@@ -1,5 +1,7 @@
 import { Conversation } from "@botpress/runtime";
+
 import { WebsiteKB } from "../knowledge/website-docs";
+
 import { getAdminModeObject } from "./extensions/admin-mode";
 import { makeGuardrails } from "./extensions/guardrails";
 import { onTraceLogging } from "./extensions/logging";

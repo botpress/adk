@@ -1,4 +1,4 @@
-import { adk, Autonomous, context, user, z } from "@botpress/runtime";
+import { adk, Autonomous, user, z } from "@botpress/runtime";
 import { ThinkSignal } from "llmz";
 
 export const AdminModeUserSchema: z.ZodRawShape = {
@@ -21,26 +21,19 @@ export const AdminModeUserSchema: z.ZodRawShape = {
     }),
 };
 
-const getIndexKnowledgeBasesTool = () => {
-  const ctx = context.getAll();
-  return new Autonomous.Tool({
-    name: "refreshKnowledgeBases",
-    description: "Tool to refresh and re-index all knowledge bases.",
-    output: z.string().describe("Confirmation message after refreshing."),
-    handler: async () => {
-      context.enterWith(ctx); // Restore context
-      await Promise.all(adk.project.knowledge.map((kb) => kb.refresh()));
-      return `Started the re-indexing process for the following knowledge bases: ${adk.project.knowledge
-        .map((kb) => kb.name)
-        .join(", ")}`;
-    },
-  });
-};
+const indexKnowledgeBasesTool = new Autonomous.Tool({
+  name: "refreshKnowledgeBases",
+  description: "Tool to refresh and re-index all knowledge bases.",
+  output: z.string().describe("Confirmation message after refreshing."),
+  handler: async () => {
+    await Promise.all(adk.project.knowledge.map((kb) => kb.refresh()));
+    return `Started the re-indexing process for the following knowledge bases: ${adk.project.knowledge
+      .map((kb) => kb.name)
+      .join(", ")}`;
+  },
+});
 
 const getLoginTool = () => {
-  const ctx = context.getAll();
-  user.state ??= {};
-
   const CODE_VALIDITY_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 
   const expectedCode = user.state.admin?.code?.toLowerCase().trim();
@@ -65,9 +58,7 @@ const getLoginTool = () => {
         ),
       output: z.boolean().describe("Returns true if login is successful."),
       handler: async (code: string) => {
-        context.enterWith(ctx); // Restore context
         const providedCode = code.toLowerCase().trim();
-
         if (expectedCode && providedCode === expectedCode) {
           user.state.admin = {
             adminUtil: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hour admin access
@@ -86,7 +77,6 @@ const getLoginTool = () => {
     name: "generateLoginCode",
     description: "Tool to generate a one-time access code for admin login.",
     handler: async () => {
-      context.enterWith(ctx); // Restore context
       const generatedCode = Math.random()
         .toString(36)
         .substring(2, 8)
@@ -169,5 +159,5 @@ export const getAdminModeObject = () =>
   new Autonomous.Object({
     name: "admin",
     description: getAdminStatus(),
-    tools: isUserAdmin() ? [getIndexKnowledgeBasesTool()] : [getLoginTool()],
+    tools: isUserAdmin() ? [indexKnowledgeBasesTool] : [getLoginTool()],
   });
