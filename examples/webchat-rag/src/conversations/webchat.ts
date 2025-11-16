@@ -7,7 +7,8 @@ import { makeGuardrails } from "./extensions/guardrails";
 import { onTraceLogging } from "./extensions/logging";
 
 export default new Conversation({
-  channel: "*",
+  channel: ["chat.channel", "webchat.channel"],
+
   handler: async ({ execute, message }) => {
     const guardrail = makeGuardrails(message);
 

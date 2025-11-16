@@ -29,3 +29,6 @@ logs/
 *.pid
 *.seed
 *.pid.lock
+
+agent.json
+bun.lock

@@ -5,11 +5,11 @@
       "enabled": true
     },
     "chat": {
-      "version": "chat@0.7.1",
+      "version": "chat@0.7.3",
       "enabled": true
     },
     "browser": {
-      "version": "browser@0.8.0",
+      "version": "browser@0.8.1",
       "enabled": true
     }
   }
