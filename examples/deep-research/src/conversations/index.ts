@@ -1,8 +1,10 @@
-/**
- * TODO: Add your conversations here
- *
- * This is a placeholder file to initialize the conversations directory.
- * You can delete this file once you add your own conversations.
- */
+import { Conversation } from "@botpress/runtime";
 
-export default {};
+export const Webchat = new Conversation({
+  channel: "webchat.channel",
+  handler: async ({ execute }) => {
+    await execute({
+      instructions: `Greet the user and ask how you can assist them today.`,
+    });
+  },
+});

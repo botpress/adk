@@ -43,7 +43,7 @@ function App() {
   const [isWebchatOpen, setIsWebchatOpen] = useState(true);
   const { client, messages, isTyping, user, clientState, newConversation } =
     useWebchat({
-      clientId: "892072aa-0b89-47e0-800c-8da8f387d757", // Insert your Client ID here
+      clientId: "1662379f-04cd-48ad-9fe6-53c3ccc7c6aa", // Insert your Client ID here
     });
 
   const config = {
@@ -56,7 +56,8 @@ function App() {
     () =>
       messages.map((message) => {
         const { authorId } = message;
-        const direction: "outgoing" | "incoming" = authorId === user?.userId ? "outgoing" : "incoming";
+        const direction: "outgoing" | "incoming" =
+          authorId === user?.userId ? "outgoing" : "incoming";
         return {
           ...message,
           direction,
@@ -66,12 +67,7 @@ function App() {
               : { name: config.botName ?? "Bot", avatar: config.botAvatar },
         };
       }),
-    [
-      config.botAvatar,
-      config.botName,
-      messages,
-      user?.userId,
-    ]
+    [config.botAvatar, config.botName, messages, user?.userId]
   );
 
   const toggleWebchat = () => {
