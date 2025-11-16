@@ -1,0 +1,19 @@
+[install]
+# Dedupe React to avoid multiple versions
+dedupe = ["react", "react-dom"]
+
+[install.scopes]
+"@botpress" = { peerDependencies = true }
+
+[build]
+# Target modern browsers
+target = "browser"
+
+# External packages that should not be bundled (handled by browser)
+external = []
+
+[run]
+# Enable React automatic runtime for JSX
+jsx = "react"
+jsxFactory = "React.createElement"
+jsxFragment = "React.Fragment"

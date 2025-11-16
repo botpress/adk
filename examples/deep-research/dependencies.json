@@ -1,0 +1,12 @@
+{
+  "integrations": {
+    "browser": {
+      "version": "browser@0.8.1",
+      "enabled": true
+    },
+    "webchat": {
+      "version": "webchat@0.3.0",
+      "enabled": true
+    }
+  }
+}
