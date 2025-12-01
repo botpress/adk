@@ -1,0 +1,19 @@
+{
+  "name": "subagents",
+  "version": "1.0.0",
+  "description": "A multi-agent orchestrator-worker pattern example",
+  "type": "module",
+  "packageManager": "bun@latest",
+  "scripts": {
+    "dev": "adk dev",
+    "build": "adk build",
+    "deploy": "adk deploy"
+  },
+  "dependencies": {
+    "@botpress/runtime": "^1.8.4",
+    "llmz": "^0.0.32"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

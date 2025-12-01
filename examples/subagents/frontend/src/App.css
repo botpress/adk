@@ -1,0 +1,178 @@
+/* Your CSS styles here */
+
+.bpMessageAvatarContainer {
+  display: none !important;
+}
+
+.bpContainer {
+  border-radius: 0 !important;
+  border-top: none;
+  border-bottom: none;
+  border-right: none;
+  border-left: none
+}
+
+button:hover {
+  border-color: transparent
+}
+
+.bpHeaderContainer {
+  background-color: inherit;
+  transition-duration: 0s;
+}
+
+.bpComposerContainer {
+  margin-bottom: var(--bpSpacing-2);
+  transition-duration: 0s;
+  position: relative;
+}
+
+.bpComposerFooter {
+  display: none;
+}
+
+.bpComposerFileAttachement {
+  background-color: #ffffff
+}
+
+.bpMessageListMarqueeContainer {
+  visibility: hidden;
+}
+
+.bpTypingIndicatorContainer {
+  padding: var(--bpSpacing-2) var(--bpSpacing-4);
+  background-color: transparent;
+}
+
+.bpMessageBlocksBubble[data-direction="incoming"] {
+  max-width: 100%;
+  background-color: transparent;
+}
+
+.bpMessageBlocksRow {
+  padding: var(--bpSpacing-2) var(--bpSpacing-4)
+}
+
+.bpMessageListViewport {
+  padding-left: 0rem;
+}
+
+.bpHeaderContentDescription {
+  font-weight: 400;
+}
+
+.bpModalButtonConfirm {
+  color: var(--bpPrimary-50)
+}
+
+:host,
+:root {
+  color-scheme: inherit;
+}
+
+.bpMessageBlocksBubble[data-direction=outgoing] {
+  background-color: #ffffff;
+  border: 1px solid var(--bpGray-200);
+  color: var(--bpGray-900)
+}
+
+.bpMessageBlocksTextCode {
+  font-size: calc(var(--bpFontSize-scale) * var(--bpFontSize-sm));
+}
+
+:root .bpReset {
+  --bpGray-1: #f7f7f8;
+  --bpGray-100: transparent;
+  --button-bg: var(--primary-color);
+  --button-text: #ffffff;
+  --primary-color: #0090FF;
+  font-weight: 400 !important
+}
+
+@media (prefers-color-scheme: dark) {
+  :root .bpReset {
+    --button-bg: var(--primary-color);
+    --bpGray-1: #09090b !important;
+    --bpGray-50: #15161A;
+    --bpGray-100: #2b2b2b;
+    --bpGray-200: #2F323B;
+    --bpGray-300: #3F434F;
+    --bpGray-400: #5F6476;
+    --bpGray-500: #696F83;
+    --bpGray-600: #969AA8;
+    --bpGray-700: #C3C5CD;
+    --bpGray-800: #DADBE0;
+    --bpGray-900: #F0F1F3;
+    --bpGray-950: #F8F8F9;
+  }
+
+  .bpMessageBlocksBubble[data-direction=outgoing] {
+    background-color: #1a1a1a;
+    color: var(--bpPrimary-50)
+  }
+
+  .bpComposerFileAttachement {
+    background-color: var(--bpGray-1)
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
+.shimmer-text {
+  background: linear-gradient(
+    90deg,
+    #5f6276 0%,
+    #9097a8 45%,
+    #c5c9d6 50%,
+    #9097a8 55%,
+    #5f6276 100%
+  );
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 5s linear infinite;
+}
+
+@media (prefers-color-scheme: dark) {
+  .shimmer-text {
+    background: linear-gradient(
+      90deg,
+      #969aa8 0%,
+      #c3c5cd 45%,
+      #e8e9ec 50%,
+      #c3c5cd 55%,
+      #969aa8 100%
+    );
+    background-size: 200% auto;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+/* Step message styles */
+.step-message {
+  font-size: 0.8rem;
+  color: var(--bpGray-500);
+  padding: 0.125rem 0;
+  font-family: ui-monospace, monospace;
+   animation: shimmer 5s linear infinite;
+}
+
+.step-content {
+  display: inline;
+}
+
+@media (prefers-color-scheme: dark) {
+  .step-message {
+    color: var(--bpGray-500);
+  }
+}
