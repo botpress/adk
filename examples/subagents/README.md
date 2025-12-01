@@ -2,6 +2,8 @@
 
 A multi-agent conversational AI system built with Botpress ADK using the **orchestrator-worker pattern**. This example demonstrates how to build specialized AI agents (subagents) that work together to handle different domains of user requests.
 
+![Demo](./demo.gif)
+
 ## Architecture
 
 ```
