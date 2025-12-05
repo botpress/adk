@@ -9,12 +9,6 @@ export default defineConfig({
     zai: "cerebras:gpt-oss-120b",
   },
 
-  configuration: {
-    schema: z.object({
-      API_KEY: z.string().describe("API key for external research service"),
-    }),
-  },
-
   bot: {
     state: z.object({}),
     tags: {
