@@ -1,0 +1,9 @@
+{
+    "servers": {
+        "Botpress": {
+            "url": "https://botpress.com/docs/mcp",
+            "type": "http"
+        }
+    },
+    "inputs": []
+}
