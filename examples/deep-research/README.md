@@ -6,7 +6,7 @@ An AI-powered research agent built with the Botpress Agent Development Kit (ADK)
 
 Try it live: **[https://deep-research.botpress.bot](https://deep-research.botpress.bot)**
 
-<video src="deep-research-demo.mp4" controls></video>
+![Deep Research Demo](deep-research-demo.gif)
 
 ## Features
 
