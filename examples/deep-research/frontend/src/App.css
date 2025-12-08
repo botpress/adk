@@ -649,6 +649,10 @@ button:hover {
   color: #374151;
 }
 
+.research-panel-activity-current {
+  color: #374151;
+}
+
 .research-panel-activity-text-muted {
   color: #9ca3af;
 }
@@ -710,6 +714,10 @@ button:hover {
 
   .research-panel-activity-text {
     color: #C3C5CD;
+  }
+
+  .research-panel-activity-current {
+    color: #F0F1F3;
   }
 
   .research-panel-activity-text-muted {
@@ -1025,7 +1033,7 @@ button:hover {
 
 .report-modal-source-card {
   -webkit-tap-highlight-color: transparent;
-  border-color: #e5e7eb;
+  border-color: #e5e7eb !important;
 }
 
 @media (prefers-color-scheme: dark) {

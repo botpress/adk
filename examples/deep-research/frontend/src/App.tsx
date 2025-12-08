@@ -214,7 +214,7 @@ function AppContent() {
           <span>
             This is a demo agent built on the Botpress ADK.{" "}
             <a
-              href="https://github.com/botpress/deep-research-agent"
+              href="https://github.com/botpress/adk/tree/main/examples/deep-research"
               target="_blank"
               rel="noopener noreferrer"
             >

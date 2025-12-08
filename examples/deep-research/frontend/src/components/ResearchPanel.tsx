@@ -257,12 +257,12 @@ const ResearchPanel: FC<Props> = ({ data: initialData, isOpen, onClose }) => {
         >
           {/* Dot */}
           <div
+            className="research-panel-dot"
             style={{
               width: "10px",
               height: "10px",
               borderRadius: "50%",
               backgroundColor: getDotColor(),
-              border: "2px solid white",
               boxShadow: "0 0 0 2px " + getDotColor() + "30",
               zIndex: 1,
               animation: isInProgress
@@ -273,10 +273,10 @@ const ResearchPanel: FC<Props> = ({ data: initialData, isOpen, onClose }) => {
           {/* Vertical line (hidden for last item) */}
           {!isLast && (
             <div
+              className="research-panel-timeline-line"
               style={{
                 flex: 1,
                 width: "2px",
-                backgroundColor: "#e5e7eb",
                 marginTop: "4px",
               }}
             />
@@ -313,12 +313,13 @@ const ResearchPanel: FC<Props> = ({ data: initialData, isOpen, onClose }) => {
             </div>
             {/* Text */}
             <div
+              className={isCurrent ? "research-panel-activity-current" : "research-panel-activity-text-muted"}
               style={{
                 flex: 1,
                 minWidth: 0,
                 fontSize: "13px",
                 lineHeight: 1.4,
-                color: hasError ? "#dc2626" : isCurrent ? "#374151" : "#9ca3af",
+                color: hasError ? "#dc2626" : undefined,
                 fontWeight: isCurrent ? 500 : 400,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
@@ -341,7 +342,8 @@ const ResearchPanel: FC<Props> = ({ data: initialData, isOpen, onClose }) => {
         style={{
           flexShrink: 0,
           padding: "16px",
-          borderBottom: "1px solid",
+          borderBottomWidth: "1px",
+          borderBottomStyle: "solid",
         }}
       >
         <div
@@ -620,11 +622,13 @@ const ResearchPanel: FC<Props> = ({ data: initialData, isOpen, onClose }) => {
                   href={source.url}
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="research-panel-source-border"
                   style={{
                     display: "flex",
                     gap: "10px",
                     padding: "10px 0",
-                    borderBottom: "1px solid #f3f4f6",
+                    borderBottomWidth: "1px",
+                    borderBottomStyle: "solid",
                     textDecoration: "none",
                     transition: "opacity 0.15s",
                   }}
@@ -742,7 +746,8 @@ const ResearchPanel: FC<Props> = ({ data: initialData, isOpen, onClose }) => {
         right: 0,
         bottom: 0,
         width: "340px",
-        borderLeft: "1px solid",
+        borderLeftWidth: "1px",
+        borderLeftStyle: "solid",
         display: "flex",
         flexDirection: "column",
         transform: shouldAnimate ? "translateX(0)" : "translateX(100%)",

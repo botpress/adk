@@ -98,7 +98,8 @@ const ReportModal: FC<Props> = ({ data: initialData, isOpen, onClose }) => {
         className="report-modal-header"
         style={{
           padding: isMobile ? "16px" : "20px 24px",
-          borderBottom: "1px solid",
+          borderBottomWidth: "1px",
+          borderBottomStyle: "solid",
           display: "flex",
           alignItems: "flex-start",
           gap: "16px",
@@ -181,7 +182,8 @@ const ReportModal: FC<Props> = ({ data: initialData, isOpen, onClose }) => {
               style={{
                 marginBottom: "24px",
                 padding: isMobile ? "12px 16px" : "16px 20px",
-                border: "1px solid",
+                borderWidth: "1px",
+                borderStyle: "solid",
                 borderRadius: "12px",
               }}
             >
@@ -244,7 +246,8 @@ const ReportModal: FC<Props> = ({ data: initialData, isOpen, onClose }) => {
                       marginTop: "0",
                       marginBottom: "16px",
                       paddingBottom: "12px",
-                      borderBottom: "1px solid",
+                      borderBottomWidth: "1px",
+                      borderBottomStyle: "solid",
                       lineHeight: 1.3,
                     }}
                   >
@@ -355,7 +358,8 @@ const ReportModal: FC<Props> = ({ data: initialData, isOpen, onClose }) => {
                     className="report-modal-hr"
                     style={{
                       border: "none",
-                      borderTop: "1px solid",
+                      borderTopWidth: "1px",
+                      borderTopStyle: "solid",
                       margin: "24px 0",
                     }}
                   />
@@ -364,7 +368,8 @@ const ReportModal: FC<Props> = ({ data: initialData, isOpen, onClose }) => {
                   <blockquote
                     className="report-modal-blockquote"
                     style={{
-                      borderLeft: "3px solid",
+                      borderLeftWidth: "3px",
+                      borderLeftStyle: "solid",
                       paddingLeft: "16px",
                       margin: "16px 0",
                       fontStyle: "italic",
@@ -386,7 +391,8 @@ const ReportModal: FC<Props> = ({ data: initialData, isOpen, onClose }) => {
               style={{
                 marginTop: "32px",
                 paddingTop: "24px",
-                borderTop: "1px solid",
+                borderTopWidth: "1px",
+                borderTopStyle: "solid",
               }}
             >
               <h2
@@ -443,7 +449,8 @@ const ReportModal: FC<Props> = ({ data: initialData, isOpen, onClose }) => {
                       alignItems: "center",
                       gap: "10px",
                       padding: "10px 12px",
-                      border: "1px solid",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
                       borderRadius: "8px",
                       textDecoration: "none",
                       transition: "all 0.15s",
@@ -539,7 +546,8 @@ const ReportModal: FC<Props> = ({ data: initialData, isOpen, onClose }) => {
         className="report-modal-footer"
         style={{
           padding: isMobile ? "12px 16px" : "16px 24px",
-          borderTop: "1px solid",
+          borderTopWidth: "1px",
+          borderTopStyle: "solid",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -568,7 +576,8 @@ const ReportModal: FC<Props> = ({ data: initialData, isOpen, onClose }) => {
               padding: "8px 16px",
               fontSize: "13px",
               fontWeight: 500,
-              border: "1px solid",
+              borderWidth: "1px",
+              borderStyle: "solid",
               borderRadius: "8px",
               cursor: "pointer",
               transition: "all 0.15s",
