@@ -1,4 +1,4 @@
-import { z, defineConfig } from "@botpress/runtime";
+import { defineConfig } from "@botpress/runtime";
 
 export default defineConfig({
   name: "demo-deep-research",
@@ -7,26 +7,6 @@ export default defineConfig({
   defaultModels: {
     autonomous: "cerebras:gpt-oss-120b",
     zai: "cerebras:gpt-oss-120b",
-  },
-
-  bot: {
-    state: z.object({}),
-    tags: {
-      age: {
-        title: "Age",
-        description: "The age of the bot in years",
-      },
-    },
-  },
-
-  user: {
-    state: z.object({}),
-    tags: {
-      subscriptionLevel: {
-        title: "Subscription Level",
-        description: "The user's subscription level",
-      },
-    },
   },
 
   dependencies: {
