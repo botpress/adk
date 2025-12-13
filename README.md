@@ -103,5 +103,5 @@ adk chat
 
 ### Documentation
 
-- [ADK Documentation](https://botpress.com/docs/adk)
+- [ADK Documentation](https://botpress.com/docs/for-developers/adk/overview)
 - [Botpress Platform](https://botpress.com)
