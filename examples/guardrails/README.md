@@ -2,6 +2,12 @@
 
 A pattern for implementing topic guardrails that keep your AI agent focused on specific subjects using the Botpress ADK.
 
+## Live Demo
+
+Try it out: https://guardrails.botpress.bot
+
+![Demo](./demo.gif)
+
 ## Use Case
 
 When building AI agents, you often need to ensure the conversation stays on topic. This example demonstrates how to implement **topic guardrails** that:
