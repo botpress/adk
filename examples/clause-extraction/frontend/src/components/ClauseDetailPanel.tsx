@@ -181,7 +181,8 @@ const ClauseDetailPanel: FC<Props> = ({ data: initialData, isOpen, onClose }) =>
   return (
     <div
       className={clsx(
-        "research-panel fixed top-0 right-0 bottom-0 w-[420px]",
+        "research-panel fixed top-0 right-0 bottom-0",
+        "w-[420px] lg:w-[33vw] xl:w-[480px] 2xl:w-[40vw] min-w-[380px] max-w-[50vw]",
         "flex flex-col shadow-xl z-40 transition-transform duration-300 ease-out border-l",
         shouldAnimate ? "translate-x-0" : "translate-x-full"
       )}
@@ -258,30 +259,6 @@ const ClauseDetailPanel: FC<Props> = ({ data: initialData, isOpen, onClose }) =>
       <div className="flex-1 overflow-y-auto p-4 research-panel-scroll">
         {activeTab === "activity" && (
           <div>
-            {/* Contract Summary - shown after summarization completes */}
-            {data.summary && (
-              <div className="mb-4 p-3 rounded-lg border extraction-summary-box">
-                <h4 className="text-[11px] font-semibold uppercase tracking-wider mb-2 extraction-summary-label">
-                  Contract Summary
-                </h4>
-                <p className="text-[13px] leading-relaxed research-panel-activity-text">
-                  {data.summary}
-                </p>
-              </div>
-            )}
-
-            {/* Summarizing indicator */}
-            {data.status === "summarizing" && !data.summary && (
-              <div className="mb-4 p-3 rounded-lg border extraction-progress-box">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-                  <span className="text-[12px] research-panel-activity-text">
-                    Generating contract summary...
-                  </span>
-                </div>
-              </div>
-            )}
-
             {/* Current Progress Summary - compact one-line format */}
             {data.status === "in_progress" && (data.currentBatch || data.passageStats) && (
               <div className="mb-3 px-3 py-2 rounded-lg extraction-progress-box text-[11px]">
@@ -355,6 +332,44 @@ const ClauseDetailPanel: FC<Props> = ({ data: initialData, isOpen, onClose }) =>
 
         {activeTab === "clauses" && (
           <div>
+            {/* Contract Summary - shown at top of Clauses tab */}
+            {data.summary && (
+              <div className="mb-4 p-4 rounded-xl extraction-summary-box">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                    <FileText className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-[11px] font-semibold uppercase tracking-wider mb-1.5 extraction-summary-label">
+                      Executive Summary
+                    </h4>
+                    <p className="text-[13px] leading-relaxed research-panel-activity-text">
+                      {data.summary}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Summarizing indicator */}
+            {data.status === "summarizing" && !data.summary && (
+              <div className="mb-4 p-4 rounded-xl extraction-progress-box">
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                    <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse" />
+                  </div>
+                  <div>
+                    <h4 className="text-[11px] font-semibold uppercase tracking-wider mb-0.5 research-panel-label">
+                      Generating Summary
+                    </h4>
+                    <span className="text-[12px] research-panel-activity-text-muted">
+                      Analyzing contract clauses...
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Filters */}
             <div className="mb-4 space-y-2">
               <div className="flex flex-wrap gap-1.5">

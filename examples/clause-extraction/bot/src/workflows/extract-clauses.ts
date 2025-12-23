@@ -410,20 +410,28 @@ export default new Workflow({
 
       const client = context.get("client");
 
-      // Build clause content for summarization
+      // Build clause content for summarization - single concatenated string
       const clauseContent = allClauses.map((clause) => {
         const riskLabel = clause.riskLevel === "high" ? "[HIGH RISK] " :
                           clause.riskLevel === "medium" ? "[MEDIUM RISK] " : "";
         return `${riskLabel}${clause.clauseType.toUpperCase()}: ${clause.title}\n${clause.text}\nKey points: ${clause.keyPoints.join("; ")}`;
       }).join("\n\n---\n\n");
 
-      // Use adk.zai.answer to generate summary from clauses
-      const result = await adk.zai.answer(
-        [clauseContent],
-        "Provide a 2-3 sentence executive summary of this contract, highlighting the most important terms, key obligations, and any high-risk clauses that require attention. Focus on: contract type, key parties' obligations, payment terms, notable risks. Be concise but informative - the summary should be scannable in 10 seconds."
-      );
+      // Use adk.zai.text instead of answer to avoid citation markers
+      const summary = await adk.zai.text(
+        `Provide a 2-3 sentence executive summary of this contract based on the extracted clauses below.
 
-      const summary = result.type === "answer" ? result.answer : "";
+Requirements:
+- Highlight the most important terms and key obligations
+- Note any high-risk clauses that require attention
+- Focus on: contract type, key parties' obligations, payment terms, notable risks
+- Be concise but informative - scannable in 10 seconds
+- Do NOT use citations or reference markers
+
+CLAUSES:
+${clauseContent}`,
+        { length: 150 }
+      );
 
       // Save summary to contractsTable
       await client.updateTableRows({

@@ -1,4 +1,4 @@
-import { type FC, useEffect } from "react";
+import { type FC, useEffect, useRef } from "react";
 import type { BlockObjects } from "@botpress/webchat";
 import ClauseExtractionCard from "./ClauseExtractionCard";
 import { useExtraction } from "../context/ExtractionContext";
@@ -17,8 +17,9 @@ interface CustomBlockWithExtraction extends CustomBlockProps {
 }
 
 const CustomMessageRenderer: FC<CustomBlockProps> = (props) => {
-  const { openPanel } = useExtraction();
+  const { openPanel, isPanelOpen } = useExtraction();
   const { updateExtractionData, getExtractionData } = useExtractionData();
+  const hasAutoOpened = useRef<Set<string>>(new Set());
 
   // Cast to extended type - webchat passes these fields via custom block payload
   const customProps = props as CustomBlockWithExtraction;
@@ -32,6 +33,20 @@ const CustomMessageRenderer: FC<CustomBlockProps> = (props) => {
       updateExtractionData(messageId, data);
     }
   }, [messageId, data, updateExtractionData]);
+
+  // Auto-open panel on first update for in_progress extractions
+  useEffect(() => {
+    if (
+      messageId &&
+      data &&
+      data.status === "in_progress" &&
+      !isPanelOpen &&
+      !hasAutoOpened.current.has(messageId)
+    ) {
+      hasAutoOpened.current.add(messageId);
+      openPanel(data, messageId);
+    }
+  }, [messageId, data, isPanelOpen, openPanel]);
 
   // Support both extraction_progress (backend) and clause_extraction (legacy) URLs
   if (url === "custom://extraction_progress" || url === "custom://clause_extraction") {
