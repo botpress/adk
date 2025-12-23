@@ -13,6 +13,7 @@ export type { ExtractionActivity } from "../tables/extraction-activity";
  */
 export const ExtractionStatus = z.enum([
   "in_progress",
+  "summarizing",
   "done",
   "errored",
   "cancelled",
@@ -73,7 +74,7 @@ export const ExtractionData = z.object({
   activities: z.array(z.object({
     id: z.string(),
     messageId: z.string(),
-    type: z.enum(["reading", "extracting", "reviewing", "storing", "complete"]),
+    type: z.enum(["reading", "extracting", "reviewing", "storing", "summarizing", "complete"]),
     status: z.enum(["pending", "in_progress", "done", "error"]),
     text: z.string(),
     clauseType: z.string().optional(),
@@ -85,6 +86,8 @@ export const ExtractionData = z.object({
   currentBatch: CurrentBatchSchema.optional(),
   // Clauses array - populated after extraction completes
   clauses: z.array(ClauseSchema).optional(),
+  // Contract summary - populated after summarization phase
+  summary: z.string().optional(),
 });
 
 export type ExtractionStatus = z.infer<typeof ExtractionStatus>;
@@ -169,6 +172,8 @@ export async function updateExtractionProgressComponent(
     currentBatch: data.currentBatch || existingData?.currentBatch,
     // Clauses - only set when provided (typically at completion)
     clauses: data.clauses || existingData?.clauses,
+    // Summary - only set when provided (after summarization)
+    summary: data.summary || existingData?.summary,
   };
 
   const { message } = await client.updateMessage({

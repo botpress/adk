@@ -1,6 +1,6 @@
-export type ExtractionStatus = "pending" | "in_progress" | "done" | "error" | "cancelled";
+export type ExtractionStatus = "pending" | "in_progress" | "summarizing" | "done" | "error" | "cancelled";
 
-export type ActivityType = "reading" | "extracting" | "reviewing" | "storing" | "complete";
+export type ActivityType = "reading" | "extracting" | "reviewing" | "storing" | "summarizing" | "complete";
 export type ActivityStatus = "pending" | "in_progress" | "done" | "error";
 
 export type RiskLevel = "low" | "medium" | "high";
@@ -56,4 +56,5 @@ export interface ExtractionData {
   error?: string;
   passageStats?: PassageStats;
   currentBatch?: CurrentBatch;
+  summary?: string; // Contract summary - populated after summarization phase
 }

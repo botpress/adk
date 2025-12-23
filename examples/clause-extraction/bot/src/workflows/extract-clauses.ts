@@ -1,4 +1,4 @@
-import { Workflow, z, context } from "@botpress/runtime";
+import { Workflow, z, context, execute } from "@botpress/runtime";
 import {
   updateExtractionProgressComponent,
   type ExtractionData,
@@ -15,6 +15,11 @@ import {
   type PassageBatch,
 } from "../utils/passage-batching";
 import { EXTRACTION_CONFIG } from "../utils/constants";
+import {
+  createQueryClausesTool,
+  createSummarizeClausesTool,
+  createUpdateContractSummaryTool,
+} from "../tools/clause-tools";
 
 const { BATCH_CONCURRENCY, DB_INSERT_BATCH_SIZE } = EXTRACTION_CONFIG;
 
@@ -79,6 +84,7 @@ export default new Workflow({
         keyPoints: string[];
         riskLevel: "low" | "medium" | "high";
       }>;
+      summary?: string;
     }) => {
       await updateExtractionProgressComponent(messageId, userId, {
         topic: documentName,
@@ -366,15 +372,6 @@ export default new Workflow({
         text: `Stored ${allClauses.length} clauses successfully`,
       });
 
-      // Final completion activity
-      await addActivity(
-        messageId,
-        userId,
-        "complete",
-        `Extraction complete: ${allClauses.length} clauses found`,
-        { uniqueKey: "complete" }
-      );
-
       // Transform raw clauses for frontend display
       const clausesForUI = allClauses.map((clause, index) => ({
         id: index + 1, // Sequential ID for frontend
@@ -386,14 +383,90 @@ export default new Workflow({
         riskLevel: clause.riskLevel,
       }));
 
+      // Update UI with clauses but not final "done" status yet (summarization pending)
       await updateUI({
-        progress: 100,
+        progress: 95,
         clausesFound: allClauses.length,
-        status: "done",
         clauses: clausesForUI,
       });
 
       console.debug("[WORKFLOW] Phase 4 complete");
+    });
+
+    // ========================================
+    // PHASE 5: Generate Contract Summary
+    // ========================================
+    await step("generate-summary", async () => {
+      console.debug("[WORKFLOW] Phase 5: Generating summary");
+
+      const summaryActivityId = await addActivity(
+        messageId,
+        userId,
+        "summarizing",
+        "Generating contract summary...",
+        { contractId, uniqueKey: "summarizing" }
+      );
+
+      // Update UI to show summarizing status
+      await updateUI({
+        progress: 95,
+        status: "summarizing",
+      });
+
+      const client = context.get("client");
+
+      // Create tools for summarization
+      const queryClausesTool = createQueryClausesTool(client, userId);
+      const summarizeClausesTool = createSummarizeClausesTool();
+      const updateContractSummaryTool = createUpdateContractSummaryTool(client, contractId);
+
+      // Execute autonomous summarization
+      await execute({
+        instructions: `Generate a concise contract summary for the contract with ID ${contractId}.
+
+Your task:
+1. Use query_clauses to get all clauses for contractId: ${contractId}
+2. Use summarize_clauses to analyze them with the question: "Provide a 2-3 sentence executive summary of this contract, highlighting the most important terms, key obligations, and any high-risk clauses that require attention."
+3. Use update_contract_summary to save the generated summary
+
+Requirements:
+- The summary should be scannable in 10 seconds
+- Focus on: contract type, key parties' obligations, payment terms, notable risks
+- Be concise but informative`,
+        tools: [queryClausesTool, summarizeClausesTool, updateContractSummaryTool],
+        iterations: 5,
+      });
+
+      // Fetch the saved summary
+      const { rows } = await client.findTableRows({
+        table: "contractsTable",
+        filter: { id: { $eq: contractId } },
+        limit: 1,
+      });
+      const savedSummary = rows[0]?.summary?.toString() || "";
+
+      await updateActivity(summaryActivityId, {
+        status: "done",
+        text: savedSummary ? "Contract summary generated" : "Summary generation completed",
+      });
+
+      // Final completion activity
+      await addActivity(
+        messageId,
+        userId,
+        "complete",
+        `Analysis complete: ${allClauses.length} clauses extracted`,
+        { uniqueKey: "complete" }
+      );
+
+      // Update UI with final status and summary
+      await updateUI({
+        progress: 100,
+        status: "done",
+        summary: savedSummary,
+      });
+
+      console.debug("[WORKFLOW] Phase 5 complete");
     });
 
     console.info("[WORKFLOW] Workflow complete!", {

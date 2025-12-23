@@ -59,6 +59,8 @@ const ClauseDetailPanel: FC<Props> = ({ data: initialData, isOpen, onClose }) =>
         return <CheckCircle className="w-3.5 h-3.5 text-purple-500" />;
       case "storing":
         return <Clock className="w-3.5 h-3.5 text-amber-500" />;
+      case "summarizing":
+        return <FileText className="w-3.5 h-3.5 text-emerald-500" />;
       case "complete":
         return <CheckCircle className="w-3.5 h-3.5 text-green-500" />;
       default:
@@ -256,6 +258,30 @@ const ClauseDetailPanel: FC<Props> = ({ data: initialData, isOpen, onClose }) =>
       <div className="flex-1 overflow-y-auto p-4 research-panel-scroll">
         {activeTab === "activity" && (
           <div>
+            {/* Contract Summary - shown after summarization completes */}
+            {data.summary && (
+              <div className="mb-4 p-3 rounded-lg border extraction-summary-box">
+                <h4 className="text-[11px] font-semibold uppercase tracking-wider mb-2 extraction-summary-label">
+                  Contract Summary
+                </h4>
+                <p className="text-[13px] leading-relaxed research-panel-activity-text">
+                  {data.summary}
+                </p>
+              </div>
+            )}
+
+            {/* Summarizing indicator */}
+            {data.status === "summarizing" && !data.summary && (
+              <div className="mb-4 p-3 rounded-lg border extraction-progress-box">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                  <span className="text-[12px] research-panel-activity-text">
+                    Generating contract summary...
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Current Progress Summary - compact one-line format */}
             {data.status === "in_progress" && (data.currentBatch || data.passageStats) && (
               <div className="mb-3 px-3 py-2 rounded-lg extraction-progress-box text-[11px]">

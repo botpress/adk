@@ -24,6 +24,8 @@ const ClauseExtractionCard: FC<Props> = ({ data, onExpand }) => {
           return `Batch ${currentBatch.index}/${currentBatch.total}`;
         }
         return "Extracting clauses";
+      case "summarizing":
+        return "Generating summary...";
       case "done":
         return "Complete";
       case "error":
@@ -75,7 +77,7 @@ const ClauseExtractionCard: FC<Props> = ({ data, onExpand }) => {
           </div>
         </div>
         <div className="flex-shrink-0 pt-0.5">
-          {status === "in_progress" && (
+          {(status === "in_progress" || status === "summarizing") && (
             <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
           )}
           {status === "done" && (

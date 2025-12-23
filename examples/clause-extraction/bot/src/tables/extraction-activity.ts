@@ -9,6 +9,7 @@ export const ActivityType = z.enum([
   "extracting",   // Extracting clauses from passages
   "reviewing",    // Reviewing and consolidating clauses
   "storing",      // Storing results to database
+  "summarizing",  // Generating contract summary
   "complete",     // Extraction complete
 ]);
 

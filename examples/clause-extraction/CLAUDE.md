@@ -40,9 +40,11 @@ npm run build      # Production build
 3. **Index**: Files API indexes document with `index: true`
 4. **Passages**: Retrieve chunked passages from RAG
 5. **Extract**: Parallel `zai.extract()` on batched passages (concurrency: 3), risk assessed from user's perspective
-6. **Update**: Bot updates custom message payload with progress
-7. **Poll**: Frontend polls every 1s, updates React context
-8. **Render**: Progress card and side panel reflect latest state
+6. **Store**: Save clauses to database
+7. **Summarize**: Autonomous `execute()` generates contract summary using shared tools
+8. **Update**: Bot updates custom message payload with progress and summary
+9. **Poll**: Frontend polls every 1s, updates React context
+10. **Render**: Progress card and side panel reflect latest state with summary
 
 ### Key Patterns
 
@@ -62,9 +64,14 @@ client.updateMessage({
 ```
 
 **Tables**:
-- `extractionActivityTable` - Activity timeline (reading, extracting, done)
+- `extractionActivityTable` - Activity timeline (reading, extracting, summarizing, complete)
 - `clausesTable` - Final extracted clauses (full-text searchable)
-- `contractsTable` - Contract metadata
+- `contractsTable` - Contract metadata + summary
+
+**Shared Tools** (`src/tools/clause-tools.ts`):
+- `createQueryClausesTool` - Query clauses from database
+- `createSummarizeClausesTool` - Analyze clauses with zai.answer()
+- `createUpdateContractSummaryTool` - Save summary to contractsTable
 
 ## Key Files
 
