@@ -1,7 +1,7 @@
 import { defineConfig } from "@botpress/runtime";
 
 export default defineConfig({
-  name: "approval",
+  name: "guardrails",
   description: "An AI agent built with Botpress ADK",
 
   defaultModels: {

@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "adk": {
+      "command": "adk",
+      "args": [
+        "mcp"
+      ]
+    }
+  }
+}
