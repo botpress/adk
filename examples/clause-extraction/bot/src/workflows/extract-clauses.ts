@@ -423,16 +423,7 @@ export default new Workflow({
         "Provide a 2-3 sentence executive summary of this contract, highlighting the most important terms, key obligations, and any high-risk clauses that require attention. Focus on: contract type, key parties' obligations, payment terms, notable risks. Be concise but informative - the summary should be scannable in 10 seconds."
       );
 
-      let summary = "";
-      if (result.type === "answer") {
-        summary = result.answer;
-      } else {
-        // Fallback: generate a basic summary using zai.text
-        summary = await adk.zai.text(
-          `Summarize this contract in 2-3 sentences. Focus on contract type, key obligations, payment terms, and risks.\n\nClauses:\n${clauseContent.slice(0, 8000)}`,
-          { length: 150 }
-        );
-      }
+      const summary = result.type === "answer" ? result.answer : "";
 
       // Save summary to contractsTable
       await client.updateTableRows({
