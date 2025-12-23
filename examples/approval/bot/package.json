@@ -1,5 +1,5 @@
 {
-  "name": "demo-deep-research",
+  "name": "demo-brand-extractor",
   "version": "1.0.0",
   "description": "A Botpress Agent built with the ADK",
   "type": "module",
@@ -10,7 +10,7 @@
     "deploy": "adk deploy"
   },
   "dependencies": {
-    "@botpress/runtime": "^1.13.0"
+    "@botpress/runtime": "^1.13.8"
   },
   "devDependencies": {
     "typescript": "^5.9.3"
