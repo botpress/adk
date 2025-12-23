@@ -1,4 +1,4 @@
-import { Workflow, z, context, execute } from "@botpress/runtime";
+import { Workflow, z, context, adk } from "@botpress/runtime";
 import {
   updateExtractionProgressComponent,
   type ExtractionData,
@@ -15,11 +15,6 @@ import {
   type PassageBatch,
 } from "../utils/passage-batching";
 import { EXTRACTION_CONFIG } from "../utils/constants";
-import {
-  createQueryClausesTool,
-  createSummarizeClausesTool,
-  createUpdateContractSummaryTool,
-} from "../tools/clause-tools";
 
 const { BATCH_CONCURRENCY, DB_INSERT_BATCH_SIZE } = EXTRACTION_CONFIG;
 
@@ -415,39 +410,39 @@ export default new Workflow({
 
       const client = context.get("client");
 
-      // Create tools for summarization
-      const queryClausesTool = createQueryClausesTool(client, userId);
-      const summarizeClausesTool = createSummarizeClausesTool();
-      const updateContractSummaryTool = createUpdateContractSummaryTool(client, contractId);
+      // Build clause content for summarization
+      const clauseContent = allClauses.map((clause) => {
+        const riskLabel = clause.riskLevel === "high" ? "[HIGH RISK] " :
+                          clause.riskLevel === "medium" ? "[MEDIUM RISK] " : "";
+        return `${riskLabel}${clause.clauseType.toUpperCase()}: ${clause.title}\n${clause.text}\nKey points: ${clause.keyPoints.join("; ")}`;
+      }).join("\n\n---\n\n");
 
-      // Execute autonomous summarization
-      await execute({
-        instructions: `Generate a concise contract summary for the contract with ID ${contractId}.
+      // Use adk.zai.answer to generate summary from clauses
+      const result = await adk.zai.answer(
+        [clauseContent],
+        "Provide a 2-3 sentence executive summary of this contract, highlighting the most important terms, key obligations, and any high-risk clauses that require attention. Focus on: contract type, key parties' obligations, payment terms, notable risks. Be concise but informative - the summary should be scannable in 10 seconds."
+      );
 
-Your task:
-1. Use query_clauses to get all clauses for contractId: ${contractId}
-2. Use summarize_clauses to analyze them with the question: "Provide a 2-3 sentence executive summary of this contract, highlighting the most important terms, key obligations, and any high-risk clauses that require attention."
-3. Use update_contract_summary to save the generated summary
+      let summary = "";
+      if (result.type === "answer") {
+        summary = result.answer;
+      } else {
+        // Fallback: generate a basic summary using zai.text
+        summary = await adk.zai.text(
+          `Summarize this contract in 2-3 sentences. Focus on contract type, key obligations, payment terms, and risks.\n\nClauses:\n${clauseContent.slice(0, 8000)}`,
+          { length: 150 }
+        );
+      }
 
-Requirements:
-- The summary should be scannable in 10 seconds
-- Focus on: contract type, key parties' obligations, payment terms, notable risks
-- Be concise but informative`,
-        tools: [queryClausesTool, summarizeClausesTool, updateContractSummaryTool],
-        iterations: 5,
-      });
-
-      // Fetch the saved summary
-      const { rows } = await client.findTableRows({
+      // Save summary to contractsTable
+      await client.updateTableRows({
         table: "contractsTable",
-        filter: { id: { $eq: contractId } },
-        limit: 1,
+        rows: [{ id: contractId, summary }],
       });
-      const savedSummary = rows[0]?.summary?.toString() || "";
 
       await updateActivity(summaryActivityId, {
         status: "done",
-        text: savedSummary ? "Contract summary generated" : "Summary generation completed",
+        text: summary ? "Contract summary generated" : "Summary generation completed",
       });
 
       // Final completion activity
@@ -463,7 +458,7 @@ Requirements:
       await updateUI({
         progress: 100,
         status: "done",
-        summary: savedSummary,
+        summary,
       });
 
       console.debug("[WORKFLOW] Phase 5 complete");

@@ -179,26 +179,3 @@ Always reference specific clauses when making claims.`,
   });
 }
 
-/**
- * Creates an update_contract_summary tool for saving summaries
- */
-export function createUpdateContractSummaryTool(client: Client, contractId: number) {
-  return new Autonomous.Tool({
-    name: "update_contract_summary",
-    description: "Save the generated summary to the contract record. Call this once you have a complete summary.",
-    input: z.object({
-      summary: z.string().describe("The contract summary text (2-3 sentences, executive overview)"),
-    }),
-    output: z.object({ success: z.boolean() }),
-    handler: async ({ summary }) => {
-      console.debug("[TOOL] update_contract_summary called", { contractId, summaryLength: summary.length });
-
-      await client.updateTableRows({
-        table: "contractsTable",
-        rows: [{ id: contractId, summary }],
-      });
-
-      return { success: true };
-    },
-  });
-}
