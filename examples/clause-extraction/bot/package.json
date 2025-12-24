@@ -1,0 +1,19 @@
+{
+  "name": "clause-extraction-bot",
+  "version": "1.0.0",
+  "description": "A Botpress Agent built with the ADK",
+  "type": "module",
+  "packageManager": "bun@latest",
+  "scripts": {
+    "dev": "adk dev",
+    "build": "adk build",
+    "deploy": "adk deploy",
+    "test:upload": "adk run scripts/test-upload.ts"
+  },
+  "dependencies": {
+    "@botpress/runtime": "^1.13.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
