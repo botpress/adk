@@ -2,7 +2,7 @@ import { type FC, useEffect, useRef } from "react";
 import type { BlockObjects } from "@botpress/webchat";
 import ClauseExtractionCard from "./ClauseExtractionCard";
 import { useExtraction } from "../context/ExtractionContext";
-import { useExtractionData } from "../context/ExtractionDataContext";
+import { useUpdateExtractionData, useExtractionMessage } from "../context/ExtractionDataContext";
 import type { ExtractionData } from "../types/extraction";
 
 type CustomBlockProps = BlockObjects["custom"];
@@ -18,7 +18,7 @@ interface CustomBlockWithExtraction extends CustomBlockProps {
 
 const CustomMessageRenderer: FC<CustomBlockProps> = (props) => {
   const { openPanel, isPanelOpen } = useExtraction();
-  const { updateExtractionData, getExtractionData } = useExtractionData();
+  const updateExtractionData = useUpdateExtractionData();
   const hasAutoOpened = useRef<Set<string>>(new Set());
 
   // Cast to extended type - webchat passes these fields via custom block payload
@@ -27,7 +27,10 @@ const CustomMessageRenderer: FC<CustomBlockProps> = (props) => {
   const data = customProps.data;
   const messageId = customProps.messageId;
 
-  // Update context when data changes (including on initial load/refresh)
+  // Subscribe to this specific message's data (selective re-render)
+  const cachedData = useExtractionMessage(messageId ?? null);
+
+  // Update store when props data changes (including on initial load/refresh)
   useEffect(() => {
     if (messageId && data) {
       updateExtractionData(messageId, data);
@@ -50,8 +53,8 @@ const CustomMessageRenderer: FC<CustomBlockProps> = (props) => {
 
   // Support both extraction_progress (backend) and clause_extraction (legacy) URLs
   if (url === "custom://extraction_progress" || url === "custom://clause_extraction") {
-    // Get latest data from context (for polling updates) or fall back to props data
-    const currentData = messageId ? getExtractionData(messageId) || data : data;
+    // Use cached data from store (for polling updates) or fall back to props data
+    const currentData = cachedData || data;
 
     // Guard against missing data
     if (!currentData) {

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from "react";
-import { useExtractionData } from "../context/ExtractionDataContext";
+import { useUpdateExtractionData } from "../context/ExtractionDataContext";
 import type { ExtractionData } from "../types/extraction";
 
 type Message = {
@@ -32,11 +32,22 @@ export function useExtractionPolling({
   userId,
 }: UseExtractionPollingParams) {
   const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
-  const { updateExtractionData } = useExtractionData();
+  const activeMessageIdsRef = useRef<Set<string>>(new Set());
+  const updateExtractionData = useUpdateExtractionData();
 
   const pollMessages = useCallback(
     async (messageIds: string[]) => {
       if (!conversationId || !clientId || !userId) {
+        return;
+      }
+
+      // Only poll messages that are still active
+      const activeIds = messageIds.filter((id) => activeMessageIdsRef.current.has(id));
+      if (activeIds.length === 0) {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = undefined;
+        }
         return;
       }
 
@@ -54,15 +65,20 @@ export function useExtractionPolling({
           const data = await response.json();
 
           if (data.messages && Array.isArray(data.messages)) {
-            for (const messageId of messageIds) {
+            for (const messageId of activeIds) {
               const message = data.messages.find((m: { id: string }) => m.id === messageId);
 
               if (message) {
                 const payload = (message as { payload?: { data?: ExtractionData } }).payload;
 
                 if (payload?.data) {
-                  console.log("Polling: Updating extraction message", messageId);
                   updateExtractionData(messageId, payload.data);
+
+                  // Stop polling this message when extraction completes
+                  if (payload.data.status !== "in_progress") {
+                    activeMessageIdsRef.current.delete(messageId);
+                    console.log("Polling: Extraction complete, stopped polling", messageId);
+                  }
                 }
               }
             }
@@ -87,7 +103,8 @@ export function useExtractionPolling({
 
       const isCustom = blockType === "custom";
       // Support both extraction_progress (backend) and clause_extraction (legacy) URLs
-      const isExtraction = blockUrl === "custom://extraction_progress" || blockUrl === "custom://clause_extraction";
+      const isExtraction =
+        blockUrl === "custom://extraction_progress" || blockUrl === "custom://clause_extraction";
 
       if (isCustom && isExtraction) {
         return status === "in_progress";
@@ -95,22 +112,27 @@ export function useExtractionPolling({
       return false;
     });
 
-    if (inProgressExtractionMessages.length > 0) {
-      const messageIds = inProgressExtractionMessages.map((m) => m.id);
-      console.log("Polling started for", inProgressExtractionMessages.length, "extraction message(s)");
+    // Add new in-progress messages to active set
+    for (const msg of inProgressExtractionMessages) {
+      if (!activeMessageIdsRef.current.has(msg.id)) {
+        activeMessageIdsRef.current.add(msg.id);
+      }
+    }
+
+    // Start polling if we have active messages and no interval running
+    if (activeMessageIdsRef.current.size > 0 && !intervalRef.current) {
+      const messageIds = Array.from(activeMessageIdsRef.current);
+      console.log("Polling: Started for", messageIds.length, "extraction message(s)");
 
       intervalRef.current = setInterval(() => {
         pollMessages(messageIds);
       }, 1000);
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
     }
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+        intervalRef.current = undefined;
       }
     };
   }, [messages, conversationId, clientId, userId, pollMessages]);

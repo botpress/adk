@@ -1,40 +1,105 @@
 /**
  * Data Cache Context - stores extraction data by messageId
  *
- * This context handles data caching concerns:
- * - Polled data from bot custom messages
- * - Persists extraction state across component remounts
- * - Map structure allows multiple extractions to be tracked simultaneously
+ * Uses useSyncExternalStore (React 18+) pattern for efficient subscriptions:
+ * - Store keeps data in a stable ref, avoiding unnecessary re-renders
+ * - Components subscribe to specific messageIds and only re-render when that data changes
+ * - Polling updates don't cause cascade re-renders across all consumers
  *
- * Separate from ExtractionContext which manages UI state (panel, modal, selection).
- * This separation allows data to persist even when UI components unmount/remount.
+ * This solves the scroll position reset issue where frequent polling updates
+ * were causing the entire component tree to re-render.
  */
 import {
   createContext,
   useContext,
-  useState,
+  useRef,
   useCallback,
+  useSyncExternalStore,
   type FC,
   type ReactNode,
 } from "react";
 import type { ExtractionData } from "../types/extraction";
 
+// Store type for external state management
+type ExtractionStore = {
+  subscribe: (listener: () => void) => () => void;
+  getSnapshot: () => Map<string, ExtractionData>;
+  getData: (messageId: string) => ExtractionData | undefined;
+  setData: (messageId: string, data: ExtractionData) => void;
+};
+
+// Create a store instance
+function createExtractionStore(): ExtractionStore {
+  const data = new Map<string, ExtractionData>();
+  const listeners = new Set<() => void>();
+
+  return {
+    subscribe(listener: () => void) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    getSnapshot() {
+      return data;
+    },
+    getData(messageId: string) {
+      return data.get(messageId);
+    },
+    setData(messageId: string, newData: ExtractionData) {
+      const existing = data.get(messageId);
+      // Only notify if data actually changed (compare by progress/status to avoid unnecessary updates)
+      if (
+        !existing ||
+        existing.progress !== newData.progress ||
+        existing.status !== newData.status ||
+        existing.clausesFound !== newData.clausesFound ||
+        existing.summary !== newData.summary
+      ) {
+        data.set(messageId, newData);
+        listeners.forEach((listener) => listener());
+      }
+    },
+  };
+}
+
 type ExtractionDataContextType = {
-  extractionMessages: Map<string, ExtractionData>;
-  updateExtractionData: (messageId: string, data: ExtractionData) => void;
-  getExtractionData: (messageId: string) => ExtractionData | undefined;
+  store: ExtractionStore;
 };
 
 const ExtractionDataContext = createContext<ExtractionDataContextType | undefined>(
   undefined
 );
 
-export const useExtractionData = () => {
+/**
+ * Hook to get extraction data for a specific messageId.
+ * Only re-renders when that specific message's data changes.
+ */
+export const useExtractionMessage = (messageId: string | null): ExtractionData | undefined => {
   const context = useContext(ExtractionDataContext);
   if (!context) {
-    throw new Error("useExtractionData must be used within ExtractionDataProvider");
+    throw new Error("useExtractionMessage must be used within ExtractionDataProvider");
   }
-  return context;
+
+  const { store } = context;
+
+  // Subscribe to store changes, but only return data for this messageId
+  const data = useSyncExternalStore(
+    store.subscribe,
+    useCallback(() => (messageId ? store.getData(messageId) : undefined), [store, messageId])
+  );
+
+  return data;
+};
+
+/**
+ * Hook to get the update function. This is stable and won't cause re-renders.
+ */
+export const useUpdateExtractionData = () => {
+  const context = useContext(ExtractionDataContext);
+  if (!context) {
+    throw new Error("useUpdateExtractionData must be used within ExtractionDataProvider");
+  }
+
+  return context.store.setData;
 };
 
 type Props = {
@@ -42,32 +107,14 @@ type Props = {
 };
 
 export const ExtractionDataProvider: FC<Props> = ({ children }) => {
-  const [extractionMessages, setExtractionMessages] = useState<
-    Map<string, ExtractionData>
-  >(new Map());
-
-  const updateExtractionData = useCallback(
-    (messageId: string, data: ExtractionData) => {
-      setExtractionMessages((prev) => {
-        const next = new Map(prev);
-        next.set(messageId, data);
-        return next;
-      });
-    },
-    []
-  );
-
-  const getExtractionData = useCallback(
-    (messageId: string) => {
-      return extractionMessages.get(messageId);
-    },
-    [extractionMessages]
-  );
+  // Store is created once and never changes
+  const storeRef = useRef<ExtractionStore | null>(null);
+  if (!storeRef.current) {
+    storeRef.current = createExtractionStore();
+  }
 
   return (
-    <ExtractionDataContext.Provider
-      value={{ extractionMessages, updateExtractionData, getExtractionData }}
-    >
+    <ExtractionDataContext.Provider value={{ store: storeRef.current }}>
       {children}
     </ExtractionDataContext.Provider>
   );
