@@ -1,7 +1,7 @@
 {
-  "name": "guardrails-bot",
+  "name": "trivia-quiz-bot",
   "version": "1.0.0",
-  "description": "A Botpress Agent built with the ADK",
+  "description": "Multiplayer trivia quiz game built with Botpress ADK",
   "type": "module",
   "packageManager": "bun@latest",
   "scripts": {

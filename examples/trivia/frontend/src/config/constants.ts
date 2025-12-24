@@ -1,7 +1,7 @@
 export const BOT_CONFIG = {
-  name: "Brand Extractor",
+  name: "Trivia Quiz",
   avatar: "", // Optional: Add your bot avatar URL
-  description: "Extract brand colors and logo from any website.",
+  description: "Multiplayer trivia quiz game - create or join games!",
 } as const;
 
 // Get this from your Botpress workspace after running `adk deploy`
