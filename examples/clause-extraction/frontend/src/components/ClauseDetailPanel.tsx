@@ -2,7 +2,7 @@ import { type FC, useState, useEffect } from "react";
 import * as Tabs from "@radix-ui/react-tabs";
 import { FileText, AlertCircle, CheckCircle, XCircle, Clock, X, ChevronDown, ChevronUp, Copy, Check, ArrowLeft, BookOpen } from "lucide-react";
 import type { ExtractionData, Activity, Clause, RiskLevel } from "../types/extraction";
-import { useExtractionData } from "../context/ExtractionDataContext";
+import { useExtractionMessage } from "../context/ExtractionDataContext";
 import { useExtraction } from "../context/ExtractionContext";
 import { CLAUSE_TYPE_LABELS, RISK_COLORS } from "../config/constants";
 import clsx from "clsx";
@@ -35,12 +35,12 @@ const ClauseDetailPanel: FC<Props> = ({ data: initialData, isOpen, onClose }) =>
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
   const [isSourceExpanded, setIsSourceExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
-  const { extractionMessages } = useExtractionData();
   const { currentMessageId, selectedClause, selectClause, clearSelection, isPanelExpanded } = useExtraction();
   const isMobile = useIsMobile();
 
-  const data =
-    (currentMessageId && extractionMessages.get(currentMessageId)) || initialData;
+  // Use selective subscription - only re-renders when this specific message's data changes
+  const cachedData = useExtractionMessage(currentMessageId);
+  const data = cachedData || initialData;
 
   useEffect(() => {
     if (isOpen) {
