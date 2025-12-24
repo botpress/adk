@@ -1,4 +1,6 @@
-import type { Client } from "@botpress/runtime";
+import { context } from "@botpress/runtime";
+
+type Client = ReturnType<typeof context.getAll>["client"];
 
 const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
@@ -14,20 +16,20 @@ export function generateJoinCode(): string {
 }
 
 /**
- * Check if a join code is unique (not used by any active game)
+ * Check if a join code is unique (not used by any active game conversation)
  */
 async function isJoinCodeUnique(
   code: string,
   client: Client
 ): Promise<boolean> {
-  const { rows } = await client.findTableRows({
-    table: "gamesTable",
-    filter: {
-      joinCode: { $eq: code },
-      status: { $eq: "waiting" },
+  const { conversations } = await client.listConversations({
+    tags: {
+      code,
+      status: "waiting",
+      type: "game",
     },
   });
-  return rows.length === 0;
+  return conversations.length === 0;
 }
 
 /**

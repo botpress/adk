@@ -10,7 +10,9 @@
     "deploy": "adk deploy"
   },
   "dependencies": {
-    "@botpress/runtime": "^1.13.8"
+    "@botpress/client": "^1.28.0",
+    "@botpress/runtime": "^1.13.8",
+    "@botpress/webchat-client": "^0.4.0"
   },
   "devDependencies": {
     "typescript": "^5.9.3"

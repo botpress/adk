@@ -6,7 +6,7 @@ export default defineConfig({
     "Multiplayer trivia quiz game - create or join games, answer timed questions, compete for the top score!",
 
   defaultModels: {
-    autonomous: "anthropic:claude-sonnet-4-5-20250929",
+    autonomous: "cerebras:gpt-oss-120b",
     zai: "cerebras:gpt-oss-120b",
   },
 
@@ -17,7 +17,25 @@ export default defineConfig({
   user: {
     state: z.object({
       username: z.string().optional(),
+      currentGameCode: z.string().optional(),
     }),
+  },
+
+  conversation: {
+    tags: {
+      type: {
+        title: "Conversation Type",
+        description: "The type of conversation (lobby or game)",
+      },
+      status: {
+        title: "Game Status",
+        description: "The current status of the trivia game",
+      },
+      code: {
+        title: "Game Code",
+        description: "The join code for the trivia game",
+      },
+    },
   },
 
   dependencies: {

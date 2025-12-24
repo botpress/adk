@@ -6,12 +6,25 @@ import {
   type PlayerAnswer,
 } from "../utils/scoring";
 import {
-  GameSettingsSchema,
-  PlayerSchema,
-  QuestionSchema,
   type Player,
-  type Question,
-} from "../tables/games";
+  type GameSettings,
+  PlayerSchema,
+  GameSettingsSchema,
+} from "../conversations";
+
+/**
+ * Question schema
+ */
+const QuestionSchema = z.object({
+  text: z.string(),
+  type: z.enum(["true_false", "multiple_choice", "text_input"]),
+  correctAnswer: z.string(),
+  options: z.array(z.string()).optional(),
+  category: z.string().optional(),
+  difficulty: z.string().optional(),
+});
+
+type Question = z.infer<typeof QuestionSchema>;
 
 /**
  * Answer delegate schema - what the frontend submits
@@ -40,7 +53,7 @@ export default new Workflow({
   timeout: "2h", // Games can take a while
 
   input: z.object({
-    gameId: z.number(),
+    gameConversationId: z.string(),
     players: z.array(PlayerSchema),
     settings: GameSettingsSchema,
   }),
@@ -65,7 +78,7 @@ export default new Workflow({
   }),
 
   handler: async ({ input, step, state }) => {
-    const { gameId, players, settings } = input;
+    const { gameConversationId, players, settings } = input;
     const client = context.get("client");
     const botId = context.get("botId");
 
@@ -84,9 +97,7 @@ export default new Workflow({
     // STEP 1: Fetch questions from Open Trivia DB
     // ========================================
     const questions = await step("fetch-questions", async () => {
-      console.log(
-        `[PlayQuiz] Fetching ${settings.questionCount} questions...`
-      );
+      console.log(`[PlayQuiz] Fetching ${settings.questionCount} questions...`);
 
       const fetched = await fetchTriviaQuestions({
         count: settings.questionCount,
@@ -99,20 +110,6 @@ export default new Workflow({
     });
 
     state.questions = questions;
-
-    // Update game with questions
-    await step("update-game-questions", async () => {
-      await client.updateTableRows({
-        table: "gamesTable",
-        rows: [
-          {
-            id: gameId,
-            status: "playing",
-            questions: JSON.stringify(questions),
-          },
-        ],
-      });
-    });
 
     // ========================================
     // STEP 2: Run each question
@@ -134,7 +131,7 @@ export default new Workflow({
               input: {
                 questionIndex: i,
                 visibleUserId: player.visibleUserId,
-                gameId,
+                gameConversationId,
               },
               schema: AnswerSchema.toJSONSchema(),
               ttl: settings.timerSeconds + 10, // Extra buffer for network
@@ -167,7 +164,7 @@ export default new Workflow({
               name: "trivia_question",
               url: "custom://trivia_question",
               data: {
-                gameId,
+                gameConversationId,
                 questionIndex: i,
                 totalQuestions: questions.length,
                 question: question.text,
@@ -256,7 +253,7 @@ export default new Workflow({
               name: "trivia_score",
               url: "custom://trivia_score",
               data: {
-                gameId,
+                gameConversationId,
                 questionIndex: i,
                 totalQuestions: questions.length,
                 correctAnswer: question.correctAnswer,
@@ -277,19 +274,6 @@ export default new Workflow({
       if (i < questions.length - 1) {
         await step.request(`wait-next-${i}`);
       }
-
-      // Update game progress
-      await step(`update-progress-${i}`, async () => {
-        await client.updateTableRows({
-          table: "gamesTable",
-          rows: [
-            {
-              id: gameId,
-              currentQuestionIndex: i + 1,
-            },
-          ],
-        });
-      });
     }
 
     // ========================================
@@ -313,7 +297,7 @@ export default new Workflow({
             name: "trivia_leaderboard",
             url: "custom://trivia_leaderboard",
             data: {
-              gameId,
+              gameConversationId,
               leaderboard: finalLeaderboard,
               isCreator: player.visibleUserId === creator.visibleUserId,
             },
@@ -321,26 +305,6 @@ export default new Workflow({
           tags: {},
         });
       }
-    });
-
-    // Update game to completed
-    await step("complete-game", async () => {
-      // Update players table with final scores
-      const updatedPlayers = players.map((p) => ({
-        ...p,
-        score: state.playerScores[p.visibleUserId] || 0,
-      }));
-
-      await client.updateTableRows({
-        table: "gamesTable",
-        rows: [
-          {
-            id: gameId,
-            status: "completed",
-            players: JSON.stringify(updatedPlayers),
-          },
-        ],
-      });
     });
 
     return {
