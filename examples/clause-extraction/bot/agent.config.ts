@@ -1,7 +1,7 @@
 import { z, defineConfig } from "@botpress/runtime";
 
 export default defineConfig({
-  name: "clause-bot",
+  name: "demo-clause-extraction",
   description: "Contract clause extraction agent with risk assessment",
 
   defaultModels: {
