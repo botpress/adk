@@ -35,6 +35,13 @@ const ClauseDetailPanel: FC<Props> = ({ data: initialData, isOpen, onClose }) =>
     return () => setShouldAnimate(false);
   }, [isOpen]);
 
+  // Auto-switch to Clauses tab when extraction completes
+  useEffect(() => {
+    if (isOpen && data.status === "done") {
+      setActiveTab("clauses");
+    }
+  }, [isOpen, data.status]);
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
