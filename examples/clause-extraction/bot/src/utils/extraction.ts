@@ -1,19 +1,11 @@
 import { adk, z } from "@botpress/runtime";
-import {
-  ClauseTypeEnum,
-  RiskLevelEnum,
-  CLAUSE_TYPES,
-  type ClauseType,
-  type RiskLevel,
-} from "./constants";
-
-// Re-export for backwards compatibility
-export { ClauseTypeEnum, RiskLevelEnum, CLAUSE_TYPES };
-export type { ClauseType, RiskLevel };
+import { ClauseTypeEnum, RiskLevelEnum } from "./constants";
 
 /**
  * Core extraction types and functions
- * Ported from POC src/core/
+ *
+ * Note: Import ClauseTypeEnum, RiskLevelEnum, ClauseType, RiskLevel
+ * directly from './constants' - that is the single source of truth.
  */
 
 
@@ -86,18 +78,24 @@ export interface Passage {
 }
 
 // ============================================================================
+// Citation (source traceability)
+// ============================================================================
+
+export interface PassageCitation {
+  id: string;
+  pageNumber?: number;
+  content: string;
+  position?: number;
+}
+
+// ============================================================================
 // Raw and Consolidated Clauses
 // ============================================================================
 
 export interface RawClauseWithSource extends Clause {
   passageId: string;
   passageIndex: number;
-}
-
-export interface ConsolidatedClause extends Clause {
-  foundInPassages: string[];
-  consolidationNotes?: string;
-  conflictFlags?: string[];
+  citation: PassageCitation;
 }
 
 // ============================================================================
@@ -117,66 +115,6 @@ For each clause found:
 If no clear contractual clauses are found in the text, return an empty clauses array.
 Be thorough but precise - only extract actual legal clauses, not general document text.
 `;
-
-export const REVIEWER_INSTRUCTIONS = `
-You are a legal contract review expert. Review and consolidate the extracted clauses.
-
-CONSOLIDATION RULES:
-1. **Deduplication**: Remove exact or near-duplicate clauses
-   - Same clause text or same meaning = keep ONE (most complete version)
-   - Mark all passage IDs where the clause was found
-
-2. **Merge similar**: If same clause appears across multiple passages:
-   - Combine into ONE clause entry
-   - Keep most comprehensive version of text and key points
-   - List all source passage IDs in foundInPassages
-
-3. **Conflict resolution**: If same clause type has conflicting info:
-   - Keep most specific/complete version
-   - Flag conflicts in conflictFlags array
-
-4. **Quality checks**:
-   - Verify clause types are correct (reclassify if needed)
-   - Ensure risk levels make sense for clause type
-
-OUTPUT REQUIREMENTS:
-- consolidatedClauses: Final deduplicated array
-- deduplicationReport: Summary of what was merged/removed
-
-IMPORTANT:
-- Do NOT modify verbatim clause text
-- Do NOT invent new clauses
-- Only reorganize and consolidate what was extracted
-`;
-
-// ============================================================================
-// Consolidation Schema
-// ============================================================================
-
-export const ConsolidationSchema = z.object({
-  consolidatedClauses: z
-    .array(
-      ClauseSchema.extend({
-        foundInPassages: z
-          .array(z.string())
-          .describe("All passage IDs where this clause was found"),
-        consolidationNotes: z
-          .string()
-          .optional()
-          .describe("Notes about merging/deduplication"),
-        conflictFlags: z
-          .array(z.string())
-          .optional()
-          .describe("Any conflicts detected"),
-      })
-    )
-    .describe("Final deduplicated clauses"),
-  deduplicationReport: z
-    .string()
-    .describe("Summary of merges and removals performed"),
-});
-
-export type ConsolidationResult = z.infer<typeof ConsolidationSchema>;
 
 // ============================================================================
 // Batch Extraction Schema
@@ -305,7 +243,7 @@ ${formattedPassages}`;
 
   const result = await adk.zai.extract(prompt, BatchExtractionSchema);
 
-  // Map results back to passage IDs
+  // Map results back to passage IDs with full citation data
   const rawClauses: RawClauseWithSource[] = result.clauses.map((clause) => {
     // passageNumber is 1-indexed, array is 0-indexed
     const passageIndex = Math.max(0, Math.min(clause.passageNumber - 1, passages.length - 1));
@@ -321,6 +259,13 @@ ${formattedPassages}`;
       relatedSections: clause.relatedSections,
       passageId: passage.id,
       passageIndex: passage.metadata?.position || passageIndex,
+      // Full citation data for source traceability
+      citation: {
+        id: passage.id,
+        pageNumber: passage.metadata?.pageNumber,
+        content: passage.content,
+        position: passage.metadata?.position,
+      },
     };
   });
 
@@ -328,36 +273,4 @@ ${formattedPassages}`;
     clauses: rawClauses,
     passageCount: passages.length,
   };
-}
-
-/**
- * Review and consolidate raw clauses using Zai
- */
-export async function reviewAndConsolidate(
-  rawClauses: RawClauseWithSource[]
-): Promise<ConsolidatedClause[]> {
-  if (rawClauses.length === 0) {
-    return [];
-  }
-
-  // Prepare raw clauses for review (include passage info)
-  const rawClausesForReview = rawClauses.map((clause) => ({
-    clauseType: clause.clauseType,
-    title: clause.title,
-    section: clause.section,
-    text: clause.text,
-    keyPoints: clause.keyPoints,
-    riskLevel: clause.riskLevel,
-    relatedSections: clause.relatedSections,
-    passageId: clause.passageId,
-  }));
-
-  const consolidationResult = await adk.zai.extract(
-    `${REVIEWER_INSTRUCTIONS}\n\nRAW CLAUSES TO REVIEW:\n${JSON.stringify(rawClausesForReview, null, 2)}`,
-    ConsolidationSchema
-  );
-
-  console.debug("[EXTRACTION] Deduplication report:", consolidationResult.deduplicationReport);
-
-  return consolidationResult.consolidatedClauses;
 }

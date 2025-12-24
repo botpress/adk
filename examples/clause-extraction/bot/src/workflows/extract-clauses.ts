@@ -78,6 +78,11 @@ export default new Workflow({
         text: string;
         keyPoints: string[];
         riskLevel: "low" | "medium" | "high";
+        citation?: {
+          passageId: string;
+          pageNumber?: number;
+          content: string;
+        };
       }>;
       summary?: string;
     }) => {
@@ -336,6 +341,9 @@ export default new Workflow({
         riskLevel: clause.riskLevel,
         position: index,
         foundInPassages: JSON.stringify([clause.passageId]), // Wrap single passageId in array for consistency
+        // Citation metadata for source traceability
+        pageNumber: clause.citation.pageNumber,
+        passageContent: clause.citation.content,
       }));
 
       // Batch insert clauses in chunks
@@ -367,7 +375,7 @@ export default new Workflow({
         text: `Stored ${allClauses.length} clauses successfully`,
       });
 
-      // Transform raw clauses for frontend display
+      // Transform raw clauses for frontend display (including citation data)
       const clausesForUI = allClauses.map((clause, index) => ({
         id: index + 1, // Sequential ID for frontend
         clauseType: clause.clauseType,
@@ -376,6 +384,12 @@ export default new Workflow({
         text: clause.text,
         keyPoints: clause.keyPoints,
         riskLevel: clause.riskLevel,
+        // Citation data for source traceability
+        citation: {
+          passageId: clause.citation.id,
+          pageNumber: clause.citation.pageNumber,
+          content: clause.citation.content,
+        },
       }));
 
       // Update UI with clauses but not final "done" status yet (summarization pending)

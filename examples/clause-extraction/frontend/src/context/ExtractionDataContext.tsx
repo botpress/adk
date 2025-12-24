@@ -1,3 +1,14 @@
+/**
+ * Data Cache Context - stores extraction data by messageId
+ *
+ * This context handles data caching concerns:
+ * - Polled data from bot custom messages
+ * - Persists extraction state across component remounts
+ * - Map structure allows multiple extractions to be tracked simultaneously
+ *
+ * Separate from ExtractionContext which manages UI state (panel, modal, selection).
+ * This separation allows data to persist even when UI components unmount/remount.
+ */
 import {
   createContext,
   useContext,

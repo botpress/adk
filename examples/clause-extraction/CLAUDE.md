@@ -2,6 +2,17 @@
 
 This example demonstrates how to build a contract clause extraction agent using the Botpress ADK. It showcases several advanced patterns including custom webchat messages, real-time progress updates, and document processing with AI.
 
+## Learning Objectives
+
+After studying this example, you will understand how to:
+
+1. **Build real-time progress UIs** - Custom webchat messages + frontend polling pattern
+2. **Process documents with AI** - Files API indexing, passage retrieval, Zai extraction
+3. **Orchestrate long-running tasks** - Multi-phase workflows with `step()` and `step.map()`
+4. **Share state between bot and UI** - Tables for persistence, custom messages for real-time updates
+5. **Apply context-aware AI** - Party-aware risk assessment based on user context
+6. **Organize ADK code** - Separation of concerns (constants, extraction logic, tools, tables)
+
 ## What This Example Demonstrates
 
 - **Custom webchat messages** with real-time progress updates
@@ -11,6 +22,16 @@ This example demonstrates how to build a contract clause extraction agent using 
 - **Workflow orchestration** with multiple phases
 - **Tables** for state sharing between bot and UI
 - **Zai library** for structured data extraction and text generation
+
+## Key Patterns to Study
+
+| Pattern | Files | Why It Matters |
+|---------|-------|----------------|
+| Single source of truth | `bot/src/utils/constants.ts` | Centralized enums prevent duplication |
+| Custom message protocol | `bot/src/utils/progress-component.ts` | Bot→frontend real-time updates |
+| Polling with context | `frontend/src/hooks/useExtractionPolling.ts` | Frontend receives bot updates |
+| UI vs Data state | `frontend/src/context/*.tsx` | Separation of concerns |
+| Security in tools | `bot/src/tools/clause-tools.ts` | userId filtering prevents data leakage |
 
 ## Quick Start
 
@@ -87,6 +108,7 @@ const clauses = await adk.zai.extract(passageText, ClauseSchema);
 | `agent.config.ts` | ADK configuration (models, integrations) |
 | `src/conversations/index.ts` | Webchat handler, triggers workflow, Q&A tools |
 | `src/workflows/extract-clauses.ts` | Main 5-phase extraction workflow |
+| `src/workflows/inspect-passages.ts` | Utility workflow to inspect passage metadata |
 | `src/utils/progress-component.ts` | Create/update custom webchat messages |
 | `src/utils/extraction.ts` | Clause extraction logic with Zai |
 | `src/utils/passage-batching.ts` | Smart batching by document sections |
@@ -128,6 +150,44 @@ Risk is assessed from the perspective of the party the user represents:
 Before extraction, the bot asks which party the user represents:
 - **Party A**: Service provider, vendor, or seller
 - **Party B**: Client, customer, or buyer
+
+## Citation & Source Traceability
+
+Each extracted clause includes citation data linking it back to its source passage:
+
+- **Page Number** - Which page the clause was found on
+- **Source Passage** - The full original text from the document
+
+This is critical for legal use cases where users need to verify extracted clauses against the original document.
+
+**Data Flow**:
+```
+Passage (from Files API) → extractFromBatch() → RawClauseWithSource.citation → clausesTable → Frontend UI
+```
+
+**Frontend**: Click any clause to expand it, then click "Source Passage" to see the original text.
+
+## Utility Workflows
+
+### `inspect_passages` - Inspect Passage Metadata
+
+A utility workflow for exploring what metadata the Files API provides on passages. Useful when building features that depend on passage structure.
+
+**Trigger via MCP**:
+```typescript
+adk_start_workflow({
+  workflow: "inspect_passages",
+  payload: { fileId: "file_xxx", limit: 10 }
+})
+```
+
+**Output**:
+- `totalPassages` - Total passages in the document
+- `samplePassages` - Array with id, contentPreview, contentLength, metadata
+- `metadataFields` - Unique metadata keys found (e.g., `pageNumber`, `position`, `type`, `subtype`)
+- `metadataStats` - Count of passages with each metadata key
+
+This workflow demonstrates how to create typed workflows with input/output schemas and call the Files API.
 
 ## Customization Ideas
 

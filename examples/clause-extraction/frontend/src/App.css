@@ -686,10 +686,52 @@ button:hover {
   color: white;
 }
 
+.extraction-filter-ghost {
+  background-color: transparent;
+  color: #6b7280;
+}
+
+.extraction-filter-ghost:hover {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
 .extraction-select {
   background-color: white;
   border: 1px solid #e5e7eb;
   color: #374151;
+}
+
+.extraction-select-minimal {
+  background-color: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.extraction-select-minimal:hover {
+  color: #374151;
+}
+
+/* Borderless row styles */
+.extraction-row {
+  background-color: transparent;
+}
+
+.extraction-row:hover {
+  background-color: #f3f4f6;
+}
+
+.extraction-row-selected {
+  background-color: #eff6ff;
+}
+
+.extraction-row-title {
+  color: #374151;
+}
+
+.extraction-row-title-selected {
+  color: #1d4ed8;
 }
 
 .extraction-clause-card {
@@ -702,8 +744,18 @@ button:hover {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
+.extraction-clause-selected {
+  background-color: #eff6ff;
+  border: 1px solid #3b82f6;
+  box-shadow: 0 0 0 1px #3b82f6;
+}
+
 .extraction-clause-title {
   color: #111827;
+}
+
+.extraction-clause-title-selected {
+  color: #1d4ed8;
 }
 
 .extraction-clause-section {
@@ -716,6 +768,16 @@ button:hover {
 
 .extraction-clause-bullet {
   color: #9ca3af;
+}
+
+/* Source passage citation box */
+.extraction-source-box {
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.extraction-source-label {
+  color: #1d4ed8;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -765,10 +827,45 @@ button:hover {
     color: #111827;
   }
 
+  .extraction-filter-ghost {
+    background-color: transparent;
+    color: #969AA8;
+  }
+
+  .extraction-filter-ghost:hover {
+    background-color: #2F323B;
+    color: #C3C5CD;
+  }
+
   .extraction-select {
     background-color: #1a1a1a;
     border-color: #3F434F;
     color: #C3C5CD;
+  }
+
+  .extraction-select-minimal {
+    background-color: transparent;
+    color: #969AA8;
+  }
+
+  .extraction-select-minimal:hover {
+    color: #C3C5CD;
+  }
+
+  .extraction-row:hover {
+    background-color: #1a1a1a;
+  }
+
+  .extraction-row-selected {
+    background-color: rgba(59, 130, 246, 0.15);
+  }
+
+  .extraction-row-title {
+    color: #C3C5CD;
+  }
+
+  .extraction-row-title-selected {
+    color: #93c5fd;
   }
 
   .extraction-clause-card {
@@ -780,8 +877,18 @@ button:hover {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   }
 
+  .extraction-clause-selected {
+    background-color: rgba(59, 130, 246, 0.15);
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px #3b82f6;
+  }
+
   .extraction-clause-title {
     color: #F0F1F3;
+  }
+
+  .extraction-clause-title-selected {
+    color: #93c5fd;
   }
 
   .extraction-clause-section {
@@ -794,6 +901,16 @@ button:hover {
 
   .extraction-clause-bullet {
     color: #5F6476;
+  }
+
+  /* Source passage citation box - dark mode */
+  .extraction-source-box {
+    background-color: rgba(59, 130, 246, 0.15);
+    border-color: #1d4ed8;
+  }
+
+  .extraction-source-label {
+    color: #93c5fd;
   }
 }
 
@@ -1577,6 +1694,13 @@ button:hover {
     padding: 0 24px;
     word-wrap: break-word;
     overflow-wrap: break-word;
+  }
+
+  /* Panel takes full width on mobile */
+  .research-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
   }
 
   .restart-button {

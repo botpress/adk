@@ -12,10 +12,10 @@
  */
 
 import type { Passage } from "./extraction";
+import { BATCHING_CONFIG } from "./constants";
 
-// Configuration
-const MIN_PASSAGE_LENGTH = 50; // Skip passages shorter than this
-const MAX_BATCH_SIZE = 10; // Maximum passages per batch
+// Configuration - import from single source of truth
+const { MIN_PASSAGE_LENGTH, MAX_BATCH_SIZE } = BATCHING_CONFIG;
 const HEADER_SUBTYPES = ["title", "subtitle"]; // Subtypes that mark section boundaries
 
 /**

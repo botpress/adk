@@ -11,7 +11,6 @@ import "./App.css";
 import adkLogo from "./assets/ADK.svg";
 import CustomMessageRenderer from "./components/CustomMessageRenderer";
 import ClauseDetailPanel from "./components/ClauseDetailPanel";
-import ClauseDetailModal from "./components/ClauseDetailModal";
 import { BOT_CONFIG, CLIENT_ID } from "./config/constants";
 import {
   ExtractionProvider,
@@ -45,7 +44,7 @@ function AppContent() {
     userId: user?.userToken,
   });
 
-  const { extractionData, isPanelOpen, isModalOpen, selectedClause, closePanel, closeModal } =
+  const { extractionData, isPanelOpen, isPanelExpanded, closePanel } =
     useExtraction();
 
   // Auto-focus input on first render
@@ -71,6 +70,13 @@ function AppContent() {
     }
   };
 
+  // Calculate dynamic margin based on panel state
+  const getPanelMargin = () => {
+    if (!isPanelOpen) return "0";
+    if (isPanelExpanded) return "min(700px, 70vw)";
+    return "min(420px, 50vw)";
+  };
+
   return (
     <div
       style={{
@@ -88,7 +94,7 @@ function AppContent() {
           display: "flex",
           position: "relative",
           transition: "margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-          marginRight: isPanelOpen ? "340px" : "0",
+          marginRight: getPanelMargin(),
           minWidth: 0,
         }}
       >
@@ -190,15 +196,6 @@ function AppContent() {
           data={extractionData}
           isOpen={isPanelOpen}
           onClose={closePanel}
-        />
-      )}
-
-      {/* Modal for clause details */}
-      {selectedClause && (
-        <ClauseDetailModal
-          clause={selectedClause}
-          isOpen={isModalOpen}
-          onClose={closeModal}
         />
       )}
     </div>

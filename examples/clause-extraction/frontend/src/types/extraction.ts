@@ -14,6 +14,12 @@ export interface Activity {
   timestamp?: string;
 }
 
+export interface Citation {
+  passageId: string;
+  pageNumber?: number;
+  content: string;
+}
+
 export interface Clause {
   id: number;
   clauseType: string;
@@ -22,6 +28,7 @@ export interface Clause {
   text: string;
   keyPoints: string[];
   riskLevel: RiskLevel;
+  citation?: Citation;
 }
 
 export interface Source {

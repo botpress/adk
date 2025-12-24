@@ -1,13 +1,12 @@
 import { Table, z } from "@botpress/runtime";
 import { ClauseTypeEnum, RiskLevelEnum } from "../utils/constants";
 
-// Re-export for backwards compatibility
-export const ClauseType = ClauseTypeEnum;
-export const RiskLevel = RiskLevelEnum;
-
 /**
  * Clauses Table
- * Stores extracted contractual clauses with risk level
+ * Stores extracted contractual clauses with risk level and source citation
+ *
+ * Note: Import ClauseTypeEnum, RiskLevelEnum, ClauseType, RiskLevel
+ * directly from '../utils/constants' - that is the single source of truth.
  */
 export default new Table({
   name: "clausesTable",
@@ -16,7 +15,7 @@ export default new Table({
     contractId: z.number(),
     fileId: z.string(),
     passageId: z.string().optional(),
-    clauseType: ClauseType,
+    clauseType: ClauseTypeEnum,
     title: {
       schema: z.string(),
       searchable: true,
@@ -31,11 +30,11 @@ export default new Table({
       schema: z.string(), // JSON array of strings
       searchable: true,
     },
-    riskLevel: RiskLevel,
+    riskLevel: RiskLevelEnum,
     position: z.number().optional(),
     foundInPassages: z.string().optional(), // JSON array of passage IDs
+    // Citation metadata - for source traceability
+    pageNumber: z.number().optional(), // Page where clause was found
+    passageContent: z.string().optional(), // Full source passage text
   },
 });
-
-export type ClauseType = z.infer<typeof ClauseType>;
-export type RiskLevel = z.infer<typeof RiskLevel>;

@@ -1,3 +1,14 @@
+/**
+ * UI State Context - manages visual/interaction state
+ *
+ * This context handles UI-only concerns:
+ * - Panel open/close state
+ * - Panel expansion state (for two-column layout)
+ * - Selected clause for detail view
+ *
+ * Separate from ExtractionDataContext which caches extraction data.
+ * This separation follows the principle of separating UI state from data state.
+ */
 import {
   createContext,
   useContext,
@@ -11,14 +22,13 @@ import type { ExtractionData, Clause } from "../types/extraction";
 type ExtractionContextType = {
   extractionData: ExtractionData | null;
   isPanelOpen: boolean;
-  isModalOpen: boolean;
+  isPanelExpanded: boolean;
   currentMessageId: string | null;
   selectedClause: Clause | null;
   openPanel: (data: ExtractionData, messageId: string) => void;
   closePanel: () => void;
-  openModal: (clause: Clause) => void;
-  closeModal: () => void;
   selectClause: (clause: Clause | null) => void;
+  clearSelection: () => void;
 };
 
 const ExtractionContext = createContext<ExtractionContextType | undefined>(
@@ -40,41 +50,34 @@ type Props = {
 export const ExtractionProvider: FC<Props> = ({ children }) => {
   const [extractionData, setExtractionData] = useState<ExtractionData | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
   const [selectedClause, setSelectedClause] = useState<Clause | null>(null);
+
+  // Panel is expanded when a clause is selected (auto-expand behavior)
+  const isPanelExpanded = selectedClause !== null;
 
   const openPanel = useCallback((data: ExtractionData, messageId: string) => {
     setExtractionData(data);
     setCurrentMessageId(messageId);
     setIsPanelOpen(true);
-    setIsModalOpen(false);
     setSelectedClause(null);
   }, []);
 
   const closePanel = useCallback(() => {
     setIsPanelOpen(false);
     setTimeout(() => {
-      if (!isModalOpen) {
-        setExtractionData(null);
-        setCurrentMessageId(null);
-        setSelectedClause(null);
-      }
+      setExtractionData(null);
+      setCurrentMessageId(null);
+      setSelectedClause(null);
     }, 300);
-  }, [isModalOpen]);
-
-  const openModal = useCallback((clause: Clause) => {
-    setSelectedClause(clause);
-    setIsModalOpen(true);
-  }, []);
-
-  const closeModal = useCallback(() => {
-    setIsModalOpen(false);
-    setSelectedClause(null);
   }, []);
 
   const selectClause = useCallback((clause: Clause | null) => {
     setSelectedClause(clause);
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    setSelectedClause(null);
   }, []);
 
   return (
@@ -82,14 +85,13 @@ export const ExtractionProvider: FC<Props> = ({ children }) => {
       value={{
         extractionData,
         isPanelOpen,
-        isModalOpen,
+        isPanelExpanded,
         currentMessageId,
         selectedClause,
         openPanel,
         closePanel,
-        openModal,
-        closeModal,
         selectClause,
+        clearSelection,
       }}
     >
       {children}

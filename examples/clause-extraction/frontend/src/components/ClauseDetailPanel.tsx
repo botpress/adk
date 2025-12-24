@@ -1,11 +1,25 @@
 import { type FC, useState, useEffect } from "react";
 import * as Tabs from "@radix-ui/react-tabs";
-import { FileText, AlertCircle, CheckCircle, XCircle, Clock, X } from "lucide-react";
-import type { ExtractionData, Activity, Clause, RiskLevel, PassageStats, CurrentBatch } from "../types/extraction";
+import { FileText, AlertCircle, CheckCircle, XCircle, Clock, X, ChevronDown, ChevronUp, Copy, Check, ArrowLeft, BookOpen } from "lucide-react";
+import type { ExtractionData, Activity, Clause, RiskLevel } from "../types/extraction";
 import { useExtractionData } from "../context/ExtractionDataContext";
 import { useExtraction } from "../context/ExtractionContext";
 import { CLAUSE_TYPE_LABELS, RISK_COLORS } from "../config/constants";
 import clsx from "clsx";
+
+// Hook to detect mobile viewport
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  return isMobile;
+};
 
 type Props = {
   data: ExtractionData;
@@ -18,8 +32,12 @@ const ClauseDetailPanel: FC<Props> = ({ data: initialData, isOpen, onClose }) =>
   const [shouldAnimate, setShouldAnimate] = useState(false);
   const [selectedRiskFilter, setSelectedRiskFilter] = useState<RiskLevel | "all">("all");
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>("all");
+  const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
+  const [isSourceExpanded, setIsSourceExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
   const { extractionMessages } = useExtractionData();
-  const { currentMessageId, openModal } = useExtraction();
+  const { currentMessageId, selectedClause, selectClause, clearSelection, isPanelExpanded } = useExtraction();
+  const isMobile = useIsMobile();
 
   const data =
     (currentMessageId && extractionMessages.get(currentMessageId)) || initialData;
@@ -45,12 +63,28 @@ const ClauseDetailPanel: FC<Props> = ({ data: initialData, isOpen, onClose }) =>
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
-        onClose();
+        if (selectedClause) {
+          clearSelection();
+        } else {
+          onClose();
+        }
       }
     };
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, selectedClause, clearSelection]);
+
+  // Reset source expansion when clause selection changes
+  useEffect(() => {
+    setIsSourceExpanded(false);
+  }, [selectedClause?.id]);
+
+  const handleCopy = async () => {
+    if (!selectedClause) return;
+    await navigator.clipboard.writeText(selectedClause.text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const getActivityIcon = (type: string, status: string) => {
     if (status === "error") {
@@ -86,14 +120,6 @@ const ClauseDetailPanel: FC<Props> = ({ data: initialData, isOpen, onClose }) =>
       default:
         return "#d1d5db";
     }
-  };
-
-  const formatPassageStats = (stats: PassageStats): string => {
-    const parts: string[] = [];
-    const contentCount = stats.total - stats.skipped;
-    if (contentCount > 0) parts.push(`${stats.processed}/${contentCount} passages`);
-    if (stats.withClauses > 0) parts.push(`${stats.withClauses} clauses found`);
-    return parts.join(" · ");
   };
 
   const formatPageRange = (pageRange: { start: number; end: number }): string => {
@@ -185,12 +211,24 @@ const ClauseDetailPanel: FC<Props> = ({ data: initialData, isOpen, onClose }) =>
 
   const uniqueTypes = [...new Set(clauses.map((c) => c.clauseType))];
 
+  // Handle clause click - toggle selection
+  const handleClauseClick = (clause: Clause) => {
+    if (selectedClause?.id === clause.id) {
+      clearSelection();
+    } else {
+      selectClause(clause);
+    }
+  };
+
   return (
     <div
       className={clsx(
         "research-panel fixed top-0 right-0 bottom-0",
-        "w-[420px] lg:w-[33vw] xl:w-[480px] 2xl:w-[40vw] min-w-[380px] max-w-[50vw]",
-        "flex flex-col shadow-xl z-40 transition-transform duration-300 ease-out border-l",
+        "flex flex-col shadow-xl z-40 border-l",
+        "transition-all duration-300 ease-out",
+        isPanelExpanded
+          ? "w-[700px] lg:w-[750px] xl:w-[800px] max-w-[70vw]"
+          : "w-[420px] lg:w-[33vw] xl:w-[480px] 2xl:w-[40vw] min-w-[380px] max-w-[50vw]",
         shouldAnimate ? "translate-x-0" : "translate-x-full"
       )}
     >
@@ -235,11 +273,11 @@ const ClauseDetailPanel: FC<Props> = ({ data: initialData, isOpen, onClose }) =>
 
         {/* Tabs */}
         <Tabs.Root value={activeTab} onValueChange={(v) => setActiveTab(v as "activity" | "clauses")}>
-          <Tabs.List className="flex gap-1 research-panel-tabs rounded-lg p-0.5">
+          <Tabs.List className="flex gap-0.5 research-panel-tabs rounded-md p-0.5">
             <Tabs.Trigger
               value="activity"
               className={clsx(
-                "flex-1 px-3 py-1.5 text-[12px] font-medium rounded-md transition-all",
+                "flex-1 px-2 py-1 text-[11px] font-medium rounded transition-all",
                 activeTab === "activity"
                   ? "research-panel-tab-active shadow-sm"
                   : "research-panel-tab"
@@ -250,7 +288,7 @@ const ClauseDetailPanel: FC<Props> = ({ data: initialData, isOpen, onClose }) =>
             <Tabs.Trigger
               value="clauses"
               className={clsx(
-                "flex-1 px-3 py-1.5 text-[12px] font-medium rounded-md transition-all",
+                "flex-1 px-2 py-1 text-[11px] font-medium rounded transition-all",
                 activeTab === "clauses"
                   ? "research-panel-tab-active shadow-sm"
                   : "research-panel-tab"
@@ -263,9 +301,9 @@ const ClauseDetailPanel: FC<Props> = ({ data: initialData, isOpen, onClose }) =>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 research-panel-scroll">
+      <div className="flex-1 overflow-hidden">
         {activeTab === "activity" && (
-          <div>
+          <div className="h-full overflow-y-auto p-4 research-panel-scroll">
             {/* Current Progress Summary - compact one-line format */}
             {data.status === "in_progress" && (data.currentBatch || data.passageStats) && (
               <div className="mb-3 px-3 py-2 rounded-lg extraction-progress-box text-[11px]">
@@ -338,140 +376,282 @@ const ClauseDetailPanel: FC<Props> = ({ data: initialData, isOpen, onClose }) =>
         )}
 
         {activeTab === "clauses" && (
-          <div>
-            {/* Contract Summary - shown at top of Clauses tab */}
-            {data.summary && (
-              <div className="mb-4 p-4 rounded-xl extraction-summary-box">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                    <FileText className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-[11px] font-semibold uppercase tracking-wider mb-1.5 extraction-summary-label">
-                      Executive Summary
-                    </h4>
-                    <p className="text-[13px] leading-relaxed research-panel-activity-text">
+          <div className={clsx(
+            "h-full",
+            // On desktop: side-by-side when expanded; on mobile: stacked (show one at a time)
+            !isMobile && isPanelExpanded ? "flex" : "flex flex-col"
+          )}>
+            {/* Left column: Summary, Filters, List - hidden on mobile when clause selected */}
+            <div className={clsx(
+              "flex flex-col overflow-hidden",
+              !isMobile && isPanelExpanded ? "w-[280px] border-r research-panel-header" : "flex-1",
+              isMobile && selectedClause && "hidden"
+            )}>
+              <div className="flex-1 overflow-y-auto px-3 py-3 research-panel-scroll">
+                {/* Collapsible Contract Summary - green box style */}
+                {data.summary && (
+                  <button
+                    onClick={() => setIsSummaryExpanded(!isSummaryExpanded)}
+                    className="w-full text-left mb-3 p-3 rounded-lg extraction-summary-box"
+                  >
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider extraction-summary-label">
+                        Summary
+                      </span>
+                      <ChevronDown className={clsx(
+                        "w-3 h-3 extraction-summary-label transition-transform",
+                        isSummaryExpanded && "rotate-180"
+                      )} />
+                    </div>
+                    <p className={clsx(
+                      "text-[12px] leading-relaxed research-panel-activity-text",
+                      !isSummaryExpanded && "line-clamp-2"
+                    )}>
                       {data.summary}
                     </p>
-                  </div>
-                </div>
-              </div>
-            )}
+                  </button>
+                )}
 
-            {/* Summarizing indicator */}
-            {data.status === "summarizing" && !data.summary && (
-              <div className="mb-4 p-4 rounded-xl extraction-progress-box">
-                <div className="flex items-center gap-3">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse" />
-                  </div>
-                  <div>
-                    <h4 className="text-[11px] font-semibold uppercase tracking-wider mb-0.5 research-panel-label">
-                      Generating Summary
-                    </h4>
-                    <span className="text-[12px] research-panel-activity-text-muted">
-                      Analyzing contract clauses...
+                {/* Summarizing indicator */}
+                {data.status === "summarizing" && !data.summary && (
+                  <div className="mb-3 p-3 rounded-lg extraction-progress-box flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                    <span className="text-[11px] research-panel-activity-text-muted">
+                      Generating summary...
                     </span>
                   </div>
+                )}
+
+                {/* Filters - smaller, tighter */}
+                <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                  {(["all", "high", "medium", "low"] as const).map((risk) => (
+                    <button
+                      key={risk}
+                      onClick={() => setSelectedRiskFilter(risk)}
+                      className={clsx(
+                        "h-6 px-2 text-[10px] rounded transition-colors",
+                        selectedRiskFilter === risk
+                          ? "extraction-filter-active"
+                          : "extraction-filter-ghost"
+                      )}
+                    >
+                      {risk === "all" ? "All" : (
+                        <span className="flex items-center gap-1">
+                          <span className={clsx(
+                            "w-1.5 h-1.5 rounded-full",
+                            risk === "high" && "bg-red-500",
+                            risk === "medium" && "bg-amber-500",
+                            risk === "low" && "bg-green-500"
+                          )} />
+                          <span className="capitalize">{risk}</span>
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                  <select
+                    value={selectedTypeFilter}
+                    onChange={(e) => setSelectedTypeFilter(e.target.value)}
+                    className="extraction-select-minimal h-6 px-1.5 text-[10px] rounded focus:outline-none"
+                  >
+                    <option value="all">All types</option>
+                    {uniqueTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {CLAUSE_TYPE_LABELS[type] || type}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              </div>
-            )}
 
-            {/* Filters */}
-            <div className="mb-4 space-y-2">
-              <div className="flex flex-wrap gap-1.5">
-                <button
-                  onClick={() => setSelectedRiskFilter("all")}
-                  className={clsx(
-                    "px-2 py-1 text-[11px] font-medium rounded-md transition-colors",
-                    selectedRiskFilter === "all"
-                      ? "extraction-filter-active"
-                      : "extraction-filter"
-                  )}
-                >
-                  All Risks
-                </button>
-                {(["high", "medium", "low"] as RiskLevel[]).map((risk) => (
-                  <button
-                    key={risk}
-                    onClick={() => setSelectedRiskFilter(risk)}
-                    className={clsx(
-                      "px-2 py-1 text-[11px] font-medium rounded-md transition-colors capitalize",
-                      selectedRiskFilter === risk
-                        ? RISK_COLORS[risk].badge
-                        : "extraction-filter"
-                    )}
-                  >
-                    {risk}
-                  </button>
-                ))}
-              </div>
-              <select
-                value={selectedTypeFilter}
-                onChange={(e) => setSelectedTypeFilter(e.target.value)}
-                className="extraction-select w-full px-2 py-1.5 text-[12px] rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">All Types ({clauses.length})</option>
-                {uniqueTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {CLAUSE_TYPE_LABELS[type] || type} (
-                    {clauses.filter((c) => c.clauseType === type).length})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Clause List */}
-            <div className="space-y-2">
-              {filteredClauses.length > 0 ? (
-                filteredClauses.map((clause) => (
-                  <button
-                    key={clause.id}
-                    onClick={() => openModal(clause)}
-                    className="extraction-clause-card w-full text-left p-3 rounded-lg transition-all"
-                  >
-                    <div className="flex items-start justify-between gap-2 mb-1.5">
-                      <div className="text-[13px] font-medium extraction-clause-title leading-tight">
-                        {clause.title}
-                      </div>
-                      <span
+                {/* Clause List - borderless, tight rows */}
+                <div className="space-y-px">
+                  {filteredClauses.length > 0 ? (
+                    filteredClauses.map((clause) => (
+                      <button
+                        key={clause.id}
+                        onClick={() => handleClauseClick(clause)}
                         className={clsx(
-                          "px-1.5 py-0.5 text-[10px] font-medium rounded capitalize flex-shrink-0",
-                          RISK_COLORS[clause.riskLevel].badge
+                          "w-full text-left px-2 py-2 rounded transition-colors",
+                          selectedClause?.id === clause.id
+                            ? "extraction-row-selected"
+                            : "extraction-row"
                         )}
                       >
-                        {clause.riskLevel}
-                      </span>
+                        <div className="flex items-center gap-2">
+                          {/* Risk indicator dot */}
+                          <span className={clsx(
+                            "w-2 h-2 rounded-full flex-shrink-0",
+                            clause.riskLevel === "high" && "bg-red-500",
+                            clause.riskLevel === "medium" && "bg-amber-500",
+                            clause.riskLevel === "low" && "bg-green-500"
+                          )} />
+                          <span className={clsx(
+                            "text-[13px] truncate",
+                            selectedClause?.id === clause.id
+                              ? "font-medium extraction-row-title-selected"
+                              : "extraction-row-title"
+                          )}>
+                            {clause.title}
+                          </span>
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="py-8 text-center text-[12px] research-panel-activity-text-muted">
+                      No clauses match filters
                     </div>
-                    {clause.section && (
-                      <div className="text-[11px] extraction-clause-section mb-1.5">{clause.section}</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Right column: Detail pane (desktop: when expanded; mobile: when selected) */}
+            {(isPanelExpanded || (isMobile && selectedClause)) && selectedClause && (
+              <div className="flex-1 flex flex-col overflow-hidden">
+                {/* Detail Header */}
+                <div className="flex-shrink-0 px-5 py-4 border-b research-panel-header">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      {/* Mobile back button */}
+                      {isMobile && (
+                        <button
+                          onClick={clearSelection}
+                          className="flex items-center gap-1.5 text-[12px] font-medium research-panel-label hover:text-gray-700 dark:hover:text-gray-300 mb-3 -ml-1"
+                        >
+                          <ArrowLeft className="w-4 h-4" />
+                          Back to list
+                        </button>
+                      )}
+                      <div className="flex items-center gap-2 mb-2">
+                        <span
+                          className={clsx(
+                            "px-2 py-0.5 text-[10px] font-semibold rounded capitalize",
+                            RISK_COLORS[selectedClause.riskLevel].badge
+                          )}
+                        >
+                          {selectedClause.riskLevel} Risk
+                        </span>
+                        <span className="clause-modal-type-badge px-2 py-0.5 text-[10px] font-medium rounded">
+                          {CLAUSE_TYPE_LABELS[selectedClause.clauseType] || selectedClause.clauseType}
+                        </span>
+                      </div>
+                      <h3 className="text-[15px] font-semibold research-panel-title leading-tight">
+                        {selectedClause.title}
+                      </h3>
+                      {selectedClause.section && (
+                        <p className="text-[12px] research-panel-activity-text-muted mt-1">
+                          {selectedClause.section}
+                        </p>
+                      )}
+                    </div>
+                    {/* Desktop close button */}
+                    {!isMobile && (
+                      <button
+                        onClick={clearSelection}
+                        className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 research-panel-label hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     )}
-                    <ul className="space-y-0.5">
-                      {clause.keyPoints.slice(0, 2).map((point, idx) => (
-                        <li key={idx} className="text-[11px] extraction-clause-text flex items-start gap-1.5">
-                          <span className="extraction-clause-bullet mt-0.5">•</span>
-                          <span className="line-clamp-1">{point}</span>
+                  </div>
+                </div>
+
+                {/* Detail Content */}
+                <div className="flex-1 overflow-y-auto p-5 space-y-5 research-panel-scroll">
+                  {/* Full Text */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-[11px] font-semibold uppercase tracking-wider research-panel-label">
+                        Full Clause Text
+                      </h4>
+                      <button
+                        onClick={handleCopy}
+                        className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-medium extraction-filter rounded transition-colors hover:opacity-80"
+                      >
+                        {copied ? (
+                          <>
+                            <Check className="w-3 h-3" />
+                            Copied
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3" />
+                            Copy
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <div className="clause-modal-collapsible-border border rounded-lg p-4">
+                      <p className="text-[13px] leading-relaxed research-panel-activity-text whitespace-pre-wrap">
+                        {selectedClause.text}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Key Points */}
+                  <div>
+                    <h4 className="text-[11px] font-semibold uppercase tracking-wider research-panel-label mb-2">
+                      Key Points
+                    </h4>
+                    <ul className="space-y-2">
+                      {selectedClause.keyPoints.map((point, idx) => (
+                        <li key={idx} className="flex items-start gap-2.5 text-[13px] research-panel-activity-text">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 flex-shrink-0" />
+                          <span className="leading-relaxed">{point}</span>
                         </li>
                       ))}
                     </ul>
-                  </button>
-                ))
-              ) : (
-                <div className="py-8 text-center text-[13px] research-panel-activity-text-muted">
-                  No clauses match the selected filters
+                  </div>
+
+                  {/* Source Passage - Collapsible */}
+                  {selectedClause.citation && (
+                    <div>
+                      <button
+                        onClick={() => setIsSourceExpanded(!isSourceExpanded)}
+                        className="w-full flex items-start gap-3 p-3 rounded-xl extraction-source-box text-left hover:opacity-90 transition-opacity"
+                      >
+                        <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                          <BookOpen className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <h4 className="text-[10px] font-semibold uppercase tracking-wider extraction-source-label">
+                              Source Passage
+                            </h4>
+                            {isSourceExpanded ? (
+                              <ChevronUp className="w-3.5 h-3.5 research-panel-label" />
+                            ) : (
+                              <ChevronDown className="w-3.5 h-3.5 research-panel-label" />
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-[11px]">
+                            {selectedClause.citation.pageNumber && (
+                              <span className="text-blue-600 dark:text-blue-400 font-medium">
+                                Page {selectedClause.citation.pageNumber}
+                              </span>
+                            )}
+                            {!isSourceExpanded && (
+                              <span className="research-panel-activity-text-muted truncate">
+                                {selectedClause.citation.content.slice(0, 80)}...
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                      {isSourceExpanded && (
+                        <div className="mt-2 p-4 rounded-lg clause-modal-collapsible-border border">
+                          <p className="text-[12px] leading-relaxed research-panel-activity-text whitespace-pre-wrap">
+                            {selectedClause.citation.content}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
       </div>
-
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-      `}</style>
     </div>
   );
 };
