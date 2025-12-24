@@ -2,6 +2,10 @@
 
 Extract and analyze contractual clauses from legal documents with party-aware risk assessment and deduplication.
 
+## Demo
+
+Try it live: **[https://clause.botpress.bot](https://clause.botpress.bot)**
+
 ## Features
 
 - Upload PDF/DOCX contracts via webchat
