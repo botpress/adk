@@ -73,6 +73,7 @@ export const Webchat = new Conversation({
     console.log("[Conversation] Handling event:", {
       conversationType: conversation.tags.type,
       conversationId: conversation.id,
+      tags: conversation.tags,
     });
 
     // Run through partial handlers

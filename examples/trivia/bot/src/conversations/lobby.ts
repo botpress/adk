@@ -228,8 +228,8 @@ export const lobbyHandler: PartialHandler = async (props) => {
       const { conversations } = await client.listConversations({
         tags: {
           code,
-          status: "waiting",
           type: "game",
+          status: "waiting",
         },
       });
 

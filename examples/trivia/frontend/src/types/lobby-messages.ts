@@ -97,12 +97,16 @@ export type GameSettingsUpdatedEvent = {
   settings: GameSettings;
 };
 
-export type GameEvent = ParticipantAddedEvent | ParticipantRemovedEvent | GameSettingsUpdatedEvent;
+export type GameStartedEvent = {
+  type: "game_started";
+};
+
+export type GameEvent = ParticipantAddedEvent | ParticipantRemovedEvent | GameSettingsUpdatedEvent | GameStartedEvent;
 
 export function isGameEvent(data: unknown): data is GameEvent {
   if (typeof data !== "object" || data === null) return false;
   const obj = data as Record<string, unknown>;
-  return obj.type === "participant_added" || obj.type === "participant_removed" || obj.type === "game_settings_updated";
+  return obj.type === "participant_added" || obj.type === "participant_removed" || obj.type === "game_settings_updated" || obj.type === "game_started";
 }
 
 export function parseGameEvent(text: string): GameEvent | null {

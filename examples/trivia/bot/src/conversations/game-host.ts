@@ -25,11 +25,17 @@ export const UpdateSettingsRequestSchema = z.object({
   settings: GameSettingsSchema,
 });
 
+export const StartGameRequestSchema = z.object({
+  type: z.literal("start_game"),
+});
+
 export const GameRequestSchema = z.discriminatedUnion("type", [
   UpdateSettingsRequestSchema,
+  StartGameRequestSchema,
 ]);
 
 export type UpdateSettingsRequest = z.infer<typeof UpdateSettingsRequestSchema>;
+export type StartGameRequest = z.infer<typeof StartGameRequestSchema>;
 export type GameRequest = z.infer<typeof GameRequestSchema>;
 
 // ============================================
@@ -41,6 +47,12 @@ export type GameSettingsUpdatedEvent = {
   settings: GameSettings;
 };
 
+export type GameStartedEvent = {
+  type: "game_started";
+};
+
+type GameEvent = GameSettingsUpdatedEvent | GameStartedEvent;
+
 /**
  * Helper to send a game event message in the game conversation
  */
@@ -48,7 +60,7 @@ async function sendGameEvent(
   client: any,
   botId: string,
   gameConversationId: string,
-  event: GameSettingsUpdatedEvent
+  event: GameEvent
 ) {
   await client.createMessage({
     conversationId: gameConversationId,
@@ -122,6 +134,40 @@ export const gameHostHandler: PartialHandler = async (props) => {
     });
 
     console.log("[GameHost] Settings broadcast to game:", conversation.id);
+    return { handled: true, continue: false };
+  }
+
+  // Handle start_game
+  if (request.type === "start_game") {
+    console.log("[GameHost] Starting game request received");
+
+    // Check if game is in waiting status
+    if (conversation.tags.status !== "waiting") {
+      console.warn("[GameHost] Cannot start game - status is not waiting:", conversation.tags.status);
+      return { handled: true, continue: false };
+    }
+
+    // Get participants to check count
+    const { participants } = await client.listParticipants({
+      id: conversation.id,
+    });
+
+    if (participants.length < 2) {
+      console.warn("[GameHost] Cannot start game - need at least 2 participants, got:", participants.length);
+      return { handled: true, continue: false };
+    }
+
+    console.log("[GameHost] Starting game with", participants.length, "participants");
+
+    // Update conversation status to playing
+    conversation.tags.status = "playing";
+
+    // Broadcast game_started event to all participants
+    await sendGameEvent(client, botId, conversation.id, {
+      type: "game_started",
+    });
+
+    console.log("[GameHost] Game started, status updated to playing");
     return { handled: true, continue: false };
   }
 

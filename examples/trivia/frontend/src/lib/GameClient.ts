@@ -16,6 +16,9 @@ type ParticipantsChangedHandler = (
   event?: GameEvent
 ) => void;
 type SettingsChangedHandler = (settings: GameSettings) => void;
+type GameStartedHandler = () => void;
+
+export type GameStatus = "waiting" | "playing" | "ended";
 
 export type GameInitData = {
   conversationId: string;
@@ -24,6 +27,7 @@ export type GameInitData = {
   userId: string;
   settings: GameSettings | null;
   creatorUserId: string | null;
+  status: GameStatus;
 };
 
 class GameClient {
@@ -34,6 +38,7 @@ class GameClient {
   private participantsChangedHandlers: Set<ParticipantsChangedHandler> =
     new Set();
   private settingsChangedHandlers: Set<SettingsChangedHandler> = new Set();
+  private gameStartedHandlers: Set<GameStartedHandler> = new Set();
   private listenerCleanup: (() => void) | null = null;
   private initData: GameInitData | null = null;
 
@@ -115,6 +120,7 @@ class GameClient {
     const regularMessages: Message[] = [];
     let latestSettings: GameSettings | null = null;
     let creatorUserId: string | null = null;
+    let status: GameStatus = "waiting";
 
     for (const message of sortedMessages) {
       console.log(
@@ -136,6 +142,9 @@ class GameClient {
             if (gameEvent.isCreator) {
               creatorUserId = gameEvent.userId;
             }
+          } else if (gameEvent.type === "game_started") {
+            status = "playing";
+            console.log("[GameClient] Found game_started event");
           }
           // Skip game event messages from regular messages
           continue;
@@ -151,6 +160,7 @@ class GameClient {
       userId: this.userId,
       settings: latestSettings,
       creatorUserId: creatorUserId,
+      status,
     };
 
     this.initData = initData;
@@ -200,6 +210,14 @@ class GameClient {
             return;
           }
 
+          // Handle game started event
+          if (gameEvent.type === "game_started") {
+            console.log("[GameClient] Game started!");
+            this.gameStartedHandlers.forEach((handler) => handler());
+            // Don't forward to message handlers
+            return;
+          }
+
           if (gameEvent.type === "participant_added") {
             // If the added participant is the creator, store their userId
             if (gameEvent.isCreator && this.initData) {
@@ -244,6 +262,7 @@ class GameClient {
       this.messageHandlers.clear();
       this.participantsChangedHandlers.clear();
       this.settingsChangedHandlers.clear();
+      this.gameStartedHandlers.clear();
     };
 
     console.log("[GameClient] Listener set up");
@@ -276,6 +295,15 @@ class GameClient {
   }
 
   /**
+   * Subscribe to game started event.
+   * Called when the game creator starts the game.
+   */
+  onGameStarted(handler: GameStartedHandler): () => void {
+    this.gameStartedHandlers.add(handler);
+    return () => this.gameStartedHandlers.delete(handler);
+  }
+
+  /**
    * Update game settings (creator only).
    * Sends the settings update as an event directly to the game conversation.
    */
@@ -289,6 +317,24 @@ class GameClient {
         data: {
           action: "update_settings",
           settings,
+        },
+      },
+    });
+  }
+
+  /**
+   * Start the game (creator only).
+   * Sends the start_game request to the bot via event.
+   */
+  async startGame(): Promise<void> {
+    console.log("[GameClient] Starting game");
+
+    await this.client.createEvent({
+      conversationId: this.conversationId,
+      payload: {
+        type: "custom",
+        data: {
+          action: "start_game",
         },
       },
     });

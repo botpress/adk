@@ -26,7 +26,7 @@ import "@botpress/webchat/style.css";
 
 type Participant = ListParticipantsResponse["participants"][number];
 
-type GameState = "loading" | "waiting" | "playing" | "finished" | "error";
+type GameState = "loading" | "waiting" | "playing" | "ended" | "error";
 
 type ChatMessage = {
   id: string;
@@ -102,7 +102,7 @@ export function GameScreen() {
         if (data.settings) {
           setSettings(data.settings);
         }
-        setGameState("waiting");
+        setGameState(data.status);
 
         // Find creator from initial messages by looking for participant_added with isCreator: true
         const { getWebchatClient } = await import("@/lib/webchat");
@@ -167,6 +167,12 @@ export function GameScreen() {
           setSettings(newSettings);
         });
 
+        // Subscribe to game started event
+        gameClient.onGameStarted(() => {
+          console.log("[GameScreen] Game started!");
+          setGameState("playing");
+        });
+
         // Subscribe to removed_from_game notifications via LobbyClient
         const lobbyClient = await LobbyClient.getInstance();
         const unsubscribeRemoved = lobbyClient.onRemovedFromGame(
@@ -229,9 +235,20 @@ export function GameScreen() {
     }
   };
 
-  const handleStartGame = () => {
-    // TODO: Implement start game
-    console.log("[GameScreen] Starting game with settings:", settings);
+  const handleStartGame = async () => {
+    if (!gameClientRef.current) return;
+
+    try {
+      console.log("[GameScreen] Starting game with settings:", settings);
+      setGameState("playing");
+      await gameClientRef.current.startGame();
+    } catch (err) {
+      console.error("[GameScreen] Failed to start game:", err);
+      setGameState("waiting");
+      setError(
+        err instanceof Error ? err.message : "Failed to start game"
+      );
+    }
   };
 
   // Helper to update local settings (used while drawer is open)
@@ -586,27 +603,40 @@ export function GameScreen() {
           </div>
 
           <div className="shrink-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 space-y-3">
-            <Composer
-              connected={true}
-              sendMessage={handleSendMessage}
-              composerPlaceholder="Type a message..."
-            />
+            {gameState === "waiting" && (
+              <>
+                <Composer
+                  connected={true}
+                  sendMessage={handleSendMessage}
+                  composerPlaceholder="Type a message..."
+                />
 
-            {/* Start Game / Waiting */}
-            {isCreator ? (
-              <Button
-                size="lg"
-                className="w-full"
-                onClick={handleStartGame}
-                disabled={!canStartGame}
-              >
-                {canStartGame
-                  ? "Start Game"
-                  : `Need ${2 - participants.length} more player${2 - participants.length > 1 ? "s" : ""}`}
-              </Button>
-            ) : (
-              <div className="text-center py-2 text-gray-500 dark:text-gray-400">
-                Waiting for host to start the game...
+                {/* Start Game / Waiting */}
+                {isCreator ? (
+                  <Button
+                    size="lg"
+                    className="w-full"
+                    onClick={handleStartGame}
+                    disabled={!canStartGame}
+                  >
+                    {canStartGame
+                      ? "Start Game"
+                      : `Need ${2 - participants.length} more player${2 - participants.length > 1 ? "s" : ""}`}
+                  </Button>
+                ) : (
+                  <div className="text-center py-2 text-gray-500 dark:text-gray-400">
+                    Waiting for host to start the game...
+                  </div>
+                )}
+              </>
+            )}
+
+            {gameState === "playing" && (
+              <div className="text-center py-4">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  <span className="font-medium">Game in progress</span>
+                </div>
               </div>
             )}
           </div>
