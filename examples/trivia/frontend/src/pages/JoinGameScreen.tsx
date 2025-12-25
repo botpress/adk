@@ -1,8 +1,9 @@
-import { useState, useRef, type KeyboardEvent, type ClipboardEvent } from "react"
+import { useState, useRef, useEffect, type KeyboardEvent, type ClipboardEvent } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Sparkles, Trophy, Users } from "lucide-react"
+import { getWebchatClient } from "@/lib/webchat"
 
 const CODE_LENGTH = 4
 
@@ -10,6 +11,47 @@ export function JoinGameScreen() {
   const navigate = useNavigate()
   const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(""))
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
+  const [username, setUsername] = useState("")
+  const [isLoadingUser, setIsLoadingUser] = useState(true)
+  const [, setIsSavingUsername] = useState(false)
+
+  // Fetch existing username on mount
+  useEffect(() => {
+    const fetchUsername = async () => {
+      try {
+        const { client } = await getWebchatClient()
+        const { user } = await client.getUser()
+        if (user.name) {
+          setUsername(user.name)
+        }
+      } catch (error) {
+        console.error("[JoinGameScreen] Failed to fetch user:", error)
+      } finally {
+        setIsLoadingUser(false)
+      }
+    }
+    fetchUsername()
+  }, [])
+
+  // Save username when it changes (debounced)
+  useEffect(() => {
+    if (isLoadingUser || !username.trim()) return
+
+    const timeoutId = setTimeout(async () => {
+      setIsSavingUsername(true)
+      try {
+        const { client } = await getWebchatClient()
+        await client.updateUser({ name: username.trim() })
+        console.log("[JoinGameScreen] Username saved:", username.trim())
+      } catch (error) {
+        console.error("[JoinGameScreen] Failed to save username:", error)
+      } finally {
+        setIsSavingUsername(false)
+      }
+    }, 500)
+
+    return () => clearTimeout(timeoutId)
+  }, [username, isLoadingUser])
 
   const handleCodeChange = (index: number, value: string) => {
     // Take only the first character and convert to uppercase
@@ -68,6 +110,9 @@ export function JoinGameScreen() {
   }
 
   const isCodeComplete = code.every((digit) => digit !== "")
+  const isUsernameValid = username.trim().length >= 2
+  const canJoin = isCodeComplete && isUsernameValid
+  const canCreate = isUsernameValid
 
   return (
     <main className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-950">
@@ -89,9 +134,30 @@ export function JoinGameScreen() {
 
         {/* Main Card */}
         <Card className="p-8 space-y-8 shadow-lg">
+          {/* Username Section */}
+          <div className="space-y-3">
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Your Name
+            </label>
+            <input
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your name"
+              disabled={isLoadingUser}
+              className="w-full px-4 py-3 text-lg rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+            />
+            {!isUsernameValid && username.length > 0 && (
+              <p className="text-sm text-amber-600 dark:text-amber-400">
+                Name must be at least 2 characters
+              </p>
+            )}
+          </div>
+
           {/* Join by Code Section */}
           <div className="space-y-4">
-            <h2 className="text-2xl font-semibold text-center text-balance text-gray-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-center text-balance text-gray-900 dark:text-white">
               Join by code
             </h2>
             <div className="flex gap-3 justify-center">
@@ -115,7 +181,7 @@ export function JoinGameScreen() {
               size="lg"
               className="w-full"
               onClick={handleJoinGame}
-              disabled={!isCodeComplete}
+              disabled={!canJoin}
             >
               Join Game
             </Button>
@@ -140,6 +206,7 @@ export function JoinGameScreen() {
               variant="outline"
               className="w-full"
               onClick={handleCreateGame}
+              disabled={!canCreate}
             >
               <Sparkles className="w-5 h-5" />
               Create New Game

@@ -175,19 +175,30 @@ export function GameScreen() {
             </h2>
           </div>
           <div className="flex flex-wrap gap-3">
-            {participants.map((participant) => (
-              <div
-                key={participant.id}
-                className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg"
-              >
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                  {participant.id.slice(0, 1).toUpperCase()}
+            {participants.map((participant) => {
+              const isYou = participant.id === initData?.userId;
+              const displayName = participant.name || "Anonymous";
+              const initial = displayName.slice(0, 1).toUpperCase();
+
+              return (
+                <div
+                  key={participant.id}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+                    isYou
+                      ? "bg-blue-100 dark:bg-blue-900/30 ring-2 ring-blue-500"
+                      : "bg-gray-100 dark:bg-gray-800"
+                  }`}
+                >
+                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                    {initial}
+                  </div>
+                  <span className="text-gray-900 dark:text-white">
+                    {displayName}
+                    {isYou && <span className="text-xs text-blue-600 dark:text-blue-400 ml-1">(you)</span>}
+                  </span>
                 </div>
-                <span className="text-gray-900 dark:text-white">
-                  {participant.id === initData?.userId ? "You" : `Player`}
-                </span>
-              </div>
-            ))}
+              );
+            })}
             {participants.length === 0 && (
               <p className="text-gray-500 dark:text-gray-400">
                 No players yet...
