@@ -4,6 +4,8 @@
  * ../../../bot/src/types/lobby-messages.ts
  */
 
+import type { GameSettings } from "./game-settings";
+
 // ============================================
 // Lobby Request Messages (Frontend -> Bot)
 // ============================================
@@ -28,6 +30,15 @@ export type LeaveRequest = {
 };
 
 export type LobbyRequest = LobbyInit | JoinRequest | CreateRequest | LeaveRequest;
+
+// ============================================
+// Game Request Messages (Frontend -> Bot, sent in game conversation)
+// ============================================
+
+export type UpdateSettingsRequest = {
+  type: "update_settings";
+  settings: GameSettings;
+};
 
 // ============================================
 // Lobby Response Messages (Bot -> Frontend)
@@ -81,12 +92,17 @@ export type ParticipantRemovedEvent = {
   userId: string;
 };
 
-export type GameEvent = ParticipantAddedEvent | ParticipantRemovedEvent;
+export type GameSettingsUpdatedEvent = {
+  type: "game_settings_updated";
+  settings: GameSettings;
+};
+
+export type GameEvent = ParticipantAddedEvent | ParticipantRemovedEvent | GameSettingsUpdatedEvent;
 
 export function isGameEvent(data: unknown): data is GameEvent {
   if (typeof data !== "object" || data === null) return false;
   const obj = data as Record<string, unknown>;
-  return obj.type === "participant_added" || obj.type === "participant_removed";
+  return obj.type === "participant_added" || obj.type === "participant_removed" || obj.type === "game_settings_updated";
 }
 
 export function parseGameEvent(text: string): GameEvent | null {

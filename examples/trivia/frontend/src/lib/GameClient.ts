@@ -6,17 +6,24 @@ import {
 import { getWebchatClient } from "./webchat";
 import { LobbyClient } from "./LobbyClient";
 import { parseGameEvent, type GameEvent } from "@/types/lobby-messages";
+import type { GameSettings } from "@/types/game-settings";
 
 type Participant = ListParticipantsResponse["participants"][number];
 
 type MessageHandler = (message: Message) => void;
-type ParticipantsChangedHandler = (participants: Participant[], event?: GameEvent) => void;
+type ParticipantsChangedHandler = (
+  participants: Participant[],
+  event?: GameEvent
+) => void;
+type SettingsChangedHandler = (settings: GameSettings) => void;
 
 export type GameInitData = {
   conversationId: string;
   messages: Message[];
   participants: Participant[];
   userId: string;
+  settings: GameSettings | null;
+  creatorUserId: string | null;
 };
 
 class GameClient {
@@ -24,7 +31,9 @@ class GameClient {
   private userId: string;
   private conversationId: string;
   private messageHandlers: Set<MessageHandler> = new Set();
-  private participantsChangedHandlers: Set<ParticipantsChangedHandler> = new Set();
+  private participantsChangedHandlers: Set<ParticipantsChangedHandler> =
+    new Set();
+  private settingsChangedHandlers: Set<SettingsChangedHandler> = new Set();
   private listenerCleanup: (() => void) | null = null;
   private initData: GameInitData | null = null;
 
@@ -47,6 +56,43 @@ class GameClient {
     return instance;
   }
 
+  private async fetchAllMessages(): Promise<Message[]> {
+    let messagesNextToken: string | undefined = undefined;
+    let allMessages: Message[] = [];
+
+    do {
+      const response = await this.client.listConversationMessages({
+        conversationId: this.conversationId,
+        nextToken: messagesNextToken,
+      });
+      allMessages = allMessages.concat(response.messages);
+      messagesNextToken =
+        response.messages.length > 1 ? response.meta.nextToken : undefined;
+    } while (messagesNextToken);
+
+    return allMessages.sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+  }
+
+  async fetchAllParticipants(): Promise<Participant[]> {
+    let allParticipants: Participant[] = [];
+    let nextToken: string | undefined = undefined;
+
+    do {
+      const response = await this.client.listParticipants({
+        conversationId: this.conversationId,
+        nextToken,
+      });
+      allParticipants = allParticipants.concat(response.participants);
+      nextToken =
+        response.participants.length > 1 ? response.meta.nextToken : undefined;
+    } while (nextToken);
+
+    return allParticipants;
+  }
+
   /**
    * Initialize the game client and set up listeners.
    * Fetches initial data (messages, participants) from the API.
@@ -55,19 +101,43 @@ class GameClient {
     console.log("[GameClient] Initializing...");
 
     // Fetch messages and participants in parallel
-    const [messagesResponse, participantsResponse] = await Promise.all([
-      this.client.listConversationMessages({ conversationId: this.conversationId }),
-      this.client.listParticipants({ conversationId: this.conversationId }),
+    const [sortedMessages, participants] = await Promise.all([
+      this.fetchAllMessages(),
+      this.fetchAllParticipants(),
     ]);
 
-    // Filter out game event messages from the message list
+    console.log(
+      "[GameClient] All messages (sorted oldest to newest):",
+      sortedMessages
+    );
+
+    // Filter out game event messages and extract latest settings
     const regularMessages: Message[] = [];
-    for (const message of messagesResponse.messages) {
+    let latestSettings: GameSettings | null = null;
+    let creatorUserId: string | null = null;
+
+    for (const message of sortedMessages) {
+      console.log(
+        "[GameClient] Processing message:",
+        message.createdAt,
+        message.payload
+      );
       if (message.payload.type === "text") {
         const text = (message.payload as { text: string }).text;
         const gameEvent = parseGameEvent(text);
+        console.log("[GameClient] Parsed game event:", gameEvent);
         if (gameEvent) {
-          // Skip game event messages
+          // Extract settings from game_settings_updated events (last one wins)
+          if (gameEvent.type === "game_settings_updated") {
+            latestSettings = gameEvent.settings;
+            console.log("[GameClient] Found settings:", latestSettings);
+          } else if (gameEvent.type === "participant_added") {
+            // Skip participant added events from regular messages
+            if (gameEvent.isCreator) {
+              creatorUserId = gameEvent.userId;
+            }
+          }
+          // Skip game event messages from regular messages
           continue;
         }
       }
@@ -77,8 +147,10 @@ class GameClient {
     const initData: GameInitData = {
       conversationId: this.conversationId,
       messages: regularMessages,
-      participants: participantsResponse.participants,
+      participants,
       userId: this.userId,
+      settings: latestSettings,
+      creatorUserId: creatorUserId,
     };
 
     this.initData = initData;
@@ -96,18 +168,11 @@ class GameClient {
     return initData;
   }
 
-  /**
-   * Fetch the current list of participants from the API
-   */
-  private async fetchParticipants(): Promise<Participant[]> {
-    const response = await this.client.listParticipants({
-      conversationId: this.conversationId,
-    });
-    return response.participants;
-  }
-
   private setupListener(): void {
-    console.log("[GameClient] Setting up conversation listener for:", this.conversationId);
+    console.log(
+      "[GameClient] Setting up conversation listener for:",
+      this.conversationId
+    );
 
     const listener = this.client.listenConversation({
       conversationId: this.conversationId,
@@ -123,15 +188,45 @@ class GameClient {
         const gameEvent = parseGameEvent(text);
 
         if (gameEvent) {
-          console.log("[GameClient] Game event received:", gameEvent.type, gameEvent.userId);
+          console.log("[GameClient] Game event received:", gameEvent.type);
 
-          // Refetch participants from the API to get the accurate list
-          try {
-            const participants = await this.fetchParticipants();
-            console.log("[GameClient] Refetched participants:", participants.map((p) => p.id));
-            this.participantsChangedHandlers.forEach((handler) => handler(participants, gameEvent));
-          } catch (error) {
-            console.error("[GameClient] Failed to fetch participants:", error);
+          // Handle settings updated event
+          if (gameEvent.type === "game_settings_updated") {
+            console.log("[GameClient] Settings updated:", gameEvent.settings);
+            this.settingsChangedHandlers.forEach((handler) =>
+              handler(gameEvent.settings)
+            );
+            // Don't forward to message handlers
+            return;
+          }
+
+          if (gameEvent.type === "participant_added") {
+            // If the added participant is the creator, store their userId
+            if (gameEvent.isCreator && this.initData) {
+              this.initData.creatorUserId = gameEvent.userId;
+            }
+          }
+
+          if (
+            gameEvent.type === "participant_added" ||
+            gameEvent.type === "participant_removed"
+          ) {
+            // Handle participant events - refetch participants from the API
+            try {
+              const participants = await this.fetchAllParticipants();
+              console.log(
+                "[GameClient] Refetched participants:",
+                participants.map((p) => p.id)
+              );
+              this.participantsChangedHandlers.forEach((handler) =>
+                handler(participants, gameEvent)
+              );
+            } catch (error) {
+              console.error(
+                "[GameClient] Failed to fetch participants:",
+                error
+              );
+            }
           }
 
           // Don't forward game events to regular message handlers
@@ -148,6 +243,7 @@ class GameClient {
       offMessage();
       this.messageHandlers.clear();
       this.participantsChangedHandlers.clear();
+      this.settingsChangedHandlers.clear();
     };
 
     console.log("[GameClient] Listener set up");
@@ -168,6 +264,34 @@ class GameClient {
   onParticipantsChanged(handler: ParticipantsChangedHandler): () => void {
     this.participantsChangedHandlers.add(handler);
     return () => this.participantsChangedHandlers.delete(handler);
+  }
+
+  /**
+   * Subscribe to game settings changes.
+   * Called when the game creator updates settings.
+   */
+  onSettingsChanged(handler: SettingsChangedHandler): () => void {
+    this.settingsChangedHandlers.add(handler);
+    return () => this.settingsChangedHandlers.delete(handler);
+  }
+
+  /**
+   * Update game settings (creator only).
+   * Sends the settings update as an event directly to the game conversation.
+   */
+  async updateSettings(settings: GameSettings): Promise<void> {
+    console.log("[GameClient] Updating settings via event:", settings);
+
+    await this.client.createEvent({
+      conversationId: this.conversationId,
+      payload: {
+        type: "custom",
+        data: {
+          action: "update_settings",
+          settings,
+        },
+      },
+    });
   }
 
   /**
