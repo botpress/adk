@@ -18,15 +18,22 @@ export const CreateRequestSchema = z.object({
   gameConversationId: z.string(),
 });
 
+export const LeaveRequestSchema = z.object({
+  type: z.literal("leave_request"),
+  gameConversationId: z.string(),
+});
+
 export const LobbyRequestSchema = z.discriminatedUnion("type", [
   LobbyInitSchema,
   JoinRequestSchema,
   CreateRequestSchema,
+  LeaveRequestSchema,
 ]);
 
 export type LobbyInit = z.infer<typeof LobbyInitSchema>;
 export type JoinRequest = z.infer<typeof JoinRequestSchema>;
 export type CreateRequest = z.infer<typeof CreateRequestSchema>;
+export type LeaveRequest = z.infer<typeof LeaveRequestSchema>;
 export type LobbyRequest = z.infer<typeof LobbyRequestSchema>;
 
 // ============================================
@@ -53,11 +60,47 @@ export const CreateResponseSchema = z.object({
   error: z.string().optional(),
 });
 
+export const LeaveResponseSchema = z.object({
+  type: z.literal("leave_response"),
+  success: z.boolean(),
+  error: z.string().optional(),
+});
+
+export const RemovedFromGameNotificationSchema = z.object({
+  type: z.literal("removed_from_game"),
+  gameConversationId: z.string(),
+});
+
 export type LobbyInitResponse = z.infer<typeof LobbyInitResponseSchema>;
 export type JoinResponse = z.infer<typeof JoinResponseSchema>;
 export type CreateResponse = z.infer<typeof CreateResponseSchema>;
+export type LeaveResponse = z.infer<typeof LeaveResponseSchema>;
+export type RemovedFromGameNotification = z.infer<typeof RemovedFromGameNotificationSchema>;
 
-export type LobbyResponse = LobbyInitResponse | JoinResponse | CreateResponse;
+export type LobbyResponse = LobbyInitResponse | JoinResponse | CreateResponse | LeaveResponse | RemovedFromGameNotification;
+
+// ============================================
+// Game Event Messages (Bot -> Frontend, sent in game conversation)
+// ============================================
+
+export const ParticipantAddedEventSchema = z.object({
+  type: z.literal("participant_added"),
+  userId: z.string(),
+});
+
+export const ParticipantRemovedEventSchema = z.object({
+  type: z.literal("participant_removed"),
+  userId: z.string(),
+});
+
+export const GameEventSchema = z.discriminatedUnion("type", [
+  ParticipantAddedEventSchema,
+  ParticipantRemovedEventSchema,
+]);
+
+export type ParticipantAddedEvent = z.infer<typeof ParticipantAddedEventSchema>;
+export type ParticipantRemovedEvent = z.infer<typeof ParticipantRemovedEventSchema>;
+export type GameEvent = z.infer<typeof GameEventSchema>;
 
 // ============================================
 // Helper to parse incoming lobby messages

@@ -5,11 +5,11 @@ type Client = ReturnType<typeof context.getAll>["client"];
 const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 /**
- * Generate a random 6-character alphanumeric join code
+ * Generate a random 4-character alphanumeric join code
  */
 export function generateJoinCode(): string {
   let code = "";
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 4; i++) {
     code += CHARS.charAt(Math.floor(Math.random() * CHARS.length));
   }
   return code;

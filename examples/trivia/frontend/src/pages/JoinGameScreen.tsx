@@ -1,28 +1,48 @@
-import { useState, useRef, type KeyboardEvent } from "react"
+import { useState, useRef, type KeyboardEvent, type ClipboardEvent } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Sparkles, Trophy, Users } from "lucide-react"
 
+const CODE_LENGTH = 4
+
 export function JoinGameScreen() {
   const navigate = useNavigate()
-  const [code, setCode] = useState(["", "", "", ""])
+  const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(""))
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   const handleCodeChange = (index: number, value: string) => {
-    if (value.length > 1) {
-      value = value[0]
-    }
+    // Take only the first character and convert to uppercase
+    const char = value.slice(0, 1).toUpperCase()
 
-    if (/^[0-9]$/.test(value) || value === "") {
+    // Only accept alphanumeric characters
+    if (/^[A-Z0-9]$/.test(char) || char === "") {
       const newCode = [...code]
-      newCode[index] = value
+      newCode[index] = char
       setCode(newCode)
 
       // Auto-focus next input
-      if (value && index < 3) {
+      if (char && index < CODE_LENGTH - 1) {
         inputRefs.current[index + 1]?.focus()
       }
+    }
+  }
+
+  const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault()
+    const pastedText = e.clipboardData.getData("text").toUpperCase().replace(/[^A-Z0-9]/g, "")
+
+    if (pastedText.length > 0) {
+      const newCode = [...code]
+      for (let i = 0; i < Math.min(pastedText.length, CODE_LENGTH); i++) {
+        newCode[i] = pastedText[i]
+      }
+      setCode(newCode)
+
+      // Focus the next empty input or the last one
+      const nextEmptyIndex = newCode.findIndex((c) => c === "")
+      const focusIndex = nextEmptyIndex === -1 ? CODE_LENGTH - 1 : nextEmptyIndex
+      inputRefs.current[focusIndex]?.focus()
     }
   }
 
@@ -34,7 +54,7 @@ export function JoinGameScreen() {
 
   const handleJoinGame = () => {
     const gameCode = code.join("")
-    if (gameCode.length === 4) {
+    if (gameCode.length === CODE_LENGTH) {
       console.log("[trivia] Joining game with code:", gameCode)
       // Navigate to lobby to join via hidden conversation
       navigate(`/lobby?join=${gameCode}`)
@@ -80,13 +100,14 @@ export function JoinGameScreen() {
                   key={index}
                   ref={(el) => { inputRefs.current[index] = el }}
                   type="text"
-                  inputMode="numeric"
+                  inputMode="text"
                   maxLength={1}
                   value={digit}
                   onChange={(e) => handleCodeChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
-                  className="w-16 h-16 text-center text-2xl font-bold rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
-                  aria-label={`Code digit ${index + 1}`}
+                  onPaste={handlePaste}
+                  className="w-16 h-16 text-center text-2xl font-bold rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all uppercase"
+                  aria-label={`Code character ${index + 1}`}
                 />
               ))}
             </div>

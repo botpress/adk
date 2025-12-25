@@ -1,16 +1,11 @@
-import { Workflow, z, context, actions } from "@botpress/runtime";
+import { actions, context, Workflow, z } from "@botpress/runtime";
+import { GameSettingsSchema, PlayerSchema } from "../conversations";
 import { fetchTriviaQuestions } from "../utils/open-trivia-api";
 import {
-  scoreAnswers,
   getLeaderboard,
   type PlayerAnswer,
+  scoreAnswers,
 } from "../utils/scoring";
-import {
-  type Player,
-  type GameSettings,
-  PlayerSchema,
-  GameSettingsSchema,
-} from "../conversations";
 
 /**
  * Question schema

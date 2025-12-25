@@ -22,7 +22,12 @@ export type CreateRequest = {
   gameConversationId: string;
 };
 
-export type LobbyRequest = LobbyInit | JoinRequest | CreateRequest;
+export type LeaveRequest = {
+  type: "leave_request";
+  gameConversationId: string;
+};
+
+export type LobbyRequest = LobbyInit | JoinRequest | CreateRequest | LeaveRequest;
 
 // ============================================
 // Lobby Response Messages (Bot -> Frontend)
@@ -48,7 +53,52 @@ export type CreateResponse = {
   error?: string;
 };
 
-export type LobbyResponse = LobbyInitResponse | JoinResponse | CreateResponse;
+export type LeaveResponse = {
+  type: "leave_response";
+  success: boolean;
+  error?: string;
+};
+
+export type RemovedFromGameNotification = {
+  type: "removed_from_game";
+  gameConversationId: string;
+};
+
+export type LobbyResponse = LobbyInitResponse | JoinResponse | CreateResponse | LeaveResponse | RemovedFromGameNotification;
+
+// ============================================
+// Game Event Messages (Bot -> Frontend, sent in game conversation)
+// ============================================
+
+export type ParticipantAddedEvent = {
+  type: "participant_added";
+  userId: string;
+};
+
+export type ParticipantRemovedEvent = {
+  type: "participant_removed";
+  userId: string;
+};
+
+export type GameEvent = ParticipantAddedEvent | ParticipantRemovedEvent;
+
+export function isGameEvent(data: unknown): data is GameEvent {
+  if (typeof data !== "object" || data === null) return false;
+  const obj = data as Record<string, unknown>;
+  return obj.type === "participant_added" || obj.type === "participant_removed";
+}
+
+export function parseGameEvent(text: string): GameEvent | null {
+  try {
+    const data = JSON.parse(text);
+    if (isGameEvent(data)) {
+      return data;
+    }
+  } catch {
+    // Not JSON or not a game event
+  }
+  return null;
+}
 
 // ============================================
 // Type guards
@@ -60,7 +110,9 @@ export function isLobbyResponse(data: unknown): data is LobbyResponse {
   return (
     obj.type === "lobby_init_response" ||
     obj.type === "join_response" ||
-    obj.type === "create_response"
+    obj.type === "create_response" ||
+    obj.type === "leave_response" ||
+    obj.type === "removed_from_game"
   );
 }
 

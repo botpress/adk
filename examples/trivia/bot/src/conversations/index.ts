@@ -1,10 +1,13 @@
 import { Conversation, context, z } from "@botpress/runtime";
-import { generateUniqueJoinCode } from "../utils/join-code";
 import {
   parseLobbyRequest,
-  type JoinResponse,
   type CreateResponse,
+  type JoinResponse,
+  type LeaveResponse,
+  type ParticipantAddedEvent,
+  type ParticipantRemovedEvent,
 } from "../types/lobby-messages";
+import { generateUniqueJoinCode } from "../utils/join-code";
 
 /**
  * Player schema
@@ -51,14 +54,12 @@ const ConversationState = z.object({
  * Helper to send a JSON response in the lobby conversation
  */
 async function sendLobbyResponse(
-  client: any,
   conversationId: string,
-  botId: string,
-  response: JoinResponse | CreateResponse
+  response: JoinResponse | CreateResponse | LeaveResponse
 ) {
-  await client.createMessage({
+  await context.get("client").createMessage({
     conversationId,
-    userId: botId,
+    userId: context.get("botId"),
     type: "text",
     payload: {
       text: JSON.stringify(response),
@@ -66,6 +67,25 @@ async function sendLobbyResponse(
     tags: {},
   });
 }
+
+/**
+ * Helper to send a game event message in the game conversation
+ */
+async function sendGameEvent(
+  gameConversationId: string,
+  event: ParticipantAddedEvent | ParticipantRemovedEvent
+) {
+  await context.get("client").createMessage({
+    conversationId: gameConversationId,
+    userId: context.get("botId"),
+    type: "text",
+    payload: {
+      text: JSON.stringify(event),
+    },
+    tags: {},
+  });
+}
+
 
 /**
  * Main Webchat Conversation Handler
@@ -79,8 +99,6 @@ export default new Conversation({
   state: ConversationState,
 
   handler: async ({ client, conversation, message }) => {
-    const botId = context.get("botId");
-
     console.log("[Conversation] Handling event:", {
       conversationType: conversation.tags.type,
       conversationId: conversation.id,
@@ -106,24 +124,40 @@ export default new Conversation({
         // Handle create_request
         if (lobbyRequest.type === "create_request") {
           const { gameConversationId } = lobbyRequest;
+          const visibleUserId = message.userId;
 
           try {
             // Generate join code
             const joinCode = await generateUniqueJoinCode(client);
 
-            // Update the game conversation with tags
+            // Update the game conversation with tags (including creatorUserId)
             await client.updateConversation({
               id: gameConversationId,
               tags: {
                 type: "game",
                 code: joinCode,
                 status: "waiting",
+                creatorUserId: visibleUserId,
               },
+            });
+
+            // Add creator as a real participant so they can access the conversation
+            await client.addParticipant({
+              id: gameConversationId,
+              userId: visibleUserId,
+            });
+
+            // Send participant_added event for the creator
+            await sendGameEvent(gameConversationId, {
+              type: "participant_added",
+              userId: visibleUserId,
             });
 
             console.log(
               "[Conversation] Game created with join code:",
-              joinCode
+              joinCode,
+              "creator:",
+              visibleUserId
             );
 
             // Send success response
@@ -133,7 +167,7 @@ export default new Conversation({
               conversationId: gameConversationId,
               joinCode,
             };
-            await sendLobbyResponse(client, conversation.id, botId, response);
+            await sendLobbyResponse(conversation.id, response);
           } catch (error) {
             console.error("[Conversation] Failed to create game:", error);
             const response: CreateResponse = {
@@ -141,7 +175,7 @@ export default new Conversation({
               success: false,
               error: "Failed to create game. Please try again.",
             };
-            await sendLobbyResponse(client, conversation.id, botId, response);
+            await sendLobbyResponse(conversation.id, response);
           }
           return;
         }
@@ -150,6 +184,7 @@ export default new Conversation({
         if (lobbyRequest.type === "join_request") {
           const { joinCode } = lobbyRequest;
           const code = joinCode.toUpperCase();
+          const visibleUserId = message.userId;
 
           try {
             // Find the game conversation by join code tag
@@ -167,13 +202,30 @@ export default new Conversation({
                 success: false,
                 error: "Invalid join code or game has already started.",
               };
-              await sendLobbyResponse(client, conversation.id, botId, response);
+              await sendLobbyResponse(conversation.id, response);
               return;
             }
 
             const gameConversation = conversations[0];
 
-            console.log("[Conversation] Player joined game:", code);
+            // Add joining player as a real participant so they can access the conversation
+            await client.addParticipant({
+              id: gameConversation.id,
+              userId: visibleUserId,
+            });
+
+            // Send participant_added event for the joining player
+            await sendGameEvent(gameConversation.id, {
+              type: "participant_added",
+              userId: visibleUserId,
+            });
+
+            console.log(
+              "[Conversation] Player joined game:",
+              code,
+              "userId:",
+              visibleUserId
+            );
 
             // Send success response - player will use the game conversation
             const response: JoinResponse = {
@@ -181,7 +233,7 @@ export default new Conversation({
               success: true,
               conversationId: gameConversation.id,
             };
-            await sendLobbyResponse(client, conversation.id, botId, response);
+            await sendLobbyResponse(conversation.id, response);
           } catch (error) {
             console.error("[Conversation] Failed to join game:", error);
             const response: JoinResponse = {
@@ -189,7 +241,72 @@ export default new Conversation({
               success: false,
               error: "Failed to join game. Please try again.",
             };
-            await sendLobbyResponse(client, conversation.id, botId, response);
+            await sendLobbyResponse(conversation.id, response);
+          }
+          return;
+        }
+
+        // Handle leave_request
+        if (lobbyRequest.type === "leave_request") {
+          const { gameConversationId } = lobbyRequest;
+          const visibleUserId = message.userId;
+          const lobbyConversationId = conversation.id;
+
+          try {
+            // Fetch the game conversation to get creator userId
+            const { conversation: gameConversation } =
+              await client.getConversation({
+                id: gameConversationId,
+              });
+
+            const creatorUserId = gameConversation.tags.creatorUserId as string;
+            const isCreator = visibleUserId === creatorUserId;
+
+            if (isCreator) {
+              // If creator leaves, delete the entire game conversation
+              console.log(
+                "[Conversation] Creator leaving game, deleting conversation:",
+                gameConversationId
+              );
+              await client.deleteConversation({
+                id: gameConversationId,
+              });
+            } else {
+              // Remove the player as a real participant
+              await client.removeParticipant({
+                id: gameConversationId,
+                userId: visibleUserId,
+              });
+
+              // Send participant_removed event for the leaving player
+              await sendGameEvent(gameConversationId, {
+                type: "participant_removed",
+                userId: visibleUserId,
+              });
+            }
+
+            console.log(
+              "[Conversation] Player left game:",
+              gameConversationId,
+              "userId:",
+              visibleUserId,
+              isCreator ? "(creator - game deleted)" : ""
+            );
+
+            // Send success response to the lobby conversation (not the game)
+            const response: LeaveResponse = {
+              type: "leave_response",
+              success: true,
+            };
+            await sendLobbyResponse(lobbyConversationId, response);
+          } catch (error) {
+            console.error("[Conversation] Failed to leave game:", error);
+            const response: LeaveResponse = {
+              type: "leave_response",
+              success: false,
+              error: "Failed to leave game.",
+            };
+            await sendLobbyResponse(lobbyConversationId, response);
           }
           return;
         }
@@ -210,7 +327,10 @@ export default new Conversation({
     // Game conversation - handle game logic
     // ========================================
     if (conversation.tags.type === "game") {
-      console.log("[Conversation] Game conversation, status:", conversation.tags.status);
+      console.log(
+        "[Conversation] Game conversation, status:",
+        conversation.tags.status
+      );
       // Game logic will be handled here
       // For now, just log
       return;

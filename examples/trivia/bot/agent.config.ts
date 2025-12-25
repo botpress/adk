@@ -23,6 +23,10 @@ export default defineConfig({
 
   conversation: {
     tags: {
+      creatorUserId: {
+        title: "Creator User ID",
+        description: "The user ID of the game creator",
+      },
       type: {
         title: "Conversation Type",
         description: "The type of conversation (lobby or game)",
@@ -41,7 +45,10 @@ export default defineConfig({
   dependencies: {
     integrations: {
       delegate: { version: "agi/delegate@0.1.0", enabled: true },
-      webchat: { version: "webchat@0.3.0", enabled: true },
+      webchat: {
+        version: "webchat@0.3.0",
+        enabled: true,
+      },
     },
   },
 });

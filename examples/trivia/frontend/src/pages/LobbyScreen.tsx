@@ -31,12 +31,12 @@ export function LobbyScreen() {
           console.log("[Lobby] Joining game with code:", joinCode);
           const { conversationId } = await client.joinGame(joinCode);
           console.log("[Lobby] Join successful! Navigating to game:", conversationId);
-          navigate(`/chat?conversationId=${conversationId}`);
+          navigate(`/game?conversationId=${conversationId}&joinCode=${joinCode}`);
         } else if (action === "create") {
           console.log("[Lobby] Creating new game");
           const { conversationId, joinCode: newCode } = await client.createGame();
           console.log("[Lobby] Game created! Join code:", newCode);
-          navigate(`/chat?conversationId=${conversationId}`);
+          navigate(`/game?conversationId=${conversationId}&joinCode=${newCode}`);
         }
       } catch (err) {
         console.error("[Lobby] Action failed:", err);
