@@ -86,6 +86,7 @@ export type LobbyResponse = LobbyInitResponse | JoinResponse | CreateResponse | 
 export const ParticipantAddedEventSchema = z.object({
   type: z.literal("participant_added"),
   userId: z.string(),
+  isCreator: z.boolean().optional(),
 });
 
 export const ParticipantRemovedEventSchema = z.object({

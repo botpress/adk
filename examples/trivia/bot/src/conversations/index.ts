@@ -147,10 +147,11 @@ export default new Conversation({
               userId: visibleUserId,
             });
 
-            // Send participant_added event for the creator
+            // Send participant_added event for the creator (with isCreator flag)
             await sendGameEvent(gameConversationId, {
               type: "participant_added",
               userId: visibleUserId,
+              isCreator: true,
             });
 
             console.log(

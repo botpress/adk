@@ -5,12 +5,12 @@ import {
 } from "@botpress/webchat-client";
 import { getWebchatClient } from "./webchat";
 import { LobbyClient } from "./LobbyClient";
-import { parseGameEvent } from "@/types/lobby-messages";
+import { parseGameEvent, type GameEvent } from "@/types/lobby-messages";
 
 type Participant = ListParticipantsResponse["participants"][number];
 
 type MessageHandler = (message: Message) => void;
-type ParticipantsChangedHandler = (participants: Participant[]) => void;
+type ParticipantsChangedHandler = (participants: Participant[], event?: GameEvent) => void;
 
 export type GameInitData = {
   conversationId: string;
@@ -129,7 +129,7 @@ class GameClient {
           try {
             const participants = await this.fetchParticipants();
             console.log("[GameClient] Refetched participants:", participants.map((p) => p.id));
-            this.participantsChangedHandlers.forEach((handler) => handler(participants));
+            this.participantsChangedHandlers.forEach((handler) => handler(participants, gameEvent));
           } catch (error) {
             console.error("[GameClient] Failed to fetch participants:", error);
           }
@@ -209,7 +209,7 @@ class GameClient {
    * Leave the game by asking the bot to remove us as participant
    */
   async leaveGame(): Promise<void> {
-    console.log("[GameClient] 🚪 Leaving game via LobbyClient...", {
+    console.log("[GameClient] Leaving game via LobbyClient...", {
       conversationId: this.conversationId,
       userId: this.userId,
     });
@@ -217,9 +217,9 @@ class GameClient {
     try {
       const lobbyClient = await LobbyClient.getInstance();
       await lobbyClient.leaveGame(this.conversationId);
-      console.log("[GameClient] ✅ Successfully left game");
+      console.log("[GameClient] Successfully left game");
     } catch (error) {
-      console.error("[GameClient] ❌ Failed to leave game:", error);
+      console.error("[GameClient] Failed to leave game:", error);
       throw error;
     }
   }

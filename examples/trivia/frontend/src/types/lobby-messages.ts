@@ -73,6 +73,7 @@ export type LobbyResponse = LobbyInitResponse | JoinResponse | CreateResponse | 
 export type ParticipantAddedEvent = {
   type: "participant_added";
   userId: string;
+  isCreator?: boolean;
 };
 
 export type ParticipantRemovedEvent = {
