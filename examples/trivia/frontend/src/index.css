@@ -36,9 +36,12 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
   min-height: 100vh;
 }
 
@@ -81,4 +84,23 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+}
+
+/* Hide webchat voice button */
+.bpComposerVoiceButton {
+  display: none !important;
+}
+
+/* Make webchat components fill width */
+.bpContainer {
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+.bpMessageListContainer {
+  max-width: 100% !important;
+}
+
+.bpComposerContainer {
+  max-width: 100% !important;
 }

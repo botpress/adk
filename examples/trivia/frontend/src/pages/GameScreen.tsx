@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo, useLayoutEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { GameClient, LobbyClient, type GameInitData } from "@/lib";
 import { type ListParticipantsResponse } from "@botpress/webchat-client";
@@ -13,15 +13,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import {
-  Users,
-  ArrowLeft,
-  Settings,
-  Copy,
-  Check,
-  Send,
-  Crown,
-} from "lucide-react";
+import { Users, ArrowLeft, Settings, Copy, Check, Crown } from "lucide-react";
 import {
   type GameSettings,
   DEFAULT_GAME_SETTINGS,
@@ -29,6 +21,8 @@ import {
   SCORE_METHOD_OPTIONS,
   CATEGORY_OPTIONS,
 } from "@/types/game-settings";
+import { Composer } from "@botpress/webchat";
+import "@botpress/webchat/style.css";
 
 type Participant = ListParticipantsResponse["participants"][number];
 
@@ -36,10 +30,8 @@ type GameState = "loading" | "waiting" | "playing" | "finished" | "error";
 
 type ChatMessage = {
   id: string;
-  type: "user" | "system";
-  userId?: string;
-  userName?: string;
   text: string;
+  authorId?: string;
   timestamp: Date;
 };
 
@@ -54,23 +46,31 @@ export function GameScreen() {
   const [initData, setInitData] = useState<GameInitData | null>(null);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [creatorUserId, setCreatorUserId] = useState<string | null>(null);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [chatInput, setChatInput] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [settings, setSettings] = useState<GameSettings>(DEFAULT_GAME_SETTINGS);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
 
   const gameClientRef = useRef<GameClient | null>(null);
   const hasInitialized = useRef(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const isCreator = initData?.userId === creatorUserId;
   const canStartGame = participants.length >= 2;
 
-  // Auto-scroll chat to bottom
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages]);
+  // Create a map of participant IDs to names for message display
+  const participantNames = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of participants) {
+      map.set(p.id, p.name || "Anonymous");
+    }
+    return map;
+  }, [participants]);
+
+  // Scroll to bottom when new messages arrive
+  useLayoutEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   useEffect(() => {
     if (!conversationId) {
@@ -85,7 +85,10 @@ export function GameScreen() {
 
     const initGame = async () => {
       try {
-        console.log("[GameScreen] Initializing game client for:", conversationId);
+        console.log(
+          "[GameScreen] Initializing game client for:",
+          conversationId
+        );
 
         const gameClient = await GameClient.create(conversationId);
         gameClientRef.current = gameClient;
@@ -97,40 +100,33 @@ export function GameScreen() {
         setGameState("waiting");
 
         // Find creator from initial messages by looking for participant_added with isCreator: true
-        // We need to fetch messages including game events to find the creator
         const { getWebchatClient } = await import("@/lib/webchat");
         const webchat = await getWebchatClient();
         const messagesResponse = await webchat.client.listConversationMessages({
-          conversationId: conversationId!
+          conversationId: conversationId!,
         });
 
         let foundCreatorId: string | null = null;
-        const initialChatMessages: ChatMessage[] = [
-          {
-            id: "welcome",
-            type: "system",
-            text: "Welcome to the game! Waiting for players to join...",
-            timestamp: new Date(),
-          },
-        ];
+        const initialMessages: ChatMessage[] = [];
 
         for (const message of messagesResponse.messages) {
           if (message.payload.type === "text") {
             const text = (message.payload as { text: string }).text;
             const gameEvent = parseGameEvent(text);
             if (gameEvent) {
-              if (gameEvent.type === "participant_added" && gameEvent.isCreator) {
+              if (
+                gameEvent.type === "participant_added" &&
+                gameEvent.isCreator
+              ) {
                 foundCreatorId = gameEvent.userId;
               }
-              // Add join/leave system messages for initial participants
-              const participant = data.participants.find(p => p.id === gameEvent.userId);
-              const name = participant?.name || "A player";
-              initialChatMessages.push({
+              // Skip game event messages - they're not regular chat
+            } else {
+              // Regular text message
+              initialMessages.push({
                 id: message.id,
-                type: "system",
-                text: gameEvent.type === "participant_added"
-                  ? `${name} joined the game`
-                  : `${name} left the game`,
+                text,
+                authorId: message.userId,
                 timestamp: new Date(message.createdAt),
               });
             }
@@ -138,25 +134,23 @@ export function GameScreen() {
         }
 
         setCreatorUserId(foundCreatorId);
-        setChatMessages(initialChatMessages);
+        // Sort by timestamp (oldest first)
+        initialMessages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+        setMessages(initialMessages);
 
         // Subscribe to real-time updates
         gameClient.onMessage((message) => {
           console.log("[GameScreen] New message:", message);
-          // Handle chat messages
           if (message.payload.type === "text") {
             const text = (message.payload as { text: string }).text;
             // Skip JSON messages (system events)
             if (!text.startsWith("{")) {
-              const sender = data.participants.find(p => p.id === message.userId);
-              setChatMessages((prev) => [
+              setMessages((prev) => [
                 ...prev,
                 {
                   id: message.id,
-                  type: "user",
-                  userId: message.userId,
-                  userName: sender?.name || "Anonymous",
                   text,
+                  authorId: message.userId,
                   timestamp: new Date(),
                 },
               ]);
@@ -165,29 +159,14 @@ export function GameScreen() {
         });
 
         gameClient.onParticipantsChanged((newParticipants, event) => {
-          console.log("[GameScreen] Participants changed:", newParticipants.map(p => p.id));
+          console.log(
+            "[GameScreen] Participants changed:",
+            newParticipants.map((p) => p.id)
+          );
 
-          // Find added/removed participants for chat messages
-          if (event) {
-            // Track creator if this is the creator joining
-            if (event.type === "participant_added" && event.isCreator) {
-              setCreatorUserId(event.userId);
-            }
-
-            const participant = newParticipants.find(p => p.id === event.userId);
-            const name = participant?.name || "A player";
-
-            setChatMessages((prev) => [
-              ...prev,
-              {
-                id: `${event.type}-${event.userId}-${Date.now()}`,
-                type: "system",
-                text: event.type === "participant_added"
-                  ? `${name} joined the game`
-                  : `${name} left the game`,
-                timestamp: new Date(),
-              },
-            ]);
+          // Track creator if this is the creator joining
+          if (event?.type === "participant_added" && event.isCreator) {
+            setCreatorUserId(event.userId);
           }
 
           setParticipants(newParticipants);
@@ -195,12 +174,14 @@ export function GameScreen() {
 
         // Subscribe to removed_from_game notifications via LobbyClient
         const lobbyClient = await LobbyClient.getInstance();
-        const unsubscribeRemoved = lobbyClient.onRemovedFromGame((notification) => {
-          if (notification.gameConversationId === conversationId) {
-            gameClient.destroy();
-            navigate("/");
+        const unsubscribeRemoved = lobbyClient.onRemovedFromGame(
+          (notification) => {
+            if (notification.gameConversationId === conversationId) {
+              gameClient.destroy();
+              navigate("/");
+            }
           }
-        });
+        );
 
         const originalCleanup = gameClient.destroy.bind(gameClient);
         gameClient.destroy = () => {
@@ -209,7 +190,9 @@ export function GameScreen() {
         };
       } catch (err) {
         console.error("[GameScreen] Failed to initialize:", err);
-        setError(err instanceof Error ? err.message : "Failed to connect to game");
+        setError(
+          err instanceof Error ? err.message : "Failed to connect to game"
+        );
         setGameState("error");
       }
     };
@@ -242,12 +225,13 @@ export function GameScreen() {
     }
   };
 
-  const handleSendChat = async () => {
-    const text = chatInput.trim();
-    if (!text || !gameClientRef.current) return;
-
-    setChatInput("");
-    await gameClientRef.current.sendMessage(text);
+  const handleSendMessage = async (payload: {
+    type: string;
+    text?: string;
+  }) => {
+    if (payload.type === "text" && payload.text && gameClientRef.current) {
+      await gameClientRef.current.sendMessage(payload.text);
+    }
   };
 
   const handleStartGame = () => {
@@ -284,9 +268,10 @@ export function GameScreen() {
 
   return (
     <main className="h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
-      {/* Header */}
-      <header className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3">
-        <div className="flex items-center justify-between">
+      <div className="flex-1 flex flex-col w-full max-w-[750px] mx-auto overflow-hidden">
+        {/* Header */}
+        <header className="shrink-0 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3">
+          <div className="flex items-center justify-between">
           <button
             onClick={handleLeaveGame}
             className="flex items-center gap-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
@@ -339,7 +324,12 @@ export function GameScreen() {
                         {DIFFICULTY_OPTIONS.map((opt) => (
                           <button
                             key={opt.value}
-                            onClick={() => setSettings({ ...settings, difficulty: opt.value })}
+                            onClick={() =>
+                              setSettings({
+                                ...settings,
+                                difficulty: opt.value,
+                              })
+                            }
                             className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                               settings.difficulty === opt.value
                                 ? "bg-blue-500 text-white"
@@ -363,7 +353,12 @@ export function GameScreen() {
                         max="30"
                         step="5"
                         value={settings.questionCount}
-                        onChange={(e) => setSettings({ ...settings, questionCount: parseInt(e.target.value) })}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            questionCount: parseInt(e.target.value),
+                          })
+                        }
                         className="w-full accent-blue-500"
                       />
                       <div className="flex justify-between text-xs text-gray-500">
@@ -383,7 +378,12 @@ export function GameScreen() {
                         max="60"
                         step="5"
                         value={settings.timerSeconds}
-                        onChange={(e) => setSettings({ ...settings, timerSeconds: parseInt(e.target.value) })}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            timerSeconds: parseInt(e.target.value),
+                          })
+                        }
                         className="w-full accent-blue-500"
                       />
                       <div className="flex justify-between text-xs text-gray-500">
@@ -401,7 +401,12 @@ export function GameScreen() {
                         {SCORE_METHOD_OPTIONS.map((opt) => (
                           <button
                             key={opt.value}
-                            onClick={() => setSettings({ ...settings, scoreMethod: opt.value })}
+                            onClick={() =>
+                              setSettings({
+                                ...settings,
+                                scoreMethod: opt.value,
+                              })
+                            }
                             className={`w-full px-4 py-3 rounded-lg text-left transition-colors ${
                               settings.scoreMethod === opt.value
                                 ? "bg-blue-500 text-white"
@@ -409,7 +414,9 @@ export function GameScreen() {
                             }`}
                           >
                             <div className="font-medium">{opt.label}</div>
-                            <div className={`text-sm ${settings.scoreMethod === opt.value ? "text-blue-100" : "text-gray-500 dark:text-gray-400"}`}>
+                            <div
+                              className={`text-sm ${settings.scoreMethod === opt.value ? "text-blue-100" : "text-gray-500 dark:text-gray-400"}`}
+                            >
                               {opt.description}
                             </div>
                           </button>
@@ -426,7 +433,12 @@ export function GameScreen() {
                         {CATEGORY_OPTIONS.map((opt) => (
                           <button
                             key={opt.value}
-                            onClick={() => setSettings({ ...settings, categories: [opt.value] })}
+                            onClick={() =>
+                              setSettings({
+                                ...settings,
+                                categories: [opt.value],
+                              })
+                            }
                             className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                               settings.categories.includes(opt.value)
                                 ? "bg-blue-500 text-white"
@@ -490,7 +502,9 @@ export function GameScreen() {
                 </div>
                 <span className="text-sm text-gray-900 dark:text-white whitespace-nowrap">
                   {displayName}
-                  {isYou && <span className="text-xs text-gray-500 ml-1">(you)</span>}
+                  {isYou && (
+                    <span className="text-xs text-gray-500 ml-1">(you)</span>
+                  )}
                 </span>
               </div>
             );
@@ -498,77 +512,73 @@ export function GameScreen() {
         </div>
       </div>
 
-      {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-        {chatMessages.map((msg) => (
-          <div key={msg.id}>
-            {msg.type === "system" ? (
-              <div className="text-center">
-                <span className="inline-block px-3 py-1 bg-gray-200 dark:bg-gray-800 rounded-full text-xs text-gray-600 dark:text-gray-400">
-                  {msg.text}
-                </span>
+        {/* Chat Area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+            {messages.length === 0 ? (
+              <div className="text-center text-gray-400 dark:text-gray-500 py-8">
+                No messages yet. Say hello!
               </div>
             ) : (
-              <div className={`flex ${msg.userId === initData?.userId ? "justify-end" : "justify-start"}`}>
-                <div
-                  className={`max-w-[80%] px-4 py-2 rounded-2xl ${
-                    msg.userId === initData?.userId
-                      ? "bg-blue-500 text-white rounded-br-md"
-                      : "bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white rounded-bl-md"
-                  }`}
-                >
-                  {msg.userId !== initData?.userId && (
-                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                      {msg.userName}
+              messages.map((msg) => {
+                const isOwnMessage = msg.authorId === initData?.userId;
+                const senderName = msg.authorId
+                  ? participantNames.get(msg.authorId) || "Unknown"
+                  : "System";
+
+                return (
+                  <div
+                    key={msg.id}
+                    className={`flex flex-col ${isOwnMessage ? "items-end" : "items-start"}`}
+                  >
+                    {!isOwnMessage && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400 mb-1 ml-1">
+                        {senderName}
+                      </span>
+                    )}
+                    <div
+                      className={`max-w-[80%] px-4 py-2 rounded-2xl ${
+                        isOwnMessage
+                          ? "bg-blue-500 text-white rounded-br-md"
+                          : "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-md"
+                      }`}
+                    >
+                      {msg.text}
                     </div>
-                  )}
-                  <p className="text-sm">{msg.text}</p>
-                </div>
+                  </div>
+                );
+              })
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          <div className="shrink-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 space-y-3">
+            <Composer
+              connected={true}
+              sendMessage={handleSendMessage}
+              composerPlaceholder="Type a message..."
+            />
+
+            {/* Start Game / Waiting */}
+            {isCreator ? (
+              <Button
+                size="lg"
+                className="w-full"
+                onClick={handleStartGame}
+                disabled={!canStartGame}
+              >
+                {canStartGame
+                  ? "Start Game"
+                  : `Need ${2 - participants.length} more player${2 - participants.length > 1 ? "s" : ""}`}
+              </Button>
+            ) : (
+              <div className="text-center py-2 text-gray-500 dark:text-gray-400">
+                Waiting for host to start the game...
               </div>
             )}
           </div>
-        ))}
-        <div ref={chatEndRef} />
-      </div>
-
-      {/* Bottom Action Area */}
-      <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 space-y-3">
-        {/* Chat Input */}
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={chatInput}
-            onChange={(e) => setChatInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
-            placeholder="Type a message..."
-            className="flex-1 px-4 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <button
-            onClick={handleSendChat}
-            disabled={!chatInput.trim()}
-            className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Send className="w-5 h-5" />
-          </button>
         </div>
-
-        {/* Start Game / Waiting */}
-        {isCreator ? (
-          <Button
-            size="lg"
-            className="w-full"
-            onClick={handleStartGame}
-            disabled={!canStartGame}
-          >
-            {canStartGame
-              ? "Start Game"
-              : `Need ${2 - participants.length} more player${2 - participants.length > 1 ? "s" : ""}`}
-          </Button>
-        ) : (
-          <div className="text-center py-2 text-gray-500 dark:text-gray-400">
-            Waiting for host to start the game...
-          </div>
-        )}
       </div>
     </main>
   );

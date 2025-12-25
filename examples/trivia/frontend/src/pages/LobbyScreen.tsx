@@ -50,7 +50,7 @@ export function LobbyScreen() {
 
   if (error) {
     return (
-      <main className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-950">
+      <main className="min-h-screen w-full flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-950">
         <div className="text-center space-y-4">
           <p className="text-red-500 text-lg">Error: {error.message}</p>
           <button
@@ -65,7 +65,7 @@ export function LobbyScreen() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-950">
+    <main className="min-h-screen w-full flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-950">
       <div className="text-center space-y-4">
         <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
         <p className="text-gray-600 dark:text-gray-400 text-lg">

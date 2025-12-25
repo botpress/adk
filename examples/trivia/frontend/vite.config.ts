@@ -8,6 +8,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@botpress/webchat/style.css': path.resolve(__dirname, './node_modules/@botpress/webchat/dist/style.css'),
     },
     dedupe: ['react', 'react-dom'],
   },

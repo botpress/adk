@@ -115,7 +115,7 @@ export function JoinGameScreen() {
   const canCreate = isUsernameValid
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-950">
+    <main className="min-h-screen w-full flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-950">
       <div className="w-full max-w-md space-y-8">
         {/* Logo and Title */}
         <div className="text-center space-y-4">
