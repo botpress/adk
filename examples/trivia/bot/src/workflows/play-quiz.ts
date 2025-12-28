@@ -1,6 +1,8 @@
 import { actions, context, Workflow, z } from "@botpress/runtime";
 
 import { fetchTriviaQuestions } from "../utils/open-trivia-api";
+
+const STEP_MAX_ATTEMPTS = 5;
 import {
   getLeaderboard,
   type PlayerAnswer,
@@ -112,37 +114,45 @@ export default new Workflow({
     // ========================================
     // STEP: Fetch questions from Open Trivia DB
     // ========================================
-    const fetchedQuestions = await step("fetch-questions", async () => {
-      console.log("[PlayQuiz] Fetching questions...");
-      console.log("[PlayQuiz]   Count:", settings.questionCount);
-      console.log("[PlayQuiz]   Category:", settings.categories[0]);
-      console.log("[PlayQuiz]   Difficulty:", settings.difficulty);
+    const fetchedQuestions = await step(
+      "fetch-questions",
+      async () => {
+        console.log("[PlayQuiz] Fetching questions...");
+        console.log("[PlayQuiz]   Count:", settings.questionCount);
+        console.log("[PlayQuiz]   Category:", settings.categories[0]);
+        console.log("[PlayQuiz]   Difficulty:", settings.difficulty);
 
-      const fetched = await fetchTriviaQuestions({
-        count: settings.questionCount,
-        category: settings.categories[0],
-        difficulty: settings.difficulty,
-      });
+        const fetched = await fetchTriviaQuestions({
+          count: settings.questionCount,
+          category: settings.categories[0],
+          difficulty: settings.difficulty,
+        });
 
-      console.log("[PlayQuiz] Fetched", fetched.length, "questions");
-      return fetched;
-    });
+        console.log("[PlayQuiz] Fetched", fetched.length, "questions");
+        return fetched;
+      },
+      { maxAttempts: STEP_MAX_ATTEMPTS }
+    );
 
     // ========================================
     // STEP: Translate questions if needed
     // ========================================
-    const questions = await step("translate-questions", async () => {
-      const language = settings.language || "english";
-      if (language.toLowerCase() === "english") {
-        console.log("[PlayQuiz] Language is English, skipping translation");
-        return fetchedQuestions;
-      }
+    const questions = await step(
+      "translate-questions",
+      async () => {
+        const language = settings.language || "english";
+        if (language.toLowerCase() === "english") {
+          console.log("[PlayQuiz] Language is English, skipping translation");
+          return fetchedQuestions;
+        }
 
-      console.log("[PlayQuiz] Translating questions to", language);
-      const translated = await translateQuestions(fetchedQuestions, language);
-      console.log("[PlayQuiz] Translation complete");
-      return translated;
-    });
+        console.log("[PlayQuiz] Translating questions to", language);
+        const translated = await translateQuestions(fetchedQuestions, language);
+        console.log("[PlayQuiz] Translation complete");
+        return translated;
+      },
+      { maxAttempts: STEP_MAX_ATTEMPTS }
+    );
 
     state.questions = questions;
 
@@ -154,19 +164,23 @@ export default new Workflow({
       const questionNumber = i + 1;
 
       // Each question has its own step
-      await step(`question-${i}`, async () => {
-        console.log(
-          "[PlayQuiz] ====== QUESTION",
-          questionNumber,
-          "/",
-          questions.length,
-          "======"
-        );
-        console.log("[PlayQuiz] Question:", question.text);
-        console.log("[PlayQuiz] Type:", question.type);
-        console.log("[PlayQuiz] Category:", question.category);
-        console.log("[PlayQuiz] Difficulty:", question.difficulty);
-      });
+      await step(
+        `question-${i}`,
+        async () => {
+          console.log(
+            "[PlayQuiz] ====== QUESTION",
+            questionNumber,
+            "/",
+            questions.length,
+            "======"
+          );
+          console.log("[PlayQuiz] Question:", question.text);
+          console.log("[PlayQuiz] Type:", question.type);
+          console.log("[PlayQuiz] Category:", question.category);
+          console.log("[PlayQuiz] Difficulty:", question.difficulty);
+        },
+        { maxAttempts: STEP_MAX_ATTEMPTS }
+      );
 
       // Create delegates for all players
       const delegates = await step(
@@ -212,54 +226,61 @@ export default new Workflow({
 
           console.log("[PlayQuiz] All delegates created");
           return createdDelegates;
-        }
+        },
+        { maxAttempts: STEP_MAX_ATTEMPTS }
       );
 
       // Send delegate map to game conversation (so frontend knows which delegate is for which player)
-      await step(`question-${i}-send-delegate-map`, async () => {
-        console.log("[PlayQuiz] Sending delegate map to game conversation...");
+      await step(
+        `question-${i}-send-delegate-map`,
+        async () => {
+          console.log(
+            "[PlayQuiz] Sending delegate map to game conversation..."
+          );
 
-        const delegateMap: Record<
-          string,
-          {
-            id: string;
-            ack_url: string;
-            fulfill_url: string;
-            reject_url: string;
+          const delegateMap: Record<
+            string,
+            {
+              id: string;
+              ack_url: string;
+              fulfill_url: string;
+              reject_url: string;
+            }
+          > = {};
+          for (const d of delegates) {
+            delegateMap[d.visibleUserId] = {
+              id: d.delegateId,
+              ack_url: d.ack_url,
+              fulfill_url: d.fulfill_url,
+              reject_url: d.reject_url,
+            };
           }
-        > = {};
-        for (const d of delegates) {
-          delegateMap[d.visibleUserId] = {
-            id: d.delegateId,
-            ack_url: d.ack_url,
-            fulfill_url: d.fulfill_url,
-            reject_url: d.reject_url,
-          };
-        }
 
-        await client.createMessage({
-          conversationId: gameConversationId,
-          userId: botId,
-          type: "text",
-          payload: {
-            text: JSON.stringify({
-              type: "question_start",
-              questionIndex: i,
-              totalQuestions: questions.length,
-              question: question.text,
-              questionType: question.type,
-              options: question.options,
-              category: question.category,
-              difficulty: question.difficulty,
-              timerSeconds: settings.timerSeconds,
-              delegates: delegateMap,
-            }),
-          },
-          tags: {},
-        });
+          await client.createMessage({
+            conversationId: gameConversationId,
+            userId: botId,
+            type: "text",
+            payload: {
+              text: JSON.stringify({
+                type: "question_start",
+                questionIndex: i,
+                totalQuestions: questions.length,
+                question: question.text,
+                questionType: question.type,
+                options: question.options,
+                category: question.category,
+                difficulty: question.difficulty,
+                timerSeconds: settings.timerSeconds,
+                delegates: delegateMap,
+              }),
+            },
+            tags: {},
+          });
 
-        console.log("[PlayQuiz] Delegate map sent");
-      });
+          console.log("[PlayQuiz] Delegate map sent");
+        },
+        { maxAttempts: STEP_MAX_ATTEMPTS }
+      );
 
       // Wait for timer to expire
       console.log(
@@ -274,72 +295,80 @@ export default new Workflow({
       console.log("[PlayQuiz] Timer expired");
 
       // Collect all answers from delegates
-      const answers = await step(`question-${i}-collect-answers`, async () => {
-        console.log("[PlayQuiz] Collecting answers from delegates...");
+      const answers = await step(
+        `question-${i}-collect-answers`,
+        async () => {
+          console.log("[PlayQuiz] Collecting answers from delegates...");
 
-        const collected: PlayerAnswer[] = await Promise.all(
-          delegates.map(async (d: DelegateInfo) => {
-            const player = players.find(
-              (p) => p.visibleUserId === d.visibleUserId
-            );
-            const { delegate: updatedDelegate } = await actions.delegate.get({
-              id: d.delegateId,
-            });
+          const collected: PlayerAnswer[] = await Promise.all(
+            delegates.map(async (d: DelegateInfo) => {
+              const player = players.find(
+                (p) => p.visibleUserId === d.visibleUserId
+              );
+              const { delegate: updatedDelegate } = await actions.delegate.get({
+                id: d.delegateId,
+              });
 
-            const output = updatedDelegate.output as
-              | { answer?: string; timeToAnswerMs?: number }
-              | undefined;
-            console.log(
-              "[PlayQuiz]   Player",
-              player?.username,
-              ":",
-              updatedDelegate.status,
-              "-",
-              output?.answer
-            );
+              const output = updatedDelegate.output as
+                | { answer?: string; timeToAnswerMs?: number }
+                | undefined;
+              console.log(
+                "[PlayQuiz]   Player",
+                player?.username,
+                ":",
+                updatedDelegate.status,
+                "-",
+                output?.answer
+              );
 
-            return {
-              visibleUserId: d.visibleUserId,
-              username: player?.username || "Unknown",
-              status: updatedDelegate.status,
-              answer: output?.answer,
-              timeToAnswerMs: output?.timeToAnswerMs,
-            };
-          })
-        );
+              return {
+                visibleUserId: d.visibleUserId,
+                username: player?.username || "Unknown",
+                status: updatedDelegate.status,
+                answer: output?.answer,
+                timeToAnswerMs: output?.timeToAnswerMs,
+              };
+            })
+          );
 
-        console.log("[PlayQuiz] Collected", collected.length, "answers");
-        return collected;
-      });
+          console.log("[PlayQuiz] Collected", collected.length, "answers");
+          return collected;
+        },
+        { maxAttempts: STEP_MAX_ATTEMPTS }
+      );
 
       // Score answers
-      const scores = await step(`question-${i}-compute-scores`, async () => {
-        console.log("[PlayQuiz] Computing scores...");
-        console.log("[PlayQuiz]   Correct answer:", question.correctAnswer);
-        console.log("[PlayQuiz]   Score method:", settings.scoreMethod);
+      const scores = await step(
+        `question-${i}-compute-scores`,
+        async () => {
+          console.log("[PlayQuiz] Computing scores...");
+          console.log("[PlayQuiz]   Correct answer:", question.correctAnswer);
+          console.log("[PlayQuiz]   Score method:", settings.scoreMethod);
 
-        const computed = await scoreAnswers(
-          answers,
-          question.correctAnswer,
-          question.type,
-          settings.scoreMethod,
-          settings.timerSeconds
-        );
-
-        for (const s of computed) {
-          console.log(
-            "[PlayQuiz]   ",
-            s.username,
-            ":",
-            s.isCorrect ? "CORRECT" : "WRONG",
-            "+",
-            s.points,
-            "points"
+          const computed = await scoreAnswers(
+            answers,
+            question.correctAnswer,
+            question.type,
+            settings.scoreMethod,
+            settings.timerSeconds
           );
-        }
 
-        return computed;
-      });
+          for (const s of computed) {
+            console.log(
+              "[PlayQuiz]   ",
+              s.username,
+              ":",
+              s.isCorrect ? "CORRECT" : "WRONG",
+              "+",
+              s.points,
+              "points"
+            );
+          }
+
+          return computed;
+        },
+        { maxAttempts: STEP_MAX_ATTEMPTS }
+      );
 
       // Update cumulative player scores first (before sending to frontend)
       const updatedScores = await step(
@@ -367,44 +396,49 @@ export default new Workflow({
           }
 
           return newPlayerScores;
-        }
+        },
+        { maxAttempts: STEP_MAX_ATTEMPTS }
       );
 
       // Persist updated scores to state
       state.playerScores = updatedScores;
 
       // Send question scores to game conversation (with cumulative totals)
-      await step(`question-${i}-send-scores`, async () => {
-        console.log("[PlayQuiz] Sending question scores...");
+      await step(
+        `question-${i}-send-scores`,
+        async () => {
+          console.log("[PlayQuiz] Sending question scores...");
 
-        const scoreResults = scores.map((s) => ({
-          visibleUserId: s.visibleUserId,
-          username: s.username,
-          answer: s.answer,
-          isCorrect: s.isCorrect,
-          points: s.points,
-          cumulativeScore: state.playerScores[s.visibleUserId] || 0,
-          timeToAnswerMs: s.timeToAnswerMs,
-        }));
+          const scoreResults = scores.map((s) => ({
+            visibleUserId: s.visibleUserId,
+            username: s.username,
+            answer: s.answer,
+            isCorrect: s.isCorrect,
+            points: s.points,
+            cumulativeScore: state.playerScores[s.visibleUserId] || 0,
+            timeToAnswerMs: s.timeToAnswerMs,
+          }));
 
-        await client.createMessage({
-          conversationId: gameConversationId,
-          userId: botId,
-          type: "text",
-          payload: {
-            text: JSON.stringify({
-              type: "question_scores",
-              questionIndex: i,
-              totalQuestions: questions.length,
-              correctAnswer: question.correctAnswer,
-              scores: scoreResults,
-            }),
-          },
-          tags: {},
-        });
+          await client.createMessage({
+            conversationId: gameConversationId,
+            userId: botId,
+            type: "text",
+            payload: {
+              text: JSON.stringify({
+                type: "question_scores",
+                questionIndex: i,
+                totalQuestions: questions.length,
+                correctAnswer: question.correctAnswer,
+                scores: scoreResults,
+              }),
+            },
+            tags: {},
+          });
 
-        console.log("[PlayQuiz] Question scores sent");
-      });
+          console.log("[PlayQuiz] Question scores sent");
+        },
+        { maxAttempts: STEP_MAX_ATTEMPTS }
+      );
 
       console.log("[PlayQuiz] Question", questionNumber, "complete");
 
@@ -439,26 +473,30 @@ export default new Workflow({
       );
     }
 
-    await step("send-final-leaderboard", async () => {
-      console.log(
-        "[PlayQuiz] Sending final leaderboard to game conversation..."
-      );
+    await step(
+      "send-final-leaderboard",
+      async () => {
+        console.log(
+          "[PlayQuiz] Sending final leaderboard to game conversation..."
+        );
 
-      await client.createMessage({
-        conversationId: gameConversationId,
-        userId: botId,
-        type: "text",
-        payload: {
-          text: JSON.stringify({
-            type: "game_scores",
-            leaderboard: finalLeaderboard,
-          }),
-        },
-        tags: {},
-      });
+        await client.createMessage({
+          conversationId: gameConversationId,
+          userId: botId,
+          type: "text",
+          payload: {
+            text: JSON.stringify({
+              type: "game_scores",
+              leaderboard: finalLeaderboard,
+            }),
+          },
+          tags: {},
+        });
 
-      console.log("[PlayQuiz] Final leaderboard sent");
-    });
+        console.log("[PlayQuiz] Final leaderboard sent");
+      },
+      { maxAttempts: STEP_MAX_ATTEMPTS }
+    );
 
     console.log("[PlayQuiz] ====== WORKFLOW COMPLETE ======");
 
