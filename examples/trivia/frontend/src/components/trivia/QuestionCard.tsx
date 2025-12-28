@@ -1,5 +1,11 @@
 import { useState, useEffect, useRef, type FC } from "react";
 import type { QuestionData } from "./types";
+import {
+  playTimerTick,
+  playTimeExpired,
+  playSubmit,
+  playQuestionStart,
+} from "../../lib/sounds";
 
 interface QuestionCardProps {
   data: QuestionData;
@@ -26,12 +32,13 @@ const QuestionCard: FC<QuestionCardProps> = ({ data }) => {
   const displayTimeRef = useRef(Date.now());
   const hasAckedRef = useRef(false);
 
-  // Acknowledge delegate on mount
+  // Acknowledge delegate on mount and play question start sound
   useEffect(() => {
     if (!hasAckedRef.current && delegate.ack_url) {
       hasAckedRef.current = true;
       fetch(delegate.ack_url, { method: "POST" }).catch(console.error);
       displayTimeRef.current = Date.now();
+      playQuestionStart();
     }
   }, [delegate.ack_url]);
 
@@ -41,12 +48,18 @@ const QuestionCard: FC<QuestionCardProps> = ({ data }) => {
 
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
-        if (prev <= 1) {
+        const newTime = prev - 1;
+        if (newTime <= 0) {
           clearInterval(interval);
           setIsExpired(true);
+          playTimeExpired();
           return 0;
         }
-        return prev - 1;
+        // Play timer tick sound in last 5 seconds
+        if (newTime <= 5) {
+          playTimerTick();
+        }
+        return newTime;
       });
     }, 1000);
 
@@ -59,6 +72,7 @@ const QuestionCard: FC<QuestionCardProps> = ({ data }) => {
     const timeToAnswerMs = Date.now() - displayTimeRef.current;
     setSelectedAnswer(answer);
     setIsSubmitted(true);
+    playSubmit();
 
     try {
       await fetch(delegate.fulfill_url, {

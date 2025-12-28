@@ -41,11 +41,12 @@ export { PlayerSchema };
 export const GameSettingsSchema = z.object({
   categories: z.array(z.string()).default(["any"]),
   difficulty: z.enum(["easy", "medium", "hard", "any"]).default("easy"),
+  language: z.string().default("english"),
   questionCount: z.number().min(5).max(50).default(10),
   scoreMethod: z
     .enum(["first-right", "time-right", "all-right"])
     .default("all-right"),
-  timerSeconds: z.number().min(10).max(60).default(20),
+  timerSeconds: z.number().min(5).max(60).default(20),
 });
 
 export type GameSettings = z.infer<typeof GameSettingsSchema>;

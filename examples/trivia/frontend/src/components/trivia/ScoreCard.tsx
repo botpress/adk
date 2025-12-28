@@ -1,5 +1,6 @@
-import type { FC } from "react";
+import { useEffect, type FC } from "react";
 import type { ScoreData } from "./types";
+import { playCorrect, playWrong } from "../../lib/sounds";
 
 interface ScoreCardProps {
   data: ScoreData;
@@ -17,6 +18,15 @@ const ScoreCard: FC<ScoreCardProps> = ({ data }) => {
     isLastQuestion,
     isCreator,
   } = data;
+
+  // Play sound effect on mount based on result
+  useEffect(() => {
+    if (isCorrect) {
+      playCorrect();
+    } else {
+      playWrong();
+    }
+  }, [isCorrect]);
 
   return (
     <div className="trivia-score">

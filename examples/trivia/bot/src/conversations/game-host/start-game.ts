@@ -55,6 +55,7 @@ export async function handleStartGame(
   const settings = props.state.settings ?? {
     categories: ["any"],
     difficulty: "easy" as const,
+    language: "english",
     questionCount: 10,
     scoreMethod: "all-right" as const,
     timerSeconds: 20,

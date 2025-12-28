@@ -6,6 +6,7 @@ import {
   type PlayerAnswer,
   scoreAnswers,
 } from "../utils/scoring";
+import { translateQuestions } from "../utils/translate";
 import { GameSettingsSchema, PlayerSchema } from "../conversations/types";
 
 /**
@@ -111,7 +112,7 @@ export default new Workflow({
     // ========================================
     // STEP: Fetch questions from Open Trivia DB
     // ========================================
-    const questions = await step("fetch-questions", async () => {
+    const fetchedQuestions = await step("fetch-questions", async () => {
       console.log("[PlayQuiz] Fetching questions...");
       console.log("[PlayQuiz]   Count:", settings.questionCount);
       console.log("[PlayQuiz]   Category:", settings.categories[0]);
@@ -125,6 +126,22 @@ export default new Workflow({
 
       console.log("[PlayQuiz] Fetched", fetched.length, "questions");
       return fetched;
+    });
+
+    // ========================================
+    // STEP: Translate questions if needed
+    // ========================================
+    const questions = await step("translate-questions", async () => {
+      const language = settings.language || "english";
+      if (language.toLowerCase() === "english") {
+        console.log("[PlayQuiz] Language is English, skipping translation");
+        return fetchedQuestions;
+      }
+
+      console.log("[PlayQuiz] Translating questions to", language);
+      const translated = await translateQuestions(fetchedQuestions, language);
+      console.log("[PlayQuiz] Translation complete");
+      return translated;
     });
 
     state.questions = questions;

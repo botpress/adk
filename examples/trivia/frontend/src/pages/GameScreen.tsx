@@ -25,7 +25,13 @@ import {
   DIFFICULTY_OPTIONS,
   SCORE_METHOD_OPTIONS,
   CATEGORY_OPTIONS,
+  QUESTION_COUNT_OPTIONS,
+  TIMER_OPTIONS,
 } from "@/types/game-settings";
+import { LanguageSelect } from "@/components/ui/language-select";
+import { NumberSelect } from "@/components/ui/number-select";
+
+const SETTINGS_STORAGE_KEY = "trivia-game-settings";
 import { Composer } from "@botpress/webchat";
 import "@botpress/webchat/style.css";
 import QuestionCard from "@/components/trivia/QuestionCard";
@@ -86,10 +92,22 @@ export function GameScreen() {
   const [initData, setInitData] = useState<GameInitData | null>(null);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [settings, setSettings] = useState<GameSettings>(DEFAULT_GAME_SETTINGS);
-  const [localSettings, setLocalSettings] = useState<GameSettings>(
-    DEFAULT_GAME_SETTINGS
-  );
+
+  // Load saved settings from localStorage
+  const getSavedSettings = (): GameSettings => {
+    try {
+      const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (saved) {
+        return { ...DEFAULT_GAME_SETTINGS, ...JSON.parse(saved) };
+      }
+    } catch (e) {
+      console.warn("Failed to load saved settings:", e);
+    }
+    return DEFAULT_GAME_SETTINGS;
+  };
+
+  const [settings, setSettings] = useState<GameSettings>(getSavedSettings);
+  const [localSettings, setLocalSettings] = useState<GameSettings>(getSavedSettings);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
 
@@ -439,6 +457,12 @@ export function GameScreen() {
       if (JSON.stringify(localSettings) !== JSON.stringify(settings)) {
         setSettings(localSettings);
         gameClientRef.current?.updateSettings(localSettings);
+        // Save to localStorage for next game
+        try {
+          localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(localSettings));
+        } catch (e) {
+          console.warn("Failed to save settings:", e);
+        }
       }
     } else if (open) {
       // Drawer is opening - sync local settings with current settings
@@ -542,6 +566,49 @@ export function GameScreen() {
                       <DrawerTitle>Game Settings</DrawerTitle>
                     </DrawerHeader>
                     <div className="px-4 pb-4 space-y-6 max-h-[60vh] overflow-y-auto">
+                      {/* Language */}
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Language
+                        </label>
+                        <LanguageSelect
+                          value={localSettings.language}
+                          onChange={(language) =>
+                            handleSettingsChange({
+                              ...localSettings,
+                              language,
+                            })
+                          }
+                        />
+                      </div>
+
+                      {/* Category */}
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Category
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {CATEGORY_OPTIONS.map((opt) => (
+                            <button
+                              key={opt.value}
+                              onClick={() =>
+                                handleSettingsChange({
+                                  ...localSettings,
+                                  categories: [opt.value],
+                                })
+                              }
+                              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                                localSettings.categories.includes(opt.value)
+                                  ? "bg-blue-500 text-white"
+                                  : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
                       {/* Difficulty */}
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -569,53 +636,37 @@ export function GameScreen() {
                         </div>
                       </div>
 
-                      {/* Question Count */}
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Questions: {localSettings.questionCount}
-                        </label>
-                        <input
-                          type="range"
-                          min="5"
-                          max="30"
-                          step="5"
-                          value={localSettings.questionCount}
-                          onChange={(e) =>
-                            handleSettingsChange({
-                              ...localSettings,
-                              questionCount: parseInt(e.target.value),
-                            })
-                          }
-                          className="w-full accent-blue-500"
-                        />
-                        <div className="flex justify-between text-xs text-gray-500">
-                          <span>5</span>
-                          <span>30</span>
+                      {/* Question Count & Timer Row */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Questions
+                          </label>
+                          <NumberSelect
+                            value={localSettings.questionCount}
+                            onChange={(questionCount) =>
+                              handleSettingsChange({
+                                ...localSettings,
+                                questionCount,
+                              })
+                            }
+                            options={QUESTION_COUNT_OPTIONS}
+                          />
                         </div>
-                      </div>
-
-                      {/* Timer */}
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Timer: {localSettings.timerSeconds}s
-                        </label>
-                        <input
-                          type="range"
-                          min="10"
-                          max="60"
-                          step="5"
-                          value={localSettings.timerSeconds}
-                          onChange={(e) =>
-                            handleSettingsChange({
-                              ...localSettings,
-                              timerSeconds: parseInt(e.target.value),
-                            })
-                          }
-                          className="w-full accent-blue-500"
-                        />
-                        <div className="flex justify-between text-xs text-gray-500">
-                          <span>10s</span>
-                          <span>60s</span>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Timer
+                          </label>
+                          <NumberSelect
+                            value={localSettings.timerSeconds}
+                            onChange={(timerSeconds) =>
+                              handleSettingsChange({
+                                ...localSettings,
+                                timerSeconds,
+                              })
+                            }
+                            options={TIMER_OPTIONS}
+                          />
                         </div>
                       </div>
 
@@ -646,33 +697,6 @@ export function GameScreen() {
                               >
                                 {opt.description}
                               </div>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Category */}
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Category
-                        </label>
-                        <div className="flex flex-wrap gap-2">
-                          {CATEGORY_OPTIONS.map((opt) => (
-                            <button
-                              key={opt.value}
-                              onClick={() =>
-                                handleSettingsChange({
-                                  ...localSettings,
-                                  categories: [opt.value],
-                                })
-                              }
-                              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                                localSettings.categories.includes(opt.value)
-                                  ? "bg-blue-500 text-white"
-                                  : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-                              }`}
-                            >
-                              {opt.label}
                             </button>
                           ))}
                         </div>
@@ -710,6 +734,12 @@ export function GameScreen() {
                 ? "Any category"
                 : settings.categories[0]}
             </span>
+            {settings.language && settings.language !== "english" && (
+              <>
+                <span>·</span>
+                <span className="capitalize">{settings.language}</span>
+              </>
+            )}
           </div>
         </header>
 
