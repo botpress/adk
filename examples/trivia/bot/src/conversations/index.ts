@@ -29,12 +29,6 @@ export const Webchat = new Conversation({
   handler: async (props) => {
     const { conversation } = props;
 
-    console.log("[Conversation] Handling event:", {
-      conversationType: conversation.tags.type,
-      conversationId: conversation.id,
-      tags: conversation.tags,
-    });
-
     // Run through partial handlers
     for (const handler of handlers) {
       const result = await handler(props);
