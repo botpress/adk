@@ -83,3 +83,9 @@ h1 {
 .bpComposerContainer {
   max-width: 100% !important;
 }
+
+/* Prevent iOS auto-zoom on input focus (requires 16px minimum) */
+.bpComposerContainer input,
+.bpComposerContainer textarea {
+  font-size: 16px !important;
+}

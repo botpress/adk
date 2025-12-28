@@ -90,7 +90,7 @@ export const LanguageSelect: FC<LanguageSelectProps> = ({ value, onChange }) => 
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search languages..."
-                className="w-full pl-8 pr-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 dark:text-gray-300 placeholder-gray-400"
+                className="w-full pl-8 pr-3 py-2 text-base bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 dark:text-gray-300 placeholder-gray-400"
               />
             </div>
           </div>

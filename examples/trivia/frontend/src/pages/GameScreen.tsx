@@ -499,8 +499,8 @@ export function GameScreen() {
   }
 
   return (
-    <main className="h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
-      <div className="flex-1 flex flex-col w-full max-w-[750px] mx-auto overflow-hidden">
+    <main className="h-dvh flex flex-col bg-gray-50 dark:bg-gray-950 overflow-hidden">
+      <div className="flex-1 flex flex-col w-full max-w-[750px] mx-auto min-h-0">
         {/* Header */}
         <header className="shrink-0 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3">
           <div className="flex items-center justify-between">
@@ -782,7 +782,7 @@ export function GameScreen() {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0">
           {/* Gameplay UI - Question/Scores/Leaderboard */}
           {gameState === "playing" && currentQuestion && (
             <div className="flex-1 overflow-y-auto px-4 py-3">
@@ -970,7 +970,7 @@ export function GameScreen() {
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="shrink-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 space-y-3">
+          <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 space-y-3">
             {gameState === "waiting" && (
               <>
                 <Composer
