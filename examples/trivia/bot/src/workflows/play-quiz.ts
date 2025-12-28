@@ -1,6 +1,7 @@
 import { actions, context, Workflow, z } from "@botpress/runtime";
 
-import { fetchTriviaQuestions } from "../utils/open-trivia-api";
+import { fetchTriviaQuestions, type Question } from "../utils/open-trivia-api";
+import { generateGeographyQuestions } from "../utils/custom-questions";
 
 const STEP_MAX_ATTEMPTS = 5;
 import {
@@ -16,11 +17,23 @@ import { GameSettingsSchema, PlayerSchema } from "../conversations/types";
  */
 const QuestionSchema = z.object({
   text: z.string(),
-  type: z.enum(["true_false", "multiple_choice", "text_input"]),
+  type: z.enum(["true_false", "multiple_choice", "text_input", "map_country", "flag_country"]),
   correctAnswer: z.string(),
   options: z.array(z.string()).optional(),
   category: z.string().optional(),
   difficulty: z.string().optional(),
+  // For map questions
+  mapData: z.object({
+    countryCode: z.string(),
+    countryAlpha3: z.string(),
+    center: z.tuple([z.number(), z.number()]),
+    zoom: z.number(),
+  }).optional(),
+  // For flag questions
+  flagData: z.object({
+    countryCode: z.string(),
+    flagUrl: z.string(),
+  }).optional(),
 });
 
 /**
@@ -112,24 +125,121 @@ export default new Workflow({
     }
 
     // ========================================
-    // STEP: Fetch questions from Open Trivia DB
+    // STEP: Fetch questions from multiple sources based on selected categories
     // ========================================
     const fetchedQuestions = await step(
       "fetch-questions",
       async () => {
         console.log("[PlayQuiz] Fetching questions...");
         console.log("[PlayQuiz]   Count:", settings.questionCount);
-        console.log("[PlayQuiz]   Category:", settings.categories[0]);
+        console.log("[PlayQuiz]   Categories:", settings.categories);
         console.log("[PlayQuiz]   Difficulty:", settings.difficulty);
 
-        const fetched = await fetchTriviaQuestions({
-          count: settings.questionCount,
-          category: settings.categories[0],
-          difficulty: settings.difficulty,
-        });
+        const categories = settings.categories.map(c => c.toLowerCase());
+        const totalCount = settings.questionCount;
 
-        console.log("[PlayQuiz] Fetched", fetched.length, "questions");
-        return fetched;
+        // If "any" is selected, fetch from Open Trivia DB with no category filter
+        if (categories.includes("any")) {
+          console.log("[PlayQuiz] Fetching from any category...");
+          const fetched = await fetchTriviaQuestions({
+            count: totalCount,
+            category: "any",
+            difficulty: settings.difficulty,
+          });
+          console.log("[PlayQuiz] Fetched", fetched.length, "questions");
+          return fetched;
+        }
+
+        // Separate geography categories from trivia categories
+        const geoCategories = categories.filter(c =>
+          c === "geography" || c === "geography-maps" || c === "geography-flags"
+        );
+        const triviaCategories = categories.filter(c =>
+          c !== "geography" && c !== "geography-maps" && c !== "geography-flags"
+        );
+
+        const allQuestions: Question[] = [];
+
+        // Fetch geography questions if any geo category is selected
+        if (geoCategories.length > 0) {
+          const geoCount = triviaCategories.length > 0
+            ? Math.ceil(totalCount * (geoCategories.length / categories.length))
+            : totalCount;
+
+          // Determine map percentage based on selected geo categories
+          let mapPercentage = 0.5; // default mix
+          if (geoCategories.includes("geography-maps") && !geoCategories.includes("geography-flags") && !geoCategories.includes("geography")) {
+            mapPercentage = 1.0; // maps only
+          } else if (geoCategories.includes("geography-flags") && !geoCategories.includes("geography-maps") && !geoCategories.includes("geography")) {
+            mapPercentage = 0.0; // flags only
+          }
+
+          console.log("[PlayQuiz] Generating", geoCount, "geography questions (mapPercentage:", mapPercentage, ")");
+
+          // If "geography" is selected, also fetch from Open Trivia DB geography
+          if (geoCategories.includes("geography")) {
+            const triviaGeoCount = Math.ceil(geoCount / 2);
+            const customGeoCount = geoCount - triviaGeoCount;
+
+            const triviaGeoQuestions = await fetchTriviaQuestions({
+              count: triviaGeoCount,
+              category: "geography",
+              difficulty: settings.difficulty,
+            });
+            allQuestions.push(...triviaGeoQuestions);
+
+            const customGeoQuestions = generateGeographyQuestions({
+              count: customGeoCount,
+              difficulty: settings.difficulty,
+              mapPercentage,
+            });
+            allQuestions.push(...(customGeoQuestions as Question[]));
+          } else {
+            // Only maps/flags selected, no trivia geography
+            const customGeoQuestions = generateGeographyQuestions({
+              count: geoCount,
+              difficulty: settings.difficulty,
+              mapPercentage,
+            });
+            allQuestions.push(...(customGeoQuestions as Question[]));
+          }
+        }
+
+        // Fetch trivia questions for each non-geography category
+        if (triviaCategories.length > 0) {
+          const triviaCount = totalCount - allQuestions.length;
+          const questionsPerCategory = Math.ceil(triviaCount / triviaCategories.length);
+
+          for (const category of triviaCategories) {
+            const countForThisCategory = Math.min(
+              questionsPerCategory,
+              totalCount - allQuestions.length
+            );
+
+            if (countForThisCategory <= 0) break;
+
+            console.log("[PlayQuiz] Fetching", countForThisCategory, "questions from", category);
+            try {
+              const fetched = await fetchTriviaQuestions({
+                count: countForThisCategory,
+                category,
+                difficulty: settings.difficulty,
+              });
+              allQuestions.push(...fetched);
+            } catch (error) {
+              console.error("[PlayQuiz] Failed to fetch from", category, error);
+            }
+          }
+        }
+
+        // Shuffle all questions together
+        const shuffled = allQuestions.sort(() => Math.random() - 0.5);
+
+        // Trim to exact count requested
+        const finalQuestions = shuffled.slice(0, totalCount);
+        console.log("[PlayQuiz] Total questions prepared:", finalQuestions.length);
+
+        return finalQuestions;
       },
       { maxAttempts: STEP_MAX_ATTEMPTS }
     );
@@ -272,6 +382,9 @@ export default new Workflow({
                 difficulty: question.difficulty,
                 timerSeconds: settings.timerSeconds,
                 delegates: delegateMap,
+                // Include map/flag data for geography questions
+                mapData: question.mapData,
+                flagData: question.flagData,
               }),
             },
             tags: {},

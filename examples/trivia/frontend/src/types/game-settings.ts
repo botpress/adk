@@ -38,6 +38,8 @@ export const CATEGORY_OPTIONS = [
   { value: "science", label: "Science" },
   { value: "history", label: "History" },
   { value: "geography", label: "Geography" },
+  { value: "geography-maps", label: "Maps Only" },
+  { value: "geography-flags", label: "Flags Only" },
   { value: "entertainment", label: "Entertainment" },
   { value: "sports", label: "Sports" },
   { value: "art", label: "Art & Literature" },

@@ -25,28 +25,51 @@ export interface ScoredAnswer {
 }
 
 /**
- * Check if two answers match (exact or fuzzy for text input)
+ * Question types supported by the scoring system
+ */
+export type QuestionType = "true_false" | "multiple_choice" | "text_input" | "map_country" | "flag_country";
+
+/**
+ * Check if two answers match (exact or fuzzy for text input and geography questions)
  */
 async function isAnswerCorrect(
   userAnswer: string | undefined,
   correctAnswer: string,
-  questionType: "true_false" | "multiple_choice" | "text_input"
+  questionType: QuestionType,
+  hasOptions: boolean = false
 ): Promise<{ isCorrect: boolean; similarity: number }> {
   if (!userAnswer) {
     return { isCorrect: false, similarity: 0 };
   }
 
-  // For true/false and multiple choice, exact match (case-insensitive)
-  if (questionType !== "text_input") {
+  // For true/false and multiple choice - exact match (case-insensitive)
+  if (questionType === "true_false" || questionType === "multiple_choice") {
     const isCorrect =
       userAnswer.toLowerCase().trim() === correctAnswer.toLowerCase().trim();
     return { isCorrect, similarity: isCorrect ? 1 : 0 };
   }
 
-  // For text input, use zai for fuzzy matching
+  // For map/flag questions WITH multiple choice options - exact match
+  if ((questionType === "map_country" || questionType === "flag_country") && hasOptions) {
+    const isCorrect =
+      userAnswer.toLowerCase().trim() === correctAnswer.toLowerCase().trim();
+    return { isCorrect, similarity: isCorrect ? 1 : 0 };
+  }
+
+  // For text input AND map/flag questions without options (typed answers) - use fuzzy matching
+  // This handles typos in country names like "Brazl" -> "Brazil", "Unted States" -> "United States"
   try {
-    const result = await adk.zai.extract(
-      `User's answer: "${userAnswer}"
+    const isCountryQuestion = questionType === "map_country" || questionType === "flag_country";
+    const prompt = isCountryQuestion
+      ? `User's answer: "${userAnswer}"
+Correct answer: "${correctAnswer}"
+
+Evaluate if the user's answer correctly identifies the country, accounting for:
+- Minor typos and misspellings (e.g., "Brazl" for "Brazil", "Grmany" for "Germany")
+- Case differences
+- Common alternative names (e.g., "USA" for "United States", "UK" for "United Kingdom")
+- Partial names that clearly identify the country (e.g., "South Africa" vs "Republic of South Africa")`
+      : `User's answer: "${userAnswer}"
 Correct answer: "${correctAnswer}"
 
 Evaluate if the user's answer is essentially correct, accounting for:
@@ -54,7 +77,10 @@ Evaluate if the user's answer is essentially correct, accounting for:
 - Case differences
 - Extra/missing punctuation
 - Common abbreviations
-- Partial answers (if they got the main point)`,
+- Partial answers (if they got the main point)`;
+
+    const result = await adk.zai.extract(
+      prompt,
       z.object({
         isCorrect: z
           .boolean()
@@ -83,7 +109,7 @@ Evaluate if the user's answer is essentially correct, accounting for:
 async function scoreFirstRight(
   answers: PlayerAnswer[],
   correctAnswer: string,
-  questionType: "true_false" | "multiple_choice" | "text_input"
+  questionType: QuestionType
 ): Promise<ScoredAnswer[]> {
   // Evaluate all answers
   const evaluations = await Promise.all(
@@ -117,7 +143,7 @@ async function scoreFirstRight(
 async function scoreTimeRight(
   answers: PlayerAnswer[],
   correctAnswer: string,
-  questionType: "true_false" | "multiple_choice" | "text_input",
+  questionType: QuestionType,
   timerSeconds: number
 ): Promise<ScoredAnswer[]> {
   const maxTimeMs = timerSeconds * 1000;
@@ -164,7 +190,7 @@ async function scoreTimeRight(
 async function scoreAllRight(
   answers: PlayerAnswer[],
   correctAnswer: string,
-  questionType: "true_false" | "multiple_choice" | "text_input"
+  questionType: QuestionType
 ): Promise<ScoredAnswer[]> {
   const evaluations = await Promise.all(
     answers.map(async (a) => ({
@@ -195,7 +221,7 @@ async function scoreAllRight(
 export async function scoreAnswers(
   answers: PlayerAnswer[],
   correctAnswer: string,
-  questionType: "true_false" | "multiple_choice" | "text_input",
+  questionType: QuestionType,
   scoreMethod: "first-right" | "time-right" | "all-right",
   timerSeconds: number
 ): Promise<ScoredAnswer[]> {

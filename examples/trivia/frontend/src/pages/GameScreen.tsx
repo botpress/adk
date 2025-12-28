@@ -582,30 +582,59 @@ export function GameScreen() {
                         />
                       </div>
 
-                      {/* Category */}
+                      {/* Category - Multi-select checklist */}
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Category
+                          Categories (select one or more)
                         </label>
                         <div className="flex flex-wrap gap-2">
-                          {CATEGORY_OPTIONS.map((opt) => (
-                            <button
-                              key={opt.value}
-                              onClick={() =>
-                                handleSettingsChange({
-                                  ...localSettings,
-                                  categories: [opt.value],
-                                })
-                              }
-                              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                                localSettings.categories.includes(opt.value)
-                                  ? "bg-blue-500 text-white"
-                                  : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-                              }`}
-                            >
-                              {opt.label}
-                            </button>
-                          ))}
+                          {CATEGORY_OPTIONS.map((opt) => {
+                            const isSelected = localSettings.categories.includes(opt.value);
+                            const isAny = opt.value === "any";
+                            const anySelected = localSettings.categories.includes("any");
+
+                            return (
+                              <button
+                                key={opt.value}
+                                onClick={() => {
+                                  let newCategories: string[];
+
+                                  if (isAny) {
+                                    // Clicking "Any" clears all others and selects only "any"
+                                    newCategories = ["any"];
+                                  } else if (isSelected) {
+                                    // Unselect this category
+                                    newCategories = localSettings.categories.filter(c => c !== opt.value);
+                                    // If nothing left, default to "any"
+                                    if (newCategories.length === 0) {
+                                      newCategories = ["any"];
+                                    }
+                                  } else {
+                                    // Select this category, remove "any" if it was selected
+                                    newCategories = [
+                                      ...localSettings.categories.filter(c => c !== "any"),
+                                      opt.value
+                                    ];
+                                  }
+
+                                  handleSettingsChange({
+                                    ...localSettings,
+                                    categories: newCategories,
+                                  });
+                                }}
+                                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                                  isSelected
+                                    ? "bg-blue-500 text-white"
+                                    : isAny && !anySelected
+                                    ? "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500"
+                                    : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                                }`}
+                              >
+                                {isSelected && <Check className="w-3.5 h-3.5" />}
+                                {opt.label}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
 
@@ -803,6 +832,8 @@ export function GameScreen() {
                     fulfill_url: "",
                     reject_url: "",
                   },
+                  mapData: currentQuestion.mapData,
+                  flagData: currentQuestion.flagData,
                 }}
               />
             </div>

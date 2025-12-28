@@ -121,12 +121,24 @@ export type QuestionStartEvent = {
   questionIndex: number;
   totalQuestions: number;
   question: string;
-  questionType: "true_false" | "multiple_choice" | "text_input";
+  questionType: "true_false" | "multiple_choice" | "text_input" | "map_country" | "flag_country";
   options?: string[];
   category?: string;
   difficulty?: string;
   timerSeconds: number;
   delegates: Record<string, DelegateInfo>;
+  // For map questions (guess the highlighted country)
+  mapData?: {
+    countryCode: string;
+    countryAlpha3: string;
+    center: [number, number];
+    zoom: number;
+  };
+  // For flag questions (guess country by flag)
+  flagData?: {
+    countryCode: string;
+    flagUrl: string;
+  };
 };
 
 export type QuestionScoreEntry = {

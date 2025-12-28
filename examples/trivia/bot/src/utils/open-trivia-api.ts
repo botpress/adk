@@ -1,15 +1,27 @@
 const API_BASE = "https://opentdb.com/api.php";
 
 /**
- * Question structure from Open Trivia DB
+ * Question structure from Open Trivia DB and custom questions
  */
 export interface Question {
   text: string;
-  type: "true_false" | "multiple_choice" | "text_input";
+  type: "true_false" | "multiple_choice" | "text_input" | "map_country" | "flag_country";
   correctAnswer: string;
   options?: string[];
   category?: string;
   difficulty?: string;
+  // For map questions (guess the highlighted country)
+  mapData?: {
+    countryCode: string; // ISO alpha-2 for flag lookup
+    countryAlpha3: string; // ISO alpha-3 for react-simple-maps
+    center: [number, number];
+    zoom: number;
+  };
+  // For flag questions (guess country by flag)
+  flagData?: {
+    countryCode: string; // ISO alpha-2 for flagpedia
+    flagUrl: string;
+  };
 }
 
 /**

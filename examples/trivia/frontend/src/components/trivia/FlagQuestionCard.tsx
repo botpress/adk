@@ -6,39 +6,29 @@ import {
   playSubmit,
   playQuestionStart,
 } from "../../lib/sounds";
-import MapQuestionCard from "./MapQuestionCard";
-import FlagQuestionCard from "./FlagQuestionCard";
 
-interface QuestionCardProps {
+interface FlagQuestionCardProps {
   data: QuestionData;
 }
 
-const QuestionCard: FC<QuestionCardProps> = ({ data }) => {
-  // Delegate to specialized components for geography questions
-  if (data.questionType === "map_country") {
-    return <MapQuestionCard data={data} />;
-  }
-
-  if (data.questionType === "flag_country") {
-    return <FlagQuestionCard data={data} />;
-  }
+const FlagQuestionCard: FC<FlagQuestionCardProps> = ({ data }) => {
   const {
     questionIndex,
     totalQuestions,
     question,
-    questionType,
     options,
     category,
     difficulty,
     timerSeconds,
     delegate,
+    flagData,
   } = data;
 
   const [timeLeft, setTimeLeft] = useState(timerSeconds);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [textAnswer, setTextAnswer] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isExpired, setIsExpired] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const displayTimeRef = useRef(Date.now());
   const hasAckedRef = useRef(false);
 
@@ -52,7 +42,7 @@ const QuestionCard: FC<QuestionCardProps> = ({ data }) => {
     }
   }, [delegate.ack_url]);
 
-  // Timer countdown - keeps running even after submission
+  // Timer countdown
   useEffect(() => {
     if (isExpired) return;
 
@@ -65,7 +55,6 @@ const QuestionCard: FC<QuestionCardProps> = ({ data }) => {
           playTimeExpired();
           return 0;
         }
-        // Play timer tick sound in last 5 seconds
         if (newTime <= 5) {
           playTimerTick();
         }
@@ -95,25 +84,23 @@ const QuestionCard: FC<QuestionCardProps> = ({ data }) => {
     }
   };
 
-  const handleTextSubmit = () => {
-    if (textAnswer.trim()) {
-      submitAnswer(textAnswer.trim());
-    }
-  };
-
   const progress = (timeLeft / timerSeconds) * 100;
   const isLowTime = timeLeft <= 5;
 
+  // Get flag URL - prefer flagData.flagUrl, fallback to constructing it
+  const flagUrl = flagData?.flagUrl ||
+    (flagData?.countryCode
+      ? `https://flagcdn.com/w320/${flagData.countryCode}.png`
+      : null);
+
   return (
-    <div className={`trivia-question ${isExpired ? "expired" : ""}`}>
+    <div className={`trivia-question flag-question ${isExpired ? "expired" : ""}`}>
       {/* Header */}
       <div className="question-header">
         <span className="question-number">
           Question {questionIndex + 1} of {totalQuestions}
         </span>
-        {category && (
-          <span className="question-category">{category}</span>
-        )}
+        {category && <span className="question-category">{category}</span>}
         {difficulty && (
           <span className={`question-difficulty ${difficulty}`}>
             {difficulty}
@@ -135,7 +122,34 @@ const QuestionCard: FC<QuestionCardProps> = ({ data }) => {
       {/* Question text */}
       <div className="question-text">{question}</div>
 
-      {/* Answer controls */}
+      {/* Flag Image */}
+      <div className="flag-container">
+        {flagUrl && (
+          <>
+            {!imageLoaded && (
+              <div className="flag-loading">
+                <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+            <img
+              src={flagUrl}
+              alt="Flag"
+              className="flag-image"
+              style={{ display: imageLoaded ? "block" : "none" }}
+              onLoad={() => setImageLoaded(true)}
+              onError={(e) => {
+                // Fallback to a different size if the image fails
+                const img = e.target as HTMLImageElement;
+                if (!img.src.includes("w160")) {
+                  img.src = `https://flagcdn.com/w160/${flagData?.countryCode}.png`;
+                }
+              }}
+            />
+          </>
+        )}
+      </div>
+
+      {/* Answer controls - Multiple choice */}
       <div className="question-answers">
         {isSubmitted ? (
           <div className="answer-submitted">
@@ -147,22 +161,7 @@ const QuestionCard: FC<QuestionCardProps> = ({ data }) => {
             <span className="expired-icon">⏱</span>
             <span>Time's up!</span>
           </div>
-        ) : questionType === "true_false" ? (
-          <div className="answer-buttons tf-buttons">
-            <button
-              className={`answer-btn true-btn ${selectedAnswer === "True" ? "selected" : ""}`}
-              onClick={() => submitAnswer("True")}
-            >
-              True
-            </button>
-            <button
-              className={`answer-btn false-btn ${selectedAnswer === "False" ? "selected" : ""}`}
-              onClick={() => submitAnswer("False")}
-            >
-              False
-            </button>
-          </div>
-        ) : questionType === "multiple_choice" && options ? (
+        ) : options ? (
           <div className="answer-buttons mc-buttons">
             {options.map((option, index) => (
               <button
@@ -181,16 +180,25 @@ const QuestionCard: FC<QuestionCardProps> = ({ data }) => {
           <div className="answer-input">
             <input
               type="text"
-              value={textAnswer}
-              onChange={(e) => setTextAnswer(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleTextSubmit()}
-              placeholder="Type your answer..."
+              placeholder="Type the country name..."
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  const input = e.target as HTMLInputElement;
+                  if (input.value.trim()) {
+                    submitAnswer(input.value.trim());
+                  }
+                }
+              }}
               autoFocus
             />
             <button
               className="submit-btn"
-              onClick={handleTextSubmit}
-              disabled={!textAnswer.trim()}
+              onClick={(e) => {
+                const input = (e.target as HTMLButtonElement).previousElementSibling as HTMLInputElement;
+                if (input.value.trim()) {
+                  submitAnswer(input.value.trim());
+                }
+              }}
             >
               Submit
             </button>
@@ -201,4 +209,4 @@ const QuestionCard: FC<QuestionCardProps> = ({ data }) => {
   );
 };
 
-export default QuestionCard;
+export default FlagQuestionCard;
