@@ -1,0 +1,20 @@
+{
+  "name": "trivia-quiz-bot",
+  "version": "1.0.0",
+  "description": "Multiplayer trivia quiz game built with Botpress ADK",
+  "type": "module",
+  "packageManager": "bun@latest",
+  "scripts": {
+    "dev": "adk dev",
+    "build": "adk build",
+    "deploy": "adk deploy"
+  },
+  "dependencies": {
+    "@botpress/client": "^1.28.0",
+    "@botpress/runtime": "^1.13.10",
+    "@botpress/webchat-client": "^0.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
