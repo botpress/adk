@@ -17,8 +17,9 @@ type ParticipantsChangedHandler = (
 ) => void;
 type SettingsChangedHandler = (settings: GameSettings) => void;
 type GameStartedHandler = () => void;
+type GameCancelledHandler = () => void;
 
-export type GameStatus = "waiting" | "playing" | "ended";
+export type GameStatus = "waiting" | "playing" | "ended" | "cancelled";
 
 export type GameInitData = {
   conversationId: string;
@@ -39,6 +40,7 @@ class GameClient {
     new Set();
   private settingsChangedHandlers: Set<SettingsChangedHandler> = new Set();
   private gameStartedHandlers: Set<GameStartedHandler> = new Set();
+  private gameCancelledHandlers: Set<GameCancelledHandler> = new Set();
   private listenerCleanup: (() => void) | null = null;
   private initData: GameInitData | null = null;
 
@@ -145,6 +147,9 @@ class GameClient {
           } else if (gameEvent.type === "game_started") {
             status = "playing";
             console.log("[GameClient] Found game_started event");
+          } else if (gameEvent.type === "game_cancelled") {
+            status = "cancelled";
+            console.log("[GameClient] Found game_cancelled event");
           }
           // Skip game event messages from regular messages
           continue;
@@ -152,6 +157,8 @@ class GameClient {
       }
       regularMessages.push(message);
     }
+
+    console.log("[GameClient] Final status determined:", status);
 
     const initData: GameInitData = {
       conversationId: this.conversationId,
@@ -218,6 +225,14 @@ class GameClient {
             return;
           }
 
+          // Handle game cancelled event
+          if (gameEvent.type === "game_cancelled") {
+            console.log("[GameClient] Game cancelled!");
+            this.gameCancelledHandlers.forEach((handler) => handler());
+            // Don't forward to message handlers
+            return;
+          }
+
           if (gameEvent.type === "participant_added") {
             // If the added participant is the creator, store their userId
             if (gameEvent.isCreator && this.initData) {
@@ -263,6 +278,7 @@ class GameClient {
       this.participantsChangedHandlers.clear();
       this.settingsChangedHandlers.clear();
       this.gameStartedHandlers.clear();
+      this.gameCancelledHandlers.clear();
     };
 
     console.log("[GameClient] Listener set up");
@@ -301,6 +317,15 @@ class GameClient {
   onGameStarted(handler: GameStartedHandler): () => void {
     this.gameStartedHandlers.add(handler);
     return () => this.gameStartedHandlers.delete(handler);
+  }
+
+  /**
+   * Subscribe to game cancelled event.
+   * Called when the game host leaves and cancels the game.
+   */
+  onGameCancelled(handler: GameCancelledHandler): () => void {
+    this.gameCancelledHandlers.add(handler);
+    return () => this.gameCancelledHandlers.delete(handler);
   }
 
   /**

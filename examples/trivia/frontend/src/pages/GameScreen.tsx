@@ -26,13 +26,15 @@ import "@botpress/webchat/style.css";
 
 type Participant = ListParticipantsResponse["participants"][number];
 
-type GameState = "loading" | "waiting" | "playing" | "ended" | "error";
+type GameState = "loading" | "waiting" | "playing" | "ended" | "cancelled" | "error";
 
 type ChatMessage = {
   id: string;
   text: string;
   authorId?: string;
   timestamp: Date;
+  isSystem?: boolean;
+  variant?: "success" | "error";
 };
 
 export function GameScreen() {
@@ -118,7 +120,23 @@ export function GameScreen() {
             const text = (message.payload as { text: string }).text;
             const gameEvent = parseGameEvent(text);
             if (gameEvent) {
-              // Skip game event messages - they're not regular chat
+              // Show game_started as a system message
+              if (gameEvent.type === "game_started") {
+                initialMessages.push({
+                  id: message.id,
+                  text: "Game started!",
+                  timestamp: new Date(message.createdAt),
+                  isSystem: true,
+                });
+              } else if (gameEvent.type === "game_cancelled") {
+                initialMessages.push({
+                  id: message.id,
+                  text: "Host left. Game cancelled.",
+                  timestamp: new Date(message.createdAt),
+                  isSystem: true,
+                  variant: "error",
+                });
+              }
             } else {
               // Regular text message
               initialMessages.push({
@@ -171,6 +189,31 @@ export function GameScreen() {
         gameClient.onGameStarted(() => {
           console.log("[GameScreen] Game started!");
           setGameState("playing");
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `game-started-${Date.now()}`,
+              text: "Game started!",
+              timestamp: new Date(),
+              isSystem: true,
+            },
+          ]);
+        });
+
+        // Subscribe to game cancelled event (host left)
+        gameClient.onGameCancelled(() => {
+          console.log("[GameScreen] Game cancelled!");
+          setGameState("cancelled");
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `game-cancelled-${Date.now()}`,
+              text: "Host left. Game cancelled.",
+              timestamp: new Date(),
+              isSystem: true,
+              variant: "error",
+            },
+          ]);
         });
 
         // Subscribe to removed_from_game notifications via LobbyClient
@@ -305,15 +348,15 @@ export function GameScreen() {
         <header className="shrink-0 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3">
           <div className="flex items-center justify-between">
             <button
-              onClick={handleLeaveGame}
+              onClick={gameState === "cancelled" ? () => navigate("/") : handleLeaveGame}
               className="flex items-center gap-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
             >
               <ArrowLeft className="w-5 h-5" />
-              <span className="text-sm">Leave</span>
+              <span className="text-sm">{gameState === "cancelled" ? "Back" : "Leave"}</span>
             </button>
 
-            {/* Join Code */}
-            {joinCode && (
+            {/* Game Status / Join Code */}
+            {gameState === "waiting" && joinCode ? (
               <button
                 onClick={handleCopyCode}
                 className="flex items-center gap-2 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
@@ -327,7 +370,21 @@ export function GameScreen() {
                   <Copy className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 )}
               </button>
-            )}
+            ) : gameState === "playing" ? (
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <span className="font-medium text-green-700 dark:text-green-300">
+                  In progress
+                </span>
+              </div>
+            ) : gameState === "cancelled" ? (
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-red-500 rounded-full" />
+                <span className="font-medium text-red-700 dark:text-red-300">
+                  Cancelled
+                </span>
+              </div>
+            ) : null}
 
             {/* Settings / Players count */}
             <div className="flex items-center gap-2">
@@ -337,7 +394,7 @@ export function GameScreen() {
                   {participants.length}
                 </span>
               </div>
-              {isCreator && (
+              {isCreator && gameState === "waiting" && (
                 <Drawer
                   open={isSettingsOpen}
                   onOpenChange={handleSettingsDrawerChange}
@@ -571,6 +628,28 @@ export function GameScreen() {
               </div>
             ) : (
               messages.map((msg) => {
+                if (msg.isSystem) {
+                  const isError = msg.variant === "error";
+                  return (
+                    <div key={msg.id} className="flex justify-center">
+                      <div
+                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${
+                          isError
+                            ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+                            : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                        }`}
+                      >
+                        <div
+                          className={`w-2 h-2 rounded-full ${
+                            isError ? "bg-red-500" : "bg-green-500"
+                          }`}
+                        />
+                        <span className="font-medium">{msg.text}</span>
+                      </div>
+                    </div>
+                  );
+                }
+
                 const isOwnMessage = msg.authorId === initData?.userId;
                 const senderName = msg.authorId
                   ? participantNames.get(msg.authorId) || "Unknown"
@@ -632,12 +711,23 @@ export function GameScreen() {
             )}
 
             {gameState === "playing" && (
-              <div className="text-center py-4">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  <span className="font-medium">Game in progress</span>
-                </div>
-              </div>
+              <Composer
+                connected={true}
+                sendMessage={handleSendMessage}
+                composerPlaceholder="Type a message..."
+              />
+            )}
+
+            {gameState === "cancelled" && (
+              <Button
+                size="lg"
+                variant="default"
+                className="w-full"
+                onClick={() => navigate("/")}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Home
+              </Button>
             )}
           </div>
         </div>

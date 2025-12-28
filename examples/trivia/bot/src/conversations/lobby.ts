@@ -78,6 +78,10 @@ export type ParticipantRemovedEvent = {
   userId: string;
 };
 
+export type GameCancelledEvent = {
+  type: "game_cancelled";
+};
+
 // ============================================
 // Helpers
 // ============================================
@@ -103,7 +107,7 @@ async function sendGameEvent(
   client: any,
   botId: string,
   gameConversationId: string,
-  event: ParticipantAddedEvent | ParticipantRemovedEvent
+  event: ParticipantAddedEvent | ParticipantRemovedEvent | GameCancelledEvent
 ) {
   await client.createMessage({
     conversationId: gameConversationId,
@@ -233,17 +237,36 @@ export const lobbyHandler: PartialHandler = async (props) => {
         },
       });
 
+      console.log(
+        "[Lobby] Join search results for code:",
+        code,
+        "found:",
+        conversations.length,
+        "conversations"
+      );
+
       if (conversations.length === 0) {
         const response: JoinResponse = {
           type: "join_response",
           success: false,
-          error: "Invalid join code or game has already started.",
+          error: "Invalid join code or game is no longer available.",
         };
         await sendLobbyResponse(client, botId, conversation.id, response);
         return { handled: true, continue: false };
       }
 
       const gameConversation = conversations[0];
+
+      // Double-check the game is still in waiting status (not cancelled or started)
+      if (gameConversation.tags.status !== "waiting") {
+        const response: JoinResponse = {
+          type: "join_response",
+          success: false,
+          error: "This game is no longer accepting players.",
+        };
+        await sendLobbyResponse(client, botId, conversation.id, response);
+        return { handled: true, continue: false };
+      }
 
       // Add joining player as a real participant so they can access the conversation
       await client.addParticipant({
@@ -299,13 +322,23 @@ export const lobbyHandler: PartialHandler = async (props) => {
       const isCreator = visibleUserId === creatorUserId;
 
       if (isCreator) {
-        // If creator leaves, delete the entire game conversation
+        // If creator leaves, cancel the game and notify all players
         console.log(
-          "[Lobby] Creator leaving game, deleting conversation:",
+          "[Lobby] Creator leaving game, cancelling:",
           gameConversationId
         );
-        await client.deleteConversation({
+
+        // Send game_cancelled event to notify all players
+        await sendGameEvent(client, botId, gameConversationId, {
+          type: "game_cancelled",
+        });
+
+        // Update the conversation status to cancelled
+        await client.updateConversation({
           id: gameConversationId,
+          tags: {
+            status: "cancelled",
+          },
         });
       } else {
         // Remove the player as a real participant
