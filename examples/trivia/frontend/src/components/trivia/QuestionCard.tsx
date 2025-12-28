@@ -35,9 +35,9 @@ const QuestionCard: FC<QuestionCardProps> = ({ data }) => {
     }
   }, [delegate.ack_url]);
 
-  // Timer countdown
+  // Timer countdown - keeps running even after submission
   useEffect(() => {
-    if (isSubmitted || isExpired) return;
+    if (isExpired) return;
 
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
@@ -51,7 +51,7 @@ const QuestionCard: FC<QuestionCardProps> = ({ data }) => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isSubmitted, isExpired]);
+  }, [isExpired]);
 
   const submitAnswer = async (answer: string) => {
     if (isSubmitted || isExpired) return;

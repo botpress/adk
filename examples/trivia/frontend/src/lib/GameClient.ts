@@ -5,7 +5,14 @@ import {
 } from "@botpress/webchat-client";
 import { getWebchatClient } from "./webchat";
 import { LobbyClient } from "./LobbyClient";
-import { parseGameEvent, type GameEvent } from "@/types/lobby-messages";
+import {
+  parseGameEvent,
+  type GameEvent,
+  type QuestionStartEvent,
+  type QuestionScoresEvent,
+  type GameScoresEvent,
+  type GameEndedEvent,
+} from "@/types/lobby-messages";
 import type { GameSettings } from "@/types/game-settings";
 
 type Participant = ListParticipantsResponse["participants"][number];
@@ -18,6 +25,10 @@ type ParticipantsChangedHandler = (
 type SettingsChangedHandler = (settings: GameSettings) => void;
 type GameStartedHandler = () => void;
 type GameCancelledHandler = () => void;
+type QuestionStartHandler = (event: QuestionStartEvent) => void;
+type QuestionScoresHandler = (event: QuestionScoresEvent) => void;
+type GameScoresHandler = (event: GameScoresEvent) => void;
+type GameEndedHandler = (event: GameEndedEvent) => void;
 
 export type GameStatus = "waiting" | "playing" | "ended" | "cancelled";
 
@@ -41,6 +52,10 @@ class GameClient {
   private settingsChangedHandlers: Set<SettingsChangedHandler> = new Set();
   private gameStartedHandlers: Set<GameStartedHandler> = new Set();
   private gameCancelledHandlers: Set<GameCancelledHandler> = new Set();
+  private questionStartHandlers: Set<QuestionStartHandler> = new Set();
+  private questionScoresHandlers: Set<QuestionScoresHandler> = new Set();
+  private gameScoresHandlers: Set<GameScoresHandler> = new Set();
+  private gameEndedHandlers: Set<GameEndedHandler> = new Set();
   private listenerCleanup: (() => void) | null = null;
   private initData: GameInitData | null = null;
 
@@ -150,6 +165,9 @@ class GameClient {
           } else if (gameEvent.type === "game_cancelled") {
             status = "cancelled";
             console.log("[GameClient] Found game_cancelled event");
+          } else if (gameEvent.type === "game_ended") {
+            status = "waiting";
+            console.log("[GameClient] Found game_ended event, status back to waiting");
           }
           // Skip game event messages from regular messages
           continue;
@@ -233,6 +251,34 @@ class GameClient {
             return;
           }
 
+          // Handle question start event (from workflow)
+          if (gameEvent.type === "question_start") {
+            console.log("[GameClient] Question start:", gameEvent.questionIndex);
+            this.questionStartHandlers.forEach((handler) => handler(gameEvent));
+            return;
+          }
+
+          // Handle question scores event (from workflow)
+          if (gameEvent.type === "question_scores") {
+            console.log("[GameClient] Question scores:", gameEvent.questionIndex);
+            this.questionScoresHandlers.forEach((handler) => handler(gameEvent));
+            return;
+          }
+
+          // Handle game scores event (from workflow)
+          if (gameEvent.type === "game_scores") {
+            console.log("[GameClient] Game scores (final leaderboard)");
+            this.gameScoresHandlers.forEach((handler) => handler(gameEvent));
+            return;
+          }
+
+          // Handle game ended event (from workflow - game is over, back to waiting)
+          if (gameEvent.type === "game_ended") {
+            console.log("[GameClient] Game ended, returning to waiting state");
+            this.gameEndedHandlers.forEach((handler) => handler(gameEvent));
+            return;
+          }
+
           if (gameEvent.type === "participant_added") {
             // If the added participant is the creator, store their userId
             if (gameEvent.isCreator && this.initData) {
@@ -279,6 +325,10 @@ class GameClient {
       this.settingsChangedHandlers.clear();
       this.gameStartedHandlers.clear();
       this.gameCancelledHandlers.clear();
+      this.questionStartHandlers.clear();
+      this.questionScoresHandlers.clear();
+      this.gameScoresHandlers.clear();
+      this.gameEndedHandlers.clear();
     };
 
     console.log("[GameClient] Listener set up");
@@ -326,6 +376,42 @@ class GameClient {
   onGameCancelled(handler: GameCancelledHandler): () => void {
     this.gameCancelledHandlers.add(handler);
     return () => this.gameCancelledHandlers.delete(handler);
+  }
+
+  /**
+   * Subscribe to question start event.
+   * Called when the workflow starts a new question.
+   */
+  onQuestionStart(handler: QuestionStartHandler): () => void {
+    this.questionStartHandlers.add(handler);
+    return () => this.questionStartHandlers.delete(handler);
+  }
+
+  /**
+   * Subscribe to question scores event.
+   * Called when the workflow sends scores after a question.
+   */
+  onQuestionScores(handler: QuestionScoresHandler): () => void {
+    this.questionScoresHandlers.add(handler);
+    return () => this.questionScoresHandlers.delete(handler);
+  }
+
+  /**
+   * Subscribe to game scores event.
+   * Called when the workflow sends the final leaderboard.
+   */
+  onGameScores(handler: GameScoresHandler): () => void {
+    this.gameScoresHandlers.add(handler);
+    return () => this.gameScoresHandlers.delete(handler);
+  }
+
+  /**
+   * Subscribe to game ended event.
+   * Called when the workflow completes and the game returns to waiting state.
+   */
+  onGameEnded(handler: GameEndedHandler): () => void {
+    this.gameEndedHandlers.add(handler);
+    return () => this.gameEndedHandlers.delete(handler);
   }
 
   /**
@@ -398,6 +484,24 @@ class GameClient {
    */
   getInitData(): GameInitData | null {
     return this.initData;
+  }
+
+  /**
+   * Close the game (after viewing final leaderboard).
+   * Sends an event to the bot to mark the game as ended and return to waiting state.
+   */
+  async closeGame(): Promise<void> {
+    console.log("[GameClient] Closing game (returning to waiting state)");
+
+    await this.client.createEvent({
+      conversationId: this.conversationId,
+      payload: {
+        type: "custom",
+        data: {
+          action: "close_game",
+        },
+      },
+    });
   }
 
   /**

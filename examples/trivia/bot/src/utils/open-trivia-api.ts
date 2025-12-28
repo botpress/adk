@@ -1,6 +1,16 @@
-import type { Question } from "../tables/games";
-
 const API_BASE = "https://opentdb.com/api.php";
+
+/**
+ * Question structure from Open Trivia DB
+ */
+export interface Question {
+  text: string;
+  type: "true_false" | "multiple_choice" | "text_input";
+  correctAnswer: string;
+  options?: string[];
+  category?: string;
+  difficulty?: string;
+}
 
 /**
  * Open Trivia Database API response

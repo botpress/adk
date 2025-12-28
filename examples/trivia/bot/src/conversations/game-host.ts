@@ -1,5 +1,7 @@
 import { context, user, z } from "@botpress/runtime";
-import { PartialHandler } from "./types";
+import { PartialHandler, Player } from "./types";
+
+import PlayQuizWorkflow from "../workflows/play-quiz";
 
 // ============================================
 // Game Settings Schema (shared between request and response)
@@ -29,9 +31,14 @@ export const StartGameRequestSchema = z.object({
   type: z.literal("start_game"),
 });
 
+export const CloseGameRequestSchema = z.object({
+  type: z.literal("close_game"),
+});
+
 export const GameRequestSchema = z.discriminatedUnion("type", [
   UpdateSettingsRequestSchema,
   StartGameRequestSchema,
+  CloseGameRequestSchema,
 ]);
 
 export type UpdateSettingsRequest = z.infer<typeof UpdateSettingsRequestSchema>;
@@ -51,7 +58,17 @@ export type GameStartedEvent = {
   type: "game_started";
 };
 
-type GameEvent = GameSettingsUpdatedEvent | GameStartedEvent;
+export type GameEndedEvent = {
+  type: "game_ended";
+  leaderboard: Array<{
+    rank: number;
+    visibleUserId: string;
+    username: string;
+    score: number;
+  }>;
+};
+
+type GameEvent = GameSettingsUpdatedEvent | GameStartedEvent | GameEndedEvent;
 
 /**
  * Helper to send a game event message in the game conversation
@@ -127,13 +144,16 @@ export const gameHostHandler: PartialHandler = async (props) => {
   if (request.type === "update_settings") {
     console.log("[GameHost] Updating settings:", request.settings);
 
+    // Save settings to conversation state
+    props.state.settings = request.settings;
+
     // Broadcast settings update to all participants
     await sendGameEvent(client, botId, conversation.id, {
       type: "game_settings_updated",
       settings: request.settings,
     });
 
-    console.log("[GameHost] Settings broadcast to game:", conversation.id);
+    console.log("[GameHost] Settings saved and broadcast to game:", conversation.id);
     return { handled: true, continue: false };
   }
 
@@ -143,7 +163,10 @@ export const gameHostHandler: PartialHandler = async (props) => {
 
     // Check if game is in waiting status
     if (conversation.tags.status !== "waiting") {
-      console.warn("[GameHost] Cannot start game - status is not waiting:", conversation.tags.status);
+      console.warn(
+        "[GameHost] Cannot start game - status is not waiting:",
+        conversation.tags.status
+      );
       return { handled: true, continue: false };
     }
 
@@ -153,14 +176,55 @@ export const gameHostHandler: PartialHandler = async (props) => {
     });
 
     if (participants.length < 2) {
-      console.warn("[GameHost] Cannot start game - need at least 2 participants, got:", participants.length);
+      console.warn(
+        "[GameHost] Cannot start game - need at least 2 participants, got:",
+        participants.length
+      );
       return { handled: true, continue: false };
     }
 
-    console.log("[GameHost] Starting game with", participants.length, "participants");
+    console.log(
+      "[GameHost] Starting game with",
+      participants.length,
+      "participants"
+    );
 
     // Update conversation status to playing
     conversation.tags.status = "playing";
+
+    // Get game settings from conversation state
+    const settings = props.state.settings ?? {
+      categories: ["any"],
+      difficulty: "easy" as const,
+      questionCount: 10,
+      scoreMethod: "all-right" as const,
+      timerSeconds: 20,
+    };
+
+    // Build players list from participants
+    const creatorUserId = conversation.tags.creatorUserId as string;
+    const players: Player[] = participants.map((p) => ({
+      visibleUserId: p.id,
+      visibleConversationId: conversation.id,
+      username: p.name || p.id.slice(0, 8),
+      score: 0,
+      isCreator: p.id === creatorUserId,
+    }));
+
+    console.log(
+      "[GameHost] Players:",
+      players.map((p) => ({ id: p.visibleUserId, isCreator: p.isCreator }))
+    );
+    console.log("[GameHost] Settings:", settings);
+
+    // Start the play_quiz workflow
+    props.state.game = await PlayQuizWorkflow.start({
+      gameConversationId: conversation.id,
+      players,
+      settings,
+    });
+
+    console.log("[GameHost] Started workflow:", props.state.game.workflow.id);
 
     // Broadcast game_started event to all participants
     await sendGameEvent(client, botId, conversation.id, {
@@ -168,6 +232,51 @@ export const gameHostHandler: PartialHandler = async (props) => {
     });
 
     console.log("[GameHost] Game started, status updated to playing");
+    return { handled: true, continue: false };
+  }
+
+  // Handle close_game (after viewing final leaderboard)
+  if (request.type === "close_game") {
+    console.log("[GameHost] Close game request received");
+
+    // Check if game is in ended status (or playing - workflow might have finished)
+    if (conversation.tags.status !== "playing" && conversation.tags.status !== "ended") {
+      console.warn(
+        "[GameHost] Cannot close game - status is:",
+        conversation.tags.status
+      );
+      return { handled: true, continue: false };
+    }
+
+    // Get the final leaderboard from the workflow state if available
+    const workflowState = props.state.game;
+    let leaderboard: GameEndedEvent["leaderboard"] = [];
+
+    if (workflowState?.workflow?.output?.finalLeaderboard) {
+      leaderboard = workflowState.workflow.output.finalLeaderboard;
+    } else {
+      // Fallback: build leaderboard from participants with 0 scores
+      const { participants } = await client.listParticipants({
+        id: conversation.id,
+      });
+      leaderboard = participants.map((p, index) => ({
+        rank: index + 1,
+        visibleUserId: p.id,
+        username: p.name || p.id.slice(0, 8),
+        score: 0,
+      }));
+    }
+
+    // Update conversation status back to waiting
+    conversation.tags.status = "waiting";
+
+    // Broadcast game_ended event to all participants
+    await sendGameEvent(client, botId, conversation.id, {
+      type: "game_ended",
+      leaderboard,
+    });
+
+    console.log("[GameHost] Game ended, status updated to waiting");
     return { handled: true, continue: false };
   }
 

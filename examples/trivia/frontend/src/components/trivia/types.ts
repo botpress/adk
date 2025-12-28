@@ -75,4 +75,5 @@ export interface LeaderboardData {
   gameId: number;
   leaderboard: LeaderboardEntry[];
   isCreator: boolean;
+  onClose?: () => void;
 }

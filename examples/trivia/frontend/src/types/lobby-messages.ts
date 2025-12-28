@@ -105,12 +105,83 @@ export type GameCancelledEvent = {
   type: "game_cancelled";
 };
 
-export type GameEvent = ParticipantAddedEvent | ParticipantRemovedEvent | GameSettingsUpdatedEvent | GameStartedEvent | GameCancelledEvent;
+// ============================================
+// Workflow Events (Bot -> Frontend, sent during gameplay)
+// ============================================
+
+export type DelegateInfo = {
+  id: string;
+  ack_url: string;
+  fulfill_url: string;
+  reject_url: string;
+};
+
+export type QuestionStartEvent = {
+  type: "question_start";
+  questionIndex: number;
+  totalQuestions: number;
+  question: string;
+  questionType: "true_false" | "multiple_choice" | "text_input";
+  options?: string[];
+  category?: string;
+  difficulty?: string;
+  timerSeconds: number;
+  delegates: Record<string, DelegateInfo>;
+};
+
+export type QuestionScoreEntry = {
+  visibleUserId: string;
+  username: string;
+  answer?: string;
+  isCorrect: boolean;
+  points: number;
+  cumulativeScore: number;
+  timeToAnswerMs?: number;
+};
+
+export type QuestionScoresEvent = {
+  type: "question_scores";
+  questionIndex: number;
+  totalQuestions: number;
+  correctAnswer: string;
+  scores: QuestionScoreEntry[];
+};
+
+export type LeaderboardEntry = {
+  rank: number;
+  visibleUserId: string;
+  username: string;
+  score: number;
+};
+
+export type GameScoresEvent = {
+  type: "game_scores";
+  leaderboard: LeaderboardEntry[];
+};
+
+export type GameEndedEvent = {
+  type: "game_ended";
+  leaderboard: LeaderboardEntry[];
+};
+
+export type WorkflowEvent = QuestionStartEvent | QuestionScoresEvent | GameScoresEvent | GameEndedEvent;
+
+export type GameEvent = ParticipantAddedEvent | ParticipantRemovedEvent | GameSettingsUpdatedEvent | GameStartedEvent | GameCancelledEvent | WorkflowEvent;
 
 export function isGameEvent(data: unknown): data is GameEvent {
   if (typeof data !== "object" || data === null) return false;
   const obj = data as Record<string, unknown>;
-  return obj.type === "participant_added" || obj.type === "participant_removed" || obj.type === "game_settings_updated" || obj.type === "game_started" || obj.type === "game_cancelled";
+  return (
+    obj.type === "participant_added" ||
+    obj.type === "participant_removed" ||
+    obj.type === "game_settings_updated" ||
+    obj.type === "game_started" ||
+    obj.type === "game_cancelled" ||
+    obj.type === "question_start" ||
+    obj.type === "question_scores" ||
+    obj.type === "game_scores" ||
+    obj.type === "game_ended"
+  );
 }
 
 export function parseGameEvent(text: string): GameEvent | null {

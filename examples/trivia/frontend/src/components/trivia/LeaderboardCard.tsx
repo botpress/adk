@@ -6,7 +6,7 @@ interface LeaderboardCardProps {
 }
 
 const LeaderboardCard: FC<LeaderboardCardProps> = ({ data }) => {
-  const { leaderboard, isCreator } = data;
+  const { leaderboard, onClose } = data;
 
   const getMedalEmoji = (rank: number) => {
     switch (rank) {
@@ -60,16 +60,12 @@ const LeaderboardCard: FC<LeaderboardCardProps> = ({ data }) => {
         </div>
       </div>
 
-      {/* Play again */}
+      {/* Close leaderboard */}
       <div className="leaderboard-footer">
-        {isCreator ? (
-          <div className="footer-creator">
-            <span>Great game! Say "new game" to play again.</span>
-          </div>
-        ) : (
-          <div className="footer-player">
-            <span>Thanks for playing! 🎮</span>
-          </div>
+        {onClose && (
+          <button className="close-leaderboard-btn" onClick={onClose}>
+            Close
+          </button>
         )}
       </div>
     </div>

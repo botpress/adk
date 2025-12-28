@@ -2,7 +2,12 @@ import { useEffect, useState, useRef, useMemo, useLayoutEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { GameClient, LobbyClient, type GameInitData } from "@/lib";
 import { type ListParticipantsResponse } from "@botpress/webchat-client";
-import { parseGameEvent } from "@/types/lobby-messages";
+import {
+  parseGameEvent,
+  type QuestionStartEvent,
+  type QuestionScoresEvent,
+  type GameScoresEvent,
+} from "@/types/lobby-messages";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -23,10 +28,37 @@ import {
 } from "@/types/game-settings";
 import { Composer } from "@botpress/webchat";
 import "@botpress/webchat/style.css";
+import QuestionCard from "@/components/trivia/QuestionCard";
+import ScoreCard from "@/components/trivia/ScoreCard";
+import LeaderboardCard from "@/components/trivia/LeaderboardCard";
+import "@/components/trivia/trivia.css";
 
 type Participant = ListParticipantsResponse["participants"][number];
 
 type GameState = "loading" | "waiting" | "playing" | "ended" | "cancelled" | "error";
+
+// What the player is currently seeing during gameplay
+type PlayState = "waiting_for_question" | "answering" | "viewing_scores" | "viewing_leaderboard";
+
+// Helper to build leaderboard from scores (using cumulative scores)
+function buildLeaderboard(scores: QuestionScoresEvent["scores"]): { rank: number; username: string; score: number }[] {
+  // Sort by cumulative score descending, then assign ranks
+  const sorted = [...scores].sort((a, b) => b.cumulativeScore - a.cumulativeScore);
+  let currentRank = 1;
+  let previousScore = -1;
+
+  return sorted.map((s, index) => {
+    if (s.cumulativeScore !== previousScore) {
+      currentRank = index + 1;
+    }
+    previousScore = s.cumulativeScore;
+    return {
+      rank: currentRank,
+      username: s.username,
+      score: s.cumulativeScore,
+    };
+  });
+}
 
 type ChatMessage = {
   id: string;
@@ -34,7 +66,13 @@ type ChatMessage = {
   authorId?: string;
   timestamp: Date;
   isSystem?: boolean;
-  variant?: "success" | "error";
+  variant?: "success" | "error" | "game-results";
+  gameResults?: {
+    winner: string;
+    isTie: boolean;
+    tiedPlayers: string[];
+    leaderboard: Array<{ rank: number; username: string; score: number }>;
+  };
 };
 
 export function GameScreen() {
@@ -54,6 +92,12 @@ export function GameScreen() {
   );
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
+
+  // Gameplay state
+  const [playState, setPlayState] = useState<PlayState>("waiting_for_question");
+  const [currentQuestion, setCurrentQuestion] = useState<QuestionStartEvent | null>(null);
+  const [currentScores, setCurrentScores] = useState<QuestionScoresEvent | null>(null);
+  const [finalLeaderboard, setFinalLeaderboard] = useState<GameScoresEvent | null>(null);
 
   const gameClientRef = useRef<GameClient | null>(null);
   const hasInitialized = useRef(false);
@@ -136,6 +180,31 @@ export function GameScreen() {
                   isSystem: true,
                   variant: "error",
                 });
+              } else if (gameEvent.type === "game_ended") {
+                // Show game_ended as a rich results card
+                // Check for tie - find all players with rank 1
+                const topPlayers = gameEvent.leaderboard.filter(e => e.rank === 1);
+                const isTie = topPlayers.length > 1;
+                const tiedPlayers = topPlayers.map(e => e.username);
+                const winner = topPlayers[0]?.username || "Unknown";
+
+                initialMessages.push({
+                  id: message.id,
+                  text: "Game Over",
+                  timestamp: new Date(message.createdAt),
+                  isSystem: true,
+                  variant: "game-results",
+                  gameResults: {
+                    winner,
+                    isTie,
+                    tiedPlayers,
+                    leaderboard: gameEvent.leaderboard.map(e => ({
+                      rank: e.rank,
+                      username: e.username,
+                      score: e.score,
+                    })),
+                  },
+                });
               }
             } else {
               // Regular text message
@@ -214,6 +283,70 @@ export function GameScreen() {
               variant: "error",
             },
           ]);
+        });
+
+        // Subscribe to question start events (from workflow)
+        gameClient.onQuestionStart((event) => {
+          console.log("[GameScreen] Question start:", event.questionIndex);
+          setPlayState("answering");
+          setCurrentQuestion(event);
+          setCurrentScores(null);
+        });
+
+        // Subscribe to question scores events (from workflow)
+        gameClient.onQuestionScores((event) => {
+          console.log("[GameScreen] Question scores:", event.questionIndex);
+          setPlayState("viewing_scores");
+          setCurrentScores(event);
+          setCurrentQuestion(null);
+        });
+
+        // Subscribe to game scores events (from workflow - final leaderboard)
+        gameClient.onGameScores((event) => {
+          console.log("[GameScreen] Game scores (final)");
+          setPlayState("viewing_leaderboard");
+          setFinalLeaderboard(event);
+          setCurrentQuestion(null);
+          setCurrentScores(null);
+          setGameState("ended");
+        });
+
+        // Subscribe to game ended events (from workflow - game complete, back to waiting)
+        gameClient.onGameEnded((event) => {
+          console.log("[GameScreen] Game ended, returning to waiting");
+          // Add final scores as a rich game results message
+          // Check for tie - find all players with rank 1
+          const topPlayers = event.leaderboard.filter(e => e.rank === 1);
+          const isTie = topPlayers.length > 1;
+          const tiedPlayers = topPlayers.map(e => e.username);
+          const winner = topPlayers[0]?.username || "Unknown";
+
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `game-ended-${Date.now()}`,
+              text: "Game Over",
+              timestamp: new Date(),
+              isSystem: true,
+              variant: "game-results",
+              gameResults: {
+                winner,
+                isTie,
+                tiedPlayers,
+                leaderboard: event.leaderboard.map(e => ({
+                  rank: e.rank,
+                  username: e.username,
+                  score: e.score,
+                })),
+              },
+            },
+          ]);
+          // Reset to waiting state
+          setPlayState("waiting_for_question");
+          setFinalLeaderboard(null);
+          setCurrentQuestion(null);
+          setCurrentScores(null);
+          setGameState("waiting");
         });
 
         // Subscribe to removed_from_game notifications via LobbyClient
@@ -618,10 +751,73 @@ export function GameScreen() {
           </div>
         </div>
 
-        {/* Chat Area */}
+        {/* Content Area */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+          {/* Gameplay UI - Question/Scores/Leaderboard */}
+          {gameState === "playing" && currentQuestion && (
+            <div className="flex-1 overflow-y-auto px-4 py-3">
+              <QuestionCard
+                data={{
+                  gameId: 0,
+                  questionIndex: currentQuestion.questionIndex,
+                  totalQuestions: currentQuestion.totalQuestions,
+                  question: currentQuestion.question,
+                  questionType: currentQuestion.questionType,
+                  options: currentQuestion.options,
+                  category: currentQuestion.category,
+                  difficulty: currentQuestion.difficulty,
+                  timerSeconds: currentQuestion.timerSeconds,
+                  delegate: currentQuestion.delegates[initData?.userId || ""] || {
+                    id: "",
+                    ack_url: "",
+                    fulfill_url: "",
+                    reject_url: "",
+                  },
+                }}
+              />
+            </div>
+          )}
+
+          {gameState === "playing" && currentScores && (
+            <div className="flex-1 overflow-y-auto px-4 py-3">
+              <ScoreCard
+                data={{
+                  gameId: 0,
+                  questionIndex: currentScores.questionIndex,
+                  totalQuestions: currentScores.totalQuestions,
+                  correctAnswer: currentScores.correctAnswer,
+                  yourAnswer: currentScores.scores.find(s => s.visibleUserId === initData?.userId)?.answer,
+                  yourPoints: currentScores.scores.find(s => s.visibleUserId === initData?.userId)?.points || 0,
+                  isCorrect: currentScores.scores.find(s => s.visibleUserId === initData?.userId)?.isCorrect || false,
+                  leaderboard: buildLeaderboard(currentScores.scores),
+                  isLastQuestion: currentScores.questionIndex === currentScores.totalQuestions - 1,
+                  isCreator: isCreator || false,
+                }}
+              />
+            </div>
+          )}
+
+          {(gameState === "ended" || playState === "viewing_leaderboard") && finalLeaderboard && (
+            <div className="flex-1 overflow-y-auto px-4 py-3">
+              <LeaderboardCard
+                data={{
+                  gameId: 0,
+                  leaderboard: finalLeaderboard.leaderboard.map(e => ({
+                    rank: e.rank,
+                    username: e.username,
+                    score: e.score,
+                  })),
+                  isCreator: isCreator || false,
+                  onClose: isCreator ? async () => {
+                    await gameClientRef.current?.closeGame();
+                  } : undefined,
+                }}
+              />
+            </div>
+          )}
+
+          {/* Messages (show in waiting state or when no gameplay UI) */}
+          <div className={`flex-1 overflow-y-auto px-4 py-3 space-y-3 ${gameState === "playing" && (currentQuestion || currentScores) ? "hidden" : ""} ${gameState === "ended" ? "hidden" : ""}`}>
             {messages.length === 0 ? (
               <div className="text-center text-gray-400 dark:text-gray-500 py-8">
                 No messages yet. Say hello!
@@ -629,6 +825,69 @@ export function GameScreen() {
             ) : (
               messages.map((msg) => {
                 if (msg.isSystem) {
+                  // Game results card
+                  if (msg.variant === "game-results" && msg.gameResults) {
+                    const getMedal = (rank: number) => {
+                      if (rank === 1) return "🥇";
+                      if (rank === 2) return "🥈";
+                      if (rank === 3) return "🥉";
+                      return `#${rank}`;
+                    };
+
+                    // Format the winner text based on tie status
+                    const getWinnerText = () => {
+                      if (!msg.gameResults) return "";
+                      if (msg.gameResults.isTie) {
+                        const players = msg.gameResults.tiedPlayers;
+                        if (players.length === 2) {
+                          return `${players[0]} & ${players[1]} tie!`;
+                        }
+                        // 3+ way tie
+                        const lastPlayer = players[players.length - 1];
+                        const otherPlayers = players.slice(0, -1).join(", ");
+                        return `${otherPlayers} & ${lastPlayer} tie!`;
+                      }
+                      return `${msg.gameResults.winner} wins!`;
+                    };
+
+                    return (
+                      <div key={msg.id} className="flex justify-center my-4">
+                        <div className="w-full max-w-sm bg-gradient-to-br from-amber-50 to-yellow-100 dark:from-amber-900/30 dark:to-yellow-900/20 rounded-2xl p-4 shadow-lg border border-amber-200 dark:border-amber-800">
+                          <div className="text-center mb-3">
+                            <div className="text-3xl mb-1">🏆</div>
+                            <div className="text-lg font-bold text-amber-800 dark:text-amber-200">
+                              Game Over
+                            </div>
+                            <div className="text-sm text-amber-600 dark:text-amber-400">
+                              {getWinnerText()}
+                            </div>
+                          </div>
+                          <div className="space-y-1.5">
+                            {msg.gameResults.leaderboard.slice(0, 5).map((entry) => (
+                              <div
+                                key={entry.username}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${
+                                  entry.rank === 1
+                                    ? "bg-amber-200/50 dark:bg-amber-700/30"
+                                    : "bg-white/50 dark:bg-gray-800/50"
+                                }`}
+                              >
+                                <span className="w-6 text-center">{getMedal(entry.rank)}</span>
+                                <span className="flex-1 font-medium text-gray-800 dark:text-gray-200 truncate">
+                                  {entry.username}
+                                </span>
+                                <span className="font-bold text-amber-700 dark:text-amber-300">
+                                  {entry.score}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Regular system message
                   const isError = msg.variant === "error";
                   return (
                     <div key={msg.id} className="flex justify-center">
@@ -710,12 +969,11 @@ export function GameScreen() {
               </>
             )}
 
-            {gameState === "playing" && (
-              <Composer
-                connected={true}
-                sendMessage={handleSendMessage}
-                composerPlaceholder="Type a message..."
-              />
+            {gameState === "playing" && playState === "waiting_for_question" && (
+              <div className="text-center py-4">
+                <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                <p className="text-gray-500 dark:text-gray-400">Waiting for question...</p>
+              </div>
             )}
 
             {gameState === "cancelled" && (

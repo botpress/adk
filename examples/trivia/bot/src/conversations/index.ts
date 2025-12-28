@@ -1,48 +1,7 @@
-import { Conversation, z } from "@botpress/runtime";
+import { Conversation } from "@botpress/runtime";
 import { lobbyHandler } from "./lobby";
 import { gameHostHandler } from "./game-host";
-import { PartialHandler } from "./types";
-
-/**
- * Player schema
- */
-const PlayerSchema = z.object({
-  visibleUserId: z.string(),
-  visibleConversationId: z.string(),
-  username: z.string(),
-  score: z.number().default(0),
-  isCreator: z.boolean().default(false),
-});
-
-export type Player = z.infer<typeof PlayerSchema>;
-export { PlayerSchema };
-
-/**
- * Game settings schema
- */
-const GameSettingsSchema = z.object({
-  categories: z.array(z.string()).default(["any"]),
-  difficulty: z.enum(["easy", "medium", "hard", "any"]).default("easy"),
-  questionCount: z.number().min(5).max(50).default(10),
-  scoreMethod: z
-    .enum(["first-right", "time-right", "all-right"])
-    .default("all-right"),
-  timerSeconds: z.number().min(10).max(60).default(20),
-});
-
-export type GameSettings = z.infer<typeof GameSettingsSchema>;
-export { GameSettingsSchema };
-
-/**
- * Conversation state for trivia game
- */
-const ConversationState = z.object({
-  // Game state (only for game conversations)
-  players: z.array(PlayerSchema).default([]),
-  settings: GameSettingsSchema.optional(),
-  questions: z.array(z.any()).default([]),
-  currentQuestionIndex: z.number().default(0),
-});
+import { ConversationState, PartialHandler } from "./types";
 
 /**
  * Partial handlers to process events in sequence.
