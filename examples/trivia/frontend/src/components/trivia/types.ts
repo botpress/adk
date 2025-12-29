@@ -70,6 +70,13 @@ export interface QuestionData {
   };
 }
 
+export interface PlayerAnswer {
+  username: string;
+  answer?: string;
+  isCorrect: boolean;
+  points: number;
+}
+
 export interface ScoreData {
   gameId: number;
   questionIndex: number;
@@ -79,6 +86,7 @@ export interface ScoreData {
   yourPoints: number;
   isCorrect: boolean;
   leaderboard: LeaderboardEntry[];
+  playerAnswers: PlayerAnswer[];
   isLastQuestion: boolean;
   isCreator: boolean;
 }

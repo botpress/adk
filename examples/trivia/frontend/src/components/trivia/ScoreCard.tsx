@@ -1,4 +1,5 @@
 import { useEffect, type FC } from "react";
+import confetti from "canvas-confetti";
 import type { ScoreData } from "./types";
 import { playCorrect, playWrong } from "../../lib/sounds";
 
@@ -15,14 +16,26 @@ const ScoreCard: FC<ScoreCardProps> = ({ data }) => {
     yourPoints,
     isCorrect,
     leaderboard,
+    playerAnswers,
     isLastQuestion,
     isCreator,
   } = data;
 
-  // Play sound effect on mount based on result
+  // Play sound effect and confetti on mount based on result
   useEffect(() => {
     if (isCorrect) {
       playCorrect();
+      // Fire confetti from both sides
+      confetti({
+        particleCount: 80,
+        spread: 60,
+        origin: { x: 0.1, y: 0.6 },
+      });
+      confetti({
+        particleCount: 80,
+        spread: 60,
+        origin: { x: 0.9, y: 0.6 },
+      });
     } else {
       playWrong();
     }
@@ -52,6 +65,29 @@ const ScoreCard: FC<ScoreCardProps> = ({ data }) => {
           </div>
         )}
       </div>
+
+      {/* Other players' answers */}
+      {playerAnswers.length > 0 && (
+        <div className="player-answers">
+          <div className="player-answers-header">Other players</div>
+          <div className="player-answers-list">
+            {playerAnswers.map((player) => (
+              <div
+                key={player.username}
+                className={`player-answer-row ${player.isCorrect ? "correct" : "incorrect"}`}
+              >
+                <span className="player-name">{player.username}</span>
+                <span className="player-answer-value">
+                  {player.answer || "No answer"}
+                </span>
+                <span className={`player-result ${player.isCorrect ? "correct" : "incorrect"}`}>
+                  {player.isCorrect ? "✓" : "✗"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Mini leaderboard */}
       <div className="score-leaderboard">

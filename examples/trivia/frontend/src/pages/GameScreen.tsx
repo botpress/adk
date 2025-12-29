@@ -38,6 +38,7 @@ import QuestionCard from "@/components/trivia/QuestionCard";
 import ScoreCard from "@/components/trivia/ScoreCard";
 import LeaderboardCard from "@/components/trivia/LeaderboardCard";
 import "@/components/trivia/trivia.css";
+import { playSubmit } from "@/lib/sounds";
 
 type Participant = ListParticipantsResponse["participants"][number];
 
@@ -463,6 +464,8 @@ export function GameScreen() {
         } catch (e) {
           console.warn("Failed to save settings:", e);
         }
+        // Play confirmation sound
+        playSubmit();
       }
     } else if (open) {
       // Drawer is opening - sync local settings with current settings
@@ -499,9 +502,10 @@ export function GameScreen() {
   }
 
   return (
-    <main className="h-dvh flex flex-col bg-gray-50 dark:bg-gray-950 overflow-hidden">
-      <div className="flex-1 flex flex-col w-full max-w-[750px] mx-auto min-h-0">
-        {/* Header */}
+    <main className="h-dvh flex flex-col bg-white dark:bg-gray-900 overflow-hidden">
+      <div className="relative flex-1 flex flex-col w-full max-w-[750px] mx-auto min-h-0 bg-white dark:bg-gray-900">
+        {/* Header - hidden during gameplay for more screen space */}
+        {gameState !== "playing" && (
         <header className="shrink-0 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3">
           <div className="flex items-center justify-between">
             <button
@@ -771,8 +775,23 @@ export function GameScreen() {
             )}
           </div>
         </header>
+        )}
 
-        {/* Participants Bar */}
+        {/* Minimal leave button during gameplay */}
+        {gameState === "playing" && (
+          <div className="absolute top-2 left-2 z-10">
+            <button
+              onClick={handleLeaveGame}
+              className="flex items-center gap-1 px-2 py-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-full border border-gray-200 dark:border-gray-700 transition-colors"
+            >
+              <ArrowLeft className="w-3 h-3" />
+              Leave
+            </button>
+          </div>
+        )}
+
+        {/* Participants Bar - hidden during gameplay */}
+        {gameState !== "playing" && (
         <div className="flex-shrink-0 px-4 py-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-x-auto">
           <div className="flex gap-2">
             {participants.map((participant) => {
@@ -809,6 +828,7 @@ export function GameScreen() {
             })}
           </div>
         </div>
+        )}
 
         {/* Content Area */}
         <div className="flex-1 flex flex-col min-h-0">
@@ -851,6 +871,14 @@ export function GameScreen() {
                   yourPoints: currentScores.scores.find(s => s.visibleUserId === initData?.userId)?.points || 0,
                   isCorrect: currentScores.scores.find(s => s.visibleUserId === initData?.userId)?.isCorrect || false,
                   leaderboard: buildLeaderboard(currentScores.scores),
+                  playerAnswers: currentScores.scores
+                    .filter(s => s.visibleUserId !== initData?.userId)
+                    .map(s => ({
+                      username: s.username,
+                      answer: s.answer,
+                      isCorrect: s.isCorrect,
+                      points: s.points,
+                    })),
                   isLastQuestion: currentScores.questionIndex === currentScores.totalQuestions - 1,
                   isCreator: isCreator || false,
                 }}
@@ -1001,7 +1029,7 @@ export function GameScreen() {
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 space-y-3">
+          <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] space-y-3">
             {gameState === "waiting" && (
               <>
                 <Composer

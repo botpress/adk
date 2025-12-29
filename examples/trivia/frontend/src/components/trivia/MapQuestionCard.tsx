@@ -261,7 +261,6 @@ const MapQuestionCard: FC<MapQuestionCardProps> = ({ data }) => {
             </Geographies>
           </ZoomableGroup>
         </ComposableMap>
-        <div className="map-hint">Pinch to zoom, drag to pan</div>
       </div>
 
       {/* Answer controls - Multiple choice from options */}

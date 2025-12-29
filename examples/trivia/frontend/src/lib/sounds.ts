@@ -9,7 +9,22 @@ function getAudioContext(): AudioContext {
   if (!audioContext) {
     audioContext = new AudioContext();
   }
+  // Resume if suspended (required for mobile browsers after user interaction)
+  if (audioContext.state === "suspended") {
+    audioContext.resume();
+  }
   return audioContext;
+}
+
+/**
+ * Initialize audio context - call this on first user interaction
+ * Mobile browsers require user gesture to enable audio
+ */
+export function initAudio(): void {
+  const ctx = getAudioContext();
+  if (ctx.state === "suspended") {
+    ctx.resume();
+  }
 }
 
 function playTone(
