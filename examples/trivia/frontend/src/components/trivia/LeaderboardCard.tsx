@@ -68,6 +68,26 @@ const LeaderboardCard: FC<LeaderboardCardProps> = ({ data }) => {
           </button>
         )}
       </div>
+
+      {/* Attribution */}
+      <div className="leaderboard-attribution">
+        Trivia questions from{" "}
+        <a
+          href="https://opentdb.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Open Trivia Database
+        </a>
+        , licensed under{" "}
+        <a
+          href="https://creativecommons.org/licenses/by-sa/4.0/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          CC BY-SA 4.0
+        </a>
+      </div>
     </div>
   );
 };

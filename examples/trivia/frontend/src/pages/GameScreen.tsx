@@ -37,6 +37,7 @@ import "@botpress/webchat/style.css";
 import QuestionCard from "@/components/trivia/QuestionCard";
 import ScoreCard from "@/components/trivia/ScoreCard";
 import LeaderboardCard from "@/components/trivia/LeaderboardCard";
+import GameStartSplash from "@/components/trivia/GameStartSplash";
 import "@/components/trivia/trivia.css";
 import { playSubmit } from "@/lib/sounds";
 
@@ -117,6 +118,8 @@ export function GameScreen() {
   const [currentQuestion, setCurrentQuestion] = useState<QuestionStartEvent | null>(null);
   const [currentScores, setCurrentScores] = useState<QuestionScoresEvent | null>(null);
   const [finalLeaderboard, setFinalLeaderboard] = useState<GameScoresEvent | null>(null);
+  const [showSplash, setShowSplash] = useState(false);
+  const [splashSettings, setSplashSettings] = useState<GameSettings | null>(null);
 
   const gameClientRef = useRef<GameClient | null>(null);
   const hasInitialized = useRef(false);
@@ -168,6 +171,15 @@ export function GameScreen() {
           setSettings(data.settings);
         }
         setGameState(data.status);
+
+        // If this user is the creator, apply cached settings from localStorage
+        const userIsCreator = data.userId === data.creatorUserId;
+        if (userIsCreator && data.status === "waiting") {
+          const cachedSettings = getSavedSettings();
+          setSettings(cachedSettings);
+          setLocalSettings(cachedSettings);
+          gameClient.updateSettings(cachedSettings);
+        }
 
         // Find creator from initial messages by looking for participant_added with isCreator: true
         const { getWebchatClient } = await import("@/lib/webchat");
@@ -274,9 +286,12 @@ export function GameScreen() {
         });
 
         // Subscribe to game started event
-        gameClient.onGameStarted(() => {
-          console.log("[GameScreen] Game started!");
+        gameClient.onGameStarted((gameSettings) => {
+          console.log("[GameScreen] Game started with settings:", gameSettings);
           setGameState("playing");
+          // Show splash screen with settings
+          setSplashSettings(gameSettings);
+          setShowSplash(true);
           setMessages((prev) => [
             ...prev,
             {
@@ -855,8 +870,18 @@ export function GameScreen() {
 
         {/* Content Area */}
         <div className="flex-1 flex flex-col min-h-0">
+          {/* Splash Screen - shown when game starts */}
+          {gameState === "playing" && showSplash && splashSettings && (
+            <div className="flex-1 overflow-y-auto">
+              <GameStartSplash
+                settings={splashSettings}
+                onComplete={() => setShowSplash(false)}
+              />
+            </div>
+          )}
+
           {/* Gameplay UI - Question/Scores/Leaderboard */}
-          {gameState === "playing" && currentQuestion && (
+          {gameState === "playing" && !showSplash && currentQuestion && (
             <div className="flex-1 overflow-y-auto px-4 py-3">
               <QuestionCard
                 data={{
@@ -883,7 +908,7 @@ export function GameScreen() {
             </div>
           )}
 
-          {gameState === "playing" && currentScores && (
+          {gameState === "playing" && !showSplash && currentScores && (
             <div className="flex-1 overflow-y-auto px-4 py-3">
               <ScoreCard
                 data={{
@@ -1082,7 +1107,7 @@ export function GameScreen() {
               </>
             )}
 
-            {gameState === "playing" && playState === "waiting_for_question" && (
+            {gameState === "playing" && !showSplash && playState === "waiting_for_question" && (
               <div className="text-center py-4">
                 <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                 <p className="text-gray-500 dark:text-gray-400">Waiting for question...</p>

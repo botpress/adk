@@ -179,6 +179,13 @@ export default new Workflow({
     state.questions = questions;
 
     // ========================================
+    // STEP: Wait for splash screen countdown (5 seconds)
+    // ========================================
+    console.log("[PlayQuiz] Waiting 5 seconds for splash screen countdown...");
+    await step.sleep("splash-countdown", 5000);
+    console.log("[PlayQuiz] Splash countdown complete, starting questions");
+
+    // ========================================
     // Loop over each question
     // ========================================
     for (let i = 0; i < questions.length; i++) {

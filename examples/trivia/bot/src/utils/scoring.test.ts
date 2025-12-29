@@ -380,16 +380,19 @@ describe("scoring utility", () => {
           const bob = scores.find((s) => s.username === "Bob")!;
           const charlie = scores.find((s) => s.username === "Charlie")!;
 
-          // Alice should have highest points (answered in 2s of 20s = 90% time remaining)
-          expect(alice.points).toBe(90);
+          // New scoring: 100 pts if <=1.5s, 25 pts at timer limit, linear scale between
+          // Alice answered in 2s (just above 1.5s threshold)
+          // timeRange = 20000-1500 = 18500ms, timeInRange = 500ms, ratio ≈ 0.973
+          // points = 25 + 0.973 * 75 ≈ 98
+          expect(alice.points).toBe(98);
           expect(alice.isCorrect).toBe(true);
 
-          // Bob answered in 10s of 20s = 50% time remaining
-          expect(bob.points).toBe(50);
+          // Bob answered in 10s: timeInRange = 8500ms, ratio ≈ 0.541, points ≈ 66
+          expect(bob.points).toBe(66);
           expect(bob.isCorrect).toBe(true);
 
-          // Charlie answered in 18s of 20s = 10% time remaining
-          expect(charlie.points).toBe(10);
+          // Charlie answered in 18s: timeInRange = 16500ms, ratio ≈ 0.108, points ≈ 33
+          expect(charlie.points).toBe(33);
           expect(charlie.isCorrect).toBe(true);
 
           // Verify ordering
@@ -436,8 +439,8 @@ describe("scoring utility", () => {
             timerSeconds
           );
 
-          // At exactly the limit, ratio = 0, so 0 points
-          expect(scores[0].points).toBe(0);
+          // At exactly the limit, ratio = 0, so minimum points (25)
+          expect(scores[0].points).toBe(25);
           expect(scores[0].isCorrect).toBe(true);
         });
       });

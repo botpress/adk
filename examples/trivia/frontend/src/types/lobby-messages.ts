@@ -99,6 +99,7 @@ export type GameSettingsUpdatedEvent = {
 
 export type GameStartedEvent = {
   type: "game_started";
+  settings: GameSettings;
 };
 
 export type GameCancelledEvent = {

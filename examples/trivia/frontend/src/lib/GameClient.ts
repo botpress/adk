@@ -23,7 +23,7 @@ type ParticipantsChangedHandler = (
   event?: GameEvent
 ) => void;
 type SettingsChangedHandler = (settings: GameSettings) => void;
-type GameStartedHandler = () => void;
+type GameStartedHandler = (settings: GameSettings) => void;
 type GameCancelledHandler = () => void;
 type QuestionStartHandler = (event: QuestionStartEvent) => void;
 type QuestionScoresHandler = (event: QuestionScoresEvent) => void;
@@ -237,8 +237,8 @@ class GameClient {
 
           // Handle game started event
           if (gameEvent.type === "game_started") {
-            console.log("[GameClient] Game started!");
-            this.gameStartedHandlers.forEach((handler) => handler());
+            console.log("[GameClient] Game started with settings:", gameEvent.settings);
+            this.gameStartedHandlers.forEach((handler) => handler(gameEvent.settings));
             // Don't forward to message handlers
             return;
           }

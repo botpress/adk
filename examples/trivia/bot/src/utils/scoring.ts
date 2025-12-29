@@ -342,7 +342,10 @@ async function scoreFirstRight(
 
 /**
  * Score answers using "time-right" method
- * Points proportional to speed (faster = more points, max 100)
+ * Points proportional to speed (faster = more points)
+ * - Answer within 1.5s = 100 points (max)
+ * - Answer at timer limit = 25 points (min)
+ * - Linear scale between 1.5s and timer limit
  */
 async function scoreTimeRight(
   answers: PlayerAnswer[],
@@ -351,6 +354,9 @@ async function scoreTimeRight(
   timerSeconds: number
 ): Promise<ScoredAnswer[]> {
   const maxTimeMs = timerSeconds * 1000;
+  const maxPointsThresholdMs = 1500; // 1.5 seconds for max points
+  const maxPoints = 100;
+  const minPoints = 25;
 
   const evaluations = await Promise.all(
     answers.map(async (a) => ({
@@ -371,10 +377,23 @@ async function scoreTimeRight(
       };
     }
 
-    // Calculate points based on time (faster = more points)
+    // Calculate points based on time
     const timeMs = a.timeToAnswerMs || maxTimeMs;
-    const ratio = Math.max(0, 1 - timeMs / maxTimeMs);
-    const points = Math.round(ratio * 100 * a.evaluation.similarity);
+    let points: number;
+
+    if (timeMs <= maxPointsThresholdMs) {
+      // Answer within 1.5s gets max points
+      points = maxPoints;
+    } else {
+      // Linear scale from 100 (at 1.5s) to 25 (at maxTime)
+      const timeRange = maxTimeMs - maxPointsThresholdMs;
+      const timeInRange = timeMs - maxPointsThresholdMs;
+      const ratio = Math.max(0, 1 - timeInRange / timeRange);
+      points = Math.round(minPoints + ratio * (maxPoints - minPoints));
+    }
+
+    // Apply similarity factor for partial matches
+    points = Math.round(points * a.evaluation.similarity);
 
     return {
       visibleUserId: a.visibleUserId,

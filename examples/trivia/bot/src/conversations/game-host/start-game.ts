@@ -10,6 +10,13 @@ export type StartGameRequest = z.infer<typeof StartGameRequestSchema>;
 
 export type GameStartedEvent = {
   type: "game_started";
+  settings: {
+    categories: string[];
+    difficulties: ("easy" | "medium" | "hard")[];
+    questionCount: number;
+    scoreMethod: "first-right" | "time-right" | "all-right";
+    timerSeconds: number;
+  };
 };
 
 export async function handleStartGame(
@@ -87,7 +94,16 @@ export async function handleStartGame(
   console.log("[GameHost] Started workflow:", props.state.game.workflow.id);
 
   // Broadcast game_started event to all participants
-  const event: GameStartedEvent = { type: "game_started" };
+  const event: GameStartedEvent = {
+    type: "game_started",
+    settings: {
+      categories: settings.categories,
+      difficulties: settings.difficulties,
+      questionCount: settings.questionCount,
+      scoreMethod: settings.scoreMethod,
+      timerSeconds: settings.timerSeconds,
+    },
+  };
 
   await client.createMessage({
     conversationId: conversation.id,
