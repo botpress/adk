@@ -5,23 +5,32 @@
  */
 
 import {
-  COUNTRIES,
-  getRandomCountries,
-  getRandomIncorrectCountries,
   ALPHA2_TO_ALPHA3,
+  COUNTRIES,
+  getRandomIncorrectCountries,
   type CountryData,
 } from "./countries";
+
+// Timer settings
+const BASE_TIMER_SECONDS = 20;
+const TEXT_INPUT_EXTRA_SECONDS = 5;
 
 /**
  * Extended question type that includes custom geography questions
  */
 export interface CustomQuestion {
   text: string;
-  type: "true_false" | "multiple_choice" | "text_input" | "map_country" | "flag_country";
+  type:
+    | "true_false"
+    | "multiple_choice"
+    | "text_input"
+    | "map_country"
+    | "flag_country";
   correctAnswer: string;
   options?: string[];
   category?: string;
   difficulty?: string;
+  timerSeconds?: number; // Per-question timer (text input gets extra time)
   // For map questions
   mapData?: {
     countryCode: string; // ISO alpha-2 for flag lookup
@@ -34,6 +43,17 @@ export interface CustomQuestion {
     countryCode: string; // ISO alpha-2 for flagpedia
     flagUrl: string;
   };
+}
+
+/**
+ * Calculate timer seconds based on question type
+ * Text input questions get extra time
+ */
+function getTimerForQuestion(
+  hasOptions: boolean,
+  baseTimer: number = BASE_TIMER_SECONDS
+): number {
+  return hasOptions ? baseTimer : baseTimer + TEXT_INPUT_EXTRA_SECONDS;
 }
 
 /**
@@ -51,39 +71,62 @@ function shuffleArray<T>(array: T[]): T[] {
 /**
  * Get flag URL from flagpedia/flagcdn
  */
-function getFlagUrl(countryCode: string, size: "w80" | "w160" | "w320" = "w320"): string {
+function getFlagUrl(
+  countryCode: string,
+  size: "w80" | "w160" | "w320" = "w320"
+): string {
   return `https://flagcdn.com/${size}/${countryCode}.png`;
 }
 
 /**
  * Generate a "guess the country on the map" question
- * Easy = multiple choice, Medium/Hard = free text input
+ * 50% chance of multiple choice, 50% chance of free text input
  */
-export function generateMapQuestion(difficulty: "easy" | "medium" | "hard" = "medium"): CustomQuestion {
+export function generateMapQuestion(
+  difficulty: "easy" | "medium" | "hard" = "medium"
+): CustomQuestion {
   // Select countries based on difficulty
   let eligibleCountries: CountryData[];
 
   if (difficulty === "easy") {
     // Well-known, large countries with distinctive shapes
     const easyCountryCodes = [
-      "us", "ca", "br", "au", "ru", "cn", "in", "jp",
-      "fr", "it", "es", "gb", "de", "mx", "eg", "za"
+      "us",
+      "ca",
+      "br",
+      "au",
+      "ru",
+      "cn",
+      "in",
+      "jp",
+      "fr",
+      "it",
+      "es",
+      "gb",
+      "de",
+      "mx",
+      "eg",
+      "za",
     ];
-    eligibleCountries = COUNTRIES.filter(c => easyCountryCodes.includes(c.code));
+    eligibleCountries = COUNTRIES.filter((c) =>
+      easyCountryCodes.includes(c.code)
+    );
   } else if (difficulty === "hard") {
     // All countries including smaller/less known ones
     eligibleCountries = COUNTRIES;
   } else {
     // Medium: exclude very small countries
     const smallCountryCodes = ["sg", "mt", "lu", "qa", "cy"];
-    eligibleCountries = COUNTRIES.filter(c => !smallCountryCodes.includes(c.code));
+    eligibleCountries = COUNTRIES.filter(
+      (c) => !smallCountryCodes.includes(c.code)
+    );
   }
 
   const randomCountries = shuffleArray(eligibleCountries);
   const country = randomCountries[0];
 
-  // Easy = multiple choice options, Medium/Hard = free text (no options)
-  const useMultipleChoice = difficulty === "easy";
+  // 50% chance of multiple choice vs free text
+  const useMultipleChoice = difficulty === "easy" ? true : Math.random() < 0.5;
 
   const baseQuestion: CustomQuestion = {
     text: useMultipleChoice
@@ -93,20 +136,22 @@ export function generateMapQuestion(difficulty: "easy" | "medium" | "hard" = "me
     correctAnswer: country.name,
     category: "Geography",
     difficulty,
+    timerSeconds: getTimerForQuestion(useMultipleChoice),
     mapData: {
       countryCode: country.code,
-      countryAlpha3: ALPHA2_TO_ALPHA3[country.code] || country.code.toUpperCase(),
+      countryAlpha3:
+        ALPHA2_TO_ALPHA3[country.code] || country.code.toUpperCase(),
       center: country.center,
       zoom: country.zoom,
     },
   };
 
-  // Only add options for easy difficulty
+  // Add options for multiple choice
   if (useMultipleChoice) {
     const incorrectCountries = getRandomIncorrectCountries(country, 3);
     baseQuestion.options = shuffleArray([
       country.name,
-      ...incorrectCountries.map(c => c.name)
+      ...incorrectCountries.map((c) => c.name),
     ]);
   }
 
@@ -115,20 +160,45 @@ export function generateMapQuestion(difficulty: "easy" | "medium" | "hard" = "me
 
 /**
  * Generate a "guess the country by its flag" question
- * Easy = multiple choice, Medium/Hard = free text input
+ * 50% chance of multiple choice, 50% chance of free text input
  */
-export function generateFlagQuestion(difficulty: "easy" | "medium" | "hard" = "medium"): CustomQuestion {
+export function generateFlagQuestion(
+  difficulty: "easy" | "medium" | "hard" = "medium"
+): CustomQuestion {
   // Select countries based on difficulty
   let eligibleCountries: CountryData[];
 
   if (difficulty === "easy") {
     // Countries with very distinctive flags
     const easyCountryCodes = [
-      "us", "ca", "br", "jp", "gb", "fr", "de", "it", "es",
-      "mx", "cn", "in", "au", "nz", "za", "ch", "se", "no",
-      "dk", "gr", "tr", "kr", "ar", "cl"
+      "us",
+      "ca",
+      "br",
+      "jp",
+      "gb",
+      "fr",
+      "de",
+      "it",
+      "es",
+      "mx",
+      "cn",
+      "in",
+      "au",
+      "nz",
+      "za",
+      "ch",
+      "se",
+      "no",
+      "dk",
+      "gr",
+      "tr",
+      "kr",
+      "ar",
+      "cl",
     ];
-    eligibleCountries = COUNTRIES.filter(c => easyCountryCodes.includes(c.code));
+    eligibleCountries = COUNTRIES.filter((c) =>
+      easyCountryCodes.includes(c.code)
+    );
   } else if (difficulty === "hard") {
     // All countries, including similar-looking flags
     eligibleCountries = COUNTRIES;
@@ -140,8 +210,8 @@ export function generateFlagQuestion(difficulty: "easy" | "medium" | "hard" = "m
   const randomCountries = shuffleArray(eligibleCountries);
   const correctCountry = randomCountries[0];
 
-  // Easy = multiple choice options, Medium/Hard = free text (no options)
-  const useMultipleChoice = difficulty === "easy";
+  // 50% chance of multiple choice vs free text
+  const useMultipleChoice = difficulty === "easy" ? true : Math.random() < 0.5;
 
   const baseQuestion: CustomQuestion = {
     text: useMultipleChoice
@@ -151,18 +221,19 @@ export function generateFlagQuestion(difficulty: "easy" | "medium" | "hard" = "m
     correctAnswer: correctCountry.name,
     category: "Geography",
     difficulty,
+    timerSeconds: getTimerForQuestion(useMultipleChoice),
     flagData: {
       countryCode: correctCountry.code,
       flagUrl: getFlagUrl(correctCountry.code),
     },
   };
 
-  // Only add options for easy difficulty
+  // Add options for multiple choice
   if (useMultipleChoice) {
     const incorrectCountries = getRandomIncorrectCountries(correctCountry, 3);
     baseQuestion.options = shuffleArray([
       correctCountry.name,
-      ...incorrectCountries.map(c => c.name)
+      ...incorrectCountries.map((c) => c.name),
     ]);
   }
 
@@ -181,9 +252,13 @@ export function generateGeographyQuestions(opts: {
   const { count, difficulty = "medium", mapPercentage = 0.5 } = opts;
   const questions: CustomQuestion[] = [];
 
-  const actualDifficulty = difficulty === "any"
-    ? ["easy", "medium", "hard"][Math.floor(Math.random() * 3)] as "easy" | "medium" | "hard"
-    : difficulty;
+  const actualDifficulty =
+    difficulty === "any"
+      ? (["easy", "medium", "hard"][Math.floor(Math.random() * 3)] as
+          | "easy"
+          | "medium"
+          | "hard")
+      : difficulty;
 
   // Track used countries to avoid repeats
   const usedCountryCodes = new Set<string>();
@@ -192,9 +267,13 @@ export function generateGeographyQuestions(opts: {
     const isMapQuestion = Math.random() < mapPercentage;
 
     // For varying difficulty within "any" mode
-    const questionDifficulty = difficulty === "any"
-      ? ["easy", "medium", "hard"][Math.floor(Math.random() * 3)] as "easy" | "medium" | "hard"
-      : actualDifficulty;
+    const questionDifficulty =
+      difficulty === "any"
+        ? (["easy", "medium", "hard"][Math.floor(Math.random() * 3)] as
+            | "easy"
+            | "medium"
+            | "hard")
+        : actualDifficulty;
 
     let question: CustomQuestion;
     let attempts = 0;
@@ -214,7 +293,8 @@ export function generateGeographyQuestions(opts: {
     );
 
     // Track the country code used
-    const countryCode = question.mapData?.countryCode || question.flagData?.countryCode;
+    const countryCode =
+      question.mapData?.countryCode || question.flagData?.countryCode;
     if (countryCode) {
       usedCountryCodes.add(countryCode);
     }

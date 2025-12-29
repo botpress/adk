@@ -10,6 +10,7 @@ export interface Question {
   options?: string[];
   category?: string;
   difficulty?: string;
+  timerSeconds?: number; // Per-question timer (text input gets extra time)
   // For map questions (guess the highlighted country)
   mapData?: {
     countryCode: string; // ISO alpha-2 for flag lookup

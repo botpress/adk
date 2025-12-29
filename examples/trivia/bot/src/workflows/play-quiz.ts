@@ -22,6 +22,7 @@ const QuestionSchema = z.object({
   options: z.array(z.string()).optional(),
   category: z.string().optional(),
   difficulty: z.string().optional(),
+  timerSeconds: z.number().optional(),
   // For map questions
   mapData: z.object({
     countryCode: z.string(),
@@ -292,6 +293,9 @@ export default new Workflow({
         { maxAttempts: STEP_MAX_ATTEMPTS }
       );
 
+      // Use question-specific timer if available, otherwise use settings
+      const questionTimer = question.timerSeconds ?? settings.timerSeconds;
+
       // Create delegates for all players
       const delegates = await step(
         `question-${i}-create-delegates`,
@@ -312,7 +316,7 @@ export default new Workflow({
                   gameConversationId,
                 },
                 schema: AnswerSchema.toJSONSchema(),
-                ttl: settings.timerSeconds + 10,
+                ttl: questionTimer + 10,
                 ack: 5,
                 subscribe: true,
               });
@@ -380,7 +384,7 @@ export default new Workflow({
                 options: question.options,
                 category: question.category,
                 difficulty: question.difficulty,
-                timerSeconds: settings.timerSeconds,
+                timerSeconds: questionTimer,
                 delegates: delegateMap,
                 // Include map/flag data for geography questions
                 mapData: question.mapData,
@@ -398,12 +402,12 @@ export default new Workflow({
       // Wait for timer to expire
       console.log(
         "[PlayQuiz] Waiting",
-        settings.timerSeconds,
+        questionTimer,
         "seconds for answers..."
       );
       await step.sleep(
         `question-${i}-wait-timer`,
-        settings.timerSeconds * 1000
+        questionTimer * 1000
       );
       console.log("[PlayQuiz] Timer expired");
 
@@ -463,7 +467,7 @@ export default new Workflow({
             question.correctAnswer,
             question.type,
             settings.scoreMethod,
-            settings.timerSeconds
+            questionTimer
           );
 
           for (const s of computed) {

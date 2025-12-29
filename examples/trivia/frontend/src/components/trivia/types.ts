@@ -55,6 +55,7 @@ export interface QuestionData {
   category?: string;
   difficulty?: string;
   timerSeconds: number;
+  language?: string;
   delegate: Delegate;
   // For map questions (guess the highlighted country)
   mapData?: {

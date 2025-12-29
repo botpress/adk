@@ -846,6 +846,7 @@ export function GameScreen() {
                   category: currentQuestion.category,
                   difficulty: currentQuestion.difficulty,
                   timerSeconds: currentQuestion.timerSeconds,
+                  language: settings.language,
                   delegate: currentQuestion.delegates[initData?.userId || ""] || {
                     id: "",
                     ack_url: "",

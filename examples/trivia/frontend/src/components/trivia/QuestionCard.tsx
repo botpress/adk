@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type FC } from "react";
+import { useState, useEffect, useRef, useCallback, type FC } from "react";
 import type { QuestionData } from "./types";
 import {
   playTimerTick,
@@ -8,6 +8,22 @@ import {
 } from "../../lib/sounds";
 import MapQuestionCard from "./MapQuestionCard";
 import FlagQuestionCard from "./FlagQuestionCard";
+
+// Translations for True/False answers by language
+const TRUE_FALSE_TRANSLATIONS: Record<string, { true: string; false: string }> = {
+  english: { true: "True", false: "False" },
+  french: { true: "Vrai", false: "Faux" },
+  spanish: { true: "Verdadero", false: "Falso" },
+  german: { true: "Wahr", false: "Falsch" },
+  italian: { true: "Vero", false: "Falso" },
+  portuguese: { true: "Verdadeiro", false: "Falso" },
+  dutch: { true: "Waar", false: "Onwaar" },
+  polish: { true: "Prawda", false: "Fałsz" },
+  russian: { true: "Правда", false: "Ложь" },
+  japanese: { true: "正しい", false: "間違い" },
+  chinese: { true: "对", false: "错" },
+  korean: { true: "참", false: "거짓" },
+};
 
 interface QuestionCardProps {
   data: QuestionData;
@@ -22,6 +38,12 @@ const QuestionCard: FC<QuestionCardProps> = ({ data }) => {
   if (data.questionType === "flag_country") {
     return <FlagQuestionCard data={data} />;
   }
+
+  return <StandardQuestionCard data={data} />;
+};
+
+// Separate component for standard questions to avoid conditional hooks
+const StandardQuestionCard: FC<QuestionCardProps> = ({ data }) => {
   const {
     questionIndex,
     totalQuestions,
@@ -31,15 +53,17 @@ const QuestionCard: FC<QuestionCardProps> = ({ data }) => {
     category,
     difficulty,
     timerSeconds,
+    language = "english",
     delegate,
   } = data;
 
+  // Timer is set per-question by the backend (already includes extra time for text input)
   const [timeLeft, setTimeLeft] = useState(timerSeconds);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [textAnswer, setTextAnswer] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isExpired, setIsExpired] = useState(false);
-  const displayTimeRef = useRef(Date.now());
+  const displayTimeRef = useRef<number>(0);
   const hasAckedRef = useRef(false);
 
   // Acknowledge delegate on mount and play question start sound
@@ -47,7 +71,7 @@ const QuestionCard: FC<QuestionCardProps> = ({ data }) => {
     if (!hasAckedRef.current && delegate.ack_url) {
       hasAckedRef.current = true;
       fetch(delegate.ack_url, { method: "POST" }).catch(console.error);
-      displayTimeRef.current = Date.now();
+      displayTimeRef.current = performance.now();
       playQuestionStart();
     }
   }, [delegate.ack_url]);
@@ -76,10 +100,10 @@ const QuestionCard: FC<QuestionCardProps> = ({ data }) => {
     return () => clearInterval(interval);
   }, [isExpired]);
 
-  const submitAnswer = async (answer: string) => {
+  const submitAnswer = useCallback(async (answer: string) => {
     if (isSubmitted || isExpired) return;
 
-    const timeToAnswerMs = Date.now() - displayTimeRef.current;
+    const timeToAnswerMs = Math.round(performance.now() - displayTimeRef.current);
     setSelectedAnswer(answer);
     setIsSubmitted(true);
     playSubmit();
@@ -93,7 +117,7 @@ const QuestionCard: FC<QuestionCardProps> = ({ data }) => {
     } catch (error) {
       console.error("Failed to submit answer:", error);
     }
-  };
+  }, [isSubmitted, isExpired, delegate.fulfill_url]);
 
   const handleTextSubmit = () => {
     if (textAnswer.trim()) {
@@ -102,6 +126,9 @@ const QuestionCard: FC<QuestionCardProps> = ({ data }) => {
   };
 
   const progress = (timeLeft / timerSeconds) * 100;
+
+  // Get translated True/False labels
+  const tfLabels = TRUE_FALSE_TRANSLATIONS[language] || TRUE_FALSE_TRANSLATIONS.english;
   const isLowTime = timeLeft <= 5;
 
   return (
@@ -150,16 +177,16 @@ const QuestionCard: FC<QuestionCardProps> = ({ data }) => {
         ) : questionType === "true_false" ? (
           <div className="answer-buttons tf-buttons">
             <button
-              className={`answer-btn true-btn ${selectedAnswer === "True" ? "selected" : ""}`}
-              onClick={() => submitAnswer("True")}
+              className={`answer-btn true-btn ${selectedAnswer === tfLabels.true ? "selected" : ""}`}
+              onClick={() => submitAnswer(tfLabels.true)}
             >
-              True
+              {tfLabels.true}
             </button>
             <button
-              className={`answer-btn false-btn ${selectedAnswer === "False" ? "selected" : ""}`}
-              onClick={() => submitAnswer("False")}
+              className={`answer-btn false-btn ${selectedAnswer === tfLabels.false ? "selected" : ""}`}
+              onClick={() => submitAnswer(tfLabels.false)}
             >
-              False
+              {tfLabels.false}
             </button>
           </div>
         ) : questionType === "multiple_choice" && options ? (
