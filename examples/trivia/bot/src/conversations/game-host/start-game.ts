@@ -54,7 +54,7 @@ export async function handleStartGame(
   // Get game settings from conversation state
   const settings = props.state.settings ?? {
     categories: ["any"],
-    difficulty: "easy" as const,
+    difficulties: ["easy"] as ("easy" | "medium" | "hard")[],
     language: "english",
     questionCount: 10,
     scoreMethod: "all-right" as const,

@@ -155,15 +155,182 @@ export function getRandomCountries(count: number): CountryData[] {
 }
 
 /**
+ * Countries that are commonly confused with each other
+ * - Geographically close neighbors
+ * - Similar shapes on maps
+ * - Similar names
+ * - Similar flags
+ */
+const CONFUSING_COUNTRIES: Record<string, string[]> = {
+  // Europe - neighboring countries and similar shapes
+  fr: ["de", "es", "it", "be", "ch", "gb", "pt", "nl"], // France neighbors
+  de: ["fr", "pl", "at", "cz", "nl", "be", "ch", "dk"], // Germany neighbors
+  it: ["fr", "ch", "at", "gr", "es", "hr"], // Italy neighbors
+  es: ["pt", "fr", "it", "ma", "gr"], // Spain neighbors + similar
+  gb: ["ie", "fr", "nl", "de", "dk"], // UK neighbors + similar
+  pt: ["es", "fr", "br", "it"], // Portugal + similar
+  nl: ["be", "de", "dk", "gb", "lu"], // Netherlands neighbors
+  be: ["nl", "de", "fr", "lu", "gb"], // Belgium neighbors
+  ch: ["de", "fr", "it", "at", "li"], // Switzerland neighbors
+  at: ["de", "ch", "it", "hu", "cz", "sk"], // Austria neighbors
+  pl: ["de", "cz", "sk", "ua", "lt", "by"], // Poland neighbors
+  cz: ["de", "at", "sk", "pl", "hu"], // Czech Republic neighbors
+  se: ["no", "fi", "dk", "ee"], // Sweden neighbors
+  no: ["se", "fi", "dk", "is"], // Norway neighbors
+  fi: ["se", "no", "ru", "ee"], // Finland neighbors
+  dk: ["se", "no", "de", "gb", "nl"], // Denmark neighbors
+  ie: ["gb", "fr", "nl", "is"], // Ireland + similar
+  gr: ["tr", "bg", "it", "cy", "al"], // Greece neighbors
+  hu: ["at", "sk", "ro", "rs", "hr", "ua"], // Hungary neighbors
+  ro: ["hu", "bg", "ua", "md", "rs"], // Romania neighbors
+  ua: ["ru", "pl", "ro", "hu", "by", "md"], // Ukraine neighbors
+  bg: ["ro", "gr", "tr", "rs", "mk"], // Bulgaria neighbors
+  hr: ["si", "hu", "rs", "ba", "it"], // Croatia neighbors
+  sk: ["cz", "pl", "hu", "at", "ua"], // Slovakia neighbors
+  rs: ["hr", "hu", "ro", "bg", "ba", "me", "mk"], // Serbia neighbors
+
+  // North America
+  us: ["ca", "mx", "br", "au"], // US neighbors + commonly confused
+  ca: ["us", "ru", "au", "br"], // Canada + similar large countries
+  mx: ["us", "gt", "bz", "cu", "co"], // Mexico neighbors
+
+  // Central America & Caribbean - often confused
+  gt: ["mx", "bz", "hn", "sv", "cr"], // Guatemala neighbors
+  cu: ["jm", "ht", "do", "pr", "mx"], // Cuba + Caribbean
+  jm: ["cu", "ht", "do", "pr", "tt"], // Jamaica + Caribbean
+  pa: ["cr", "co", "ni", "hn"], // Panama neighbors
+  cr: ["pa", "ni", "gt", "co"], // Costa Rica neighbors
+
+  // South America - neighbors and similar shapes
+  br: ["ar", "co", "pe", "ve", "py", "uy", "bo", "ec"], // Brazil neighbors
+  ar: ["cl", "br", "py", "uy", "bo"], // Argentina neighbors
+  co: ["ve", "br", "ec", "pe", "pa"], // Colombia neighbors
+  cl: ["ar", "pe", "bo", "br"], // Chile neighbors
+  pe: ["ec", "co", "br", "bo", "cl"], // Peru neighbors
+  ve: ["co", "br", "gy", "tt"], // Venezuela neighbors
+  ec: ["co", "pe", "br"], // Ecuador neighbors
+  bo: ["pe", "br", "py", "ar", "cl"], // Bolivia neighbors
+  py: ["ar", "br", "bo", "uy"], // Paraguay neighbors
+  uy: ["ar", "br", "py"], // Uruguay neighbors
+
+  // Asia - neighbors and commonly confused
+  cn: ["jp", "kr", "in", "ru", "mn", "vn", "th"], // China + neighbors
+  jp: ["kr", "cn", "tw", "ph"], // Japan + nearby
+  kr: ["jp", "cn", "kp", "tw"], // South Korea + nearby
+  in: ["pk", "bd", "np", "lk", "cn", "mm"], // India neighbors
+  id: ["my", "ph", "au", "th", "sg", "pg"], // Indonesia neighbors
+  th: ["my", "mm", "la", "kh", "vn"], // Thailand neighbors
+  vn: ["th", "la", "kh", "cn", "ph"], // Vietnam neighbors
+  my: ["id", "th", "sg", "ph", "bn"], // Malaysia neighbors
+  ph: ["id", "my", "tw", "jp", "vn"], // Philippines neighbors
+  sg: ["my", "id", "th", "bn"], // Singapore neighbors
+  pk: ["in", "af", "ir", "cn", "bd"], // Pakistan neighbors
+  bd: ["in", "mm", "np", "pk"], // Bangladesh neighbors
+  np: ["in", "cn", "bd", "bt"], // Nepal neighbors
+  lk: ["in", "mv", "bd"], // Sri Lanka + nearby
+  mm: ["th", "in", "cn", "la", "bd"], // Myanmar neighbors
+
+  // Middle East - often confused neighbors
+  tr: ["gr", "ir", "iq", "sy", "bg", "ge", "am", "az"], // Turkey neighbors
+  ir: ["iq", "af", "pk", "tr", "tm", "az"], // Iran neighbors
+  iq: ["ir", "sy", "jo", "sa", "kw", "tr"], // Iraq neighbors
+  sa: ["ae", "om", "ye", "jo", "iq", "kw", "qa", "bh"], // Saudi Arabia neighbors
+  ae: ["sa", "om", "qa", "bh", "kw"], // UAE neighbors
+  il: ["jo", "sy", "lb", "eg", "ps"], // Israel neighbors
+  jo: ["il", "sy", "iq", "sa", "ps"], // Jordan neighbors
+  lb: ["sy", "il", "cy"], // Lebanon neighbors
+  sy: ["tr", "iq", "jo", "il", "lb"], // Syria neighbors
+  kw: ["iq", "sa", "ir"], // Kuwait neighbors
+  qa: ["sa", "ae", "bh"], // Qatar neighbors
+  om: ["ae", "sa", "ye"], // Oman neighbors
+  ye: ["sa", "om", "dj", "er"], // Yemen neighbors
+
+  // Africa - neighbors and commonly confused
+  eg: ["ly", "sd", "il", "jo", "sa"], // Egypt neighbors
+  za: ["na", "bw", "zw", "mz", "sz", "ls"], // South Africa neighbors
+  ng: ["cm", "ne", "td", "bj", "gh", "tg"], // Nigeria neighbors
+  ke: ["tz", "ug", "et", "so", "ss"], // Kenya neighbors
+  et: ["ke", "sd", "ss", "dj", "er", "so"], // Ethiopia neighbors
+  gh: ["ci", "tg", "bf", "ng"], // Ghana neighbors
+  ma: ["dz", "es", "mr", "eh"], // Morocco neighbors
+  dz: ["ma", "tn", "ly", "ne", "ml", "mr"], // Algeria neighbors
+  tn: ["dz", "ly", "it"], // Tunisia neighbors
+  tz: ["ke", "ug", "rw", "bi", "cd", "zm", "mw", "mz"], // Tanzania neighbors
+  ug: ["ke", "tz", "rw", "cd", "ss"], // Uganda neighbors
+  sn: ["gm", "mr", "ml", "gn", "gw"], // Senegal neighbors
+  ci: ["gh", "bf", "ml", "gn", "lr"], // Ivory Coast neighbors
+  cm: ["ng", "td", "cf", "cg", "ga", "gq"], // Cameroon neighbors
+  zw: ["za", "bw", "zm", "mz"], // Zimbabwe neighbors
+  ao: ["cd", "cg", "zm", "na"], // Angola neighbors
+  mz: ["za", "zw", "zm", "mw", "tz"], // Mozambique neighbors
+  mg: ["mz", "za", "tz", "mu"], // Madagascar + nearby
+  cd: ["ao", "cg", "cf", "ss", "ug", "rw", "bi", "tz", "zm"], // DRC neighbors
+  sd: ["eg", "ly", "td", "cf", "ss", "et", "er"], // Sudan neighbors
+  ly: ["eg", "sd", "td", "ne", "dz", "tn"], // Libya neighbors
+
+  // Oceania
+  au: ["nz", "pg", "id", "fj"], // Australia neighbors
+  nz: ["au", "fj", "nc"], // New Zealand neighbors
+  fj: ["nz", "au", "vu", "to"], // Fiji neighbors
+  pg: ["id", "au", "sb"], // Papua New Guinea neighbors
+
+  // Central Asia - often confused "-stan" countries
+  kz: ["uz", "tm", "kg", "ru", "cn", "mn"], // Kazakhstan neighbors
+  uz: ["kz", "tm", "kg", "tj", "af"], // Uzbekistan neighbors
+  tm: ["kz", "uz", "af", "ir"], // Turkmenistan neighbors
+  kg: ["kz", "uz", "tj", "cn"], // Kyrgyzstan neighbors
+  tj: ["uz", "kg", "af", "cn"], // Tajikistan neighbors
+  af: ["pk", "ir", "tm", "uz", "tj", "cn"], // Afghanistan neighbors
+  mn: ["ru", "cn", "kz"], // Mongolia neighbors
+
+  // Other notable
+  ru: ["ua", "kz", "cn", "fi", "no", "by", "ge", "az", "mn"], // Russia neighbors
+  is: ["no", "ie", "gb", "gl"], // Iceland + nearby
+  cy: ["gr", "tr", "lb", "il"], // Cyprus neighbors
+  mt: ["it", "tn", "ly"], // Malta neighbors
+  lu: ["be", "de", "fr"], // Luxembourg neighbors
+};
+
+/**
  * Get random incorrect options for a country question
+ * Prioritizes geographically close or commonly confused countries
  */
 export function getRandomIncorrectCountries(
   correctCountry: CountryData,
   count: number
 ): CountryData[] {
-  const others = COUNTRIES.filter((c) => c.code !== correctCountry.code);
-  const shuffled = others.sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
+  const confusingCodes = CONFUSING_COUNTRIES[correctCountry.code] || [];
+
+  // Get confusing countries that exist in our COUNTRIES list
+  const confusingCountries = confusingCodes
+    .map((code) => COUNTRIES.find((c) => c.code === code))
+    .filter((c): c is CountryData => c !== undefined);
+
+  // Shuffle confusing countries
+  const shuffledConfusing = confusingCountries.sort(() => Math.random() - 0.5);
+
+  // Get other countries (fallback for when we don't have enough confusing ones)
+  const otherCountries = COUNTRIES.filter(
+    (c) => c.code !== correctCountry.code && !confusingCodes.includes(c.code)
+  ).sort(() => Math.random() - 0.5);
+
+  // Prioritize confusing countries, then fill with random others
+  const selected: CountryData[] = [];
+
+  // Take as many confusing countries as we can (up to count)
+  for (const country of shuffledConfusing) {
+    if (selected.length >= count) break;
+    selected.push(country);
+  }
+
+  // Fill remaining with random other countries
+  for (const country of otherCountries) {
+    if (selected.length >= count) break;
+    selected.push(country);
+  }
+
+  // Shuffle the final selection so confusing countries aren't always first
+  return selected.sort(() => Math.random() - 0.5);
 }
 
 /**

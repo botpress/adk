@@ -40,7 +40,8 @@ export { PlayerSchema };
  */
 export const GameSettingsSchema = z.object({
   categories: z.array(z.string()).default(["any"]),
-  difficulty: z.enum(["easy", "medium", "hard", "any"]).default("easy"),
+  /** Array of difficulties to include. Questions will be mixed from each selected difficulty. */
+  difficulties: z.array(z.enum(["easy", "medium", "hard"])).default(["easy"]),
   language: z.string().default("english"),
   questionCount: z.number().min(5).max(50).default(10),
   scoreMethod: z

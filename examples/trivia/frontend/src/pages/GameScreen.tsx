@@ -642,30 +642,45 @@ export function GameScreen() {
                         </div>
                       </div>
 
-                      {/* Difficulty */}
+                      {/* Difficulty (multi-select) */}
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Difficulty
+                          Difficulty (select multiple)
                         </label>
-                        <div className="grid grid-cols-4 gap-2">
-                          {DIFFICULTY_OPTIONS.map((opt) => (
-                            <button
-                              key={opt.value}
-                              onClick={() =>
-                                handleSettingsChange({
-                                  ...localSettings,
-                                  difficulty: opt.value,
-                                })
-                              }
-                              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                localSettings.difficulty === opt.value
-                                  ? "bg-blue-500 text-white"
-                                  : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-                              }`}
-                            >
-                              {opt.label}
-                            </button>
-                          ))}
+                        <div className="grid grid-cols-3 gap-2">
+                          {DIFFICULTY_OPTIONS.map((opt) => {
+                            const isSelected = localSettings.difficulties.includes(opt.value);
+                            return (
+                              <button
+                                key={opt.value}
+                                onClick={() => {
+                                  let newDifficulties: typeof localSettings.difficulties;
+                                  if (isSelected) {
+                                    // Don't allow deselecting if it's the only one selected
+                                    if (localSettings.difficulties.length === 1) {
+                                      return;
+                                    }
+                                    newDifficulties = localSettings.difficulties.filter(
+                                      (d) => d !== opt.value
+                                    );
+                                  } else {
+                                    newDifficulties = [...localSettings.difficulties, opt.value];
+                                  }
+                                  handleSettingsChange({
+                                    ...localSettings,
+                                    difficulties: newDifficulties,
+                                  });
+                                }}
+                                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                  isSelected
+                                    ? "bg-blue-500 text-white"
+                                    : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                                }`}
+                              >
+                                {opt.label}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
 
@@ -748,7 +763,11 @@ export function GameScreen() {
 
           {/* Settings summary */}
           <div className="mt-2 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
-            <span className="capitalize">{settings.difficulty}</span>
+            <span className="capitalize">
+              {settings.difficulties.length === 3
+                ? "All difficulties"
+                : settings.difficulties.join(", ")}
+            </span>
             <span>·</span>
             <span>{settings.questionCount} questions</span>
             <span>·</span>

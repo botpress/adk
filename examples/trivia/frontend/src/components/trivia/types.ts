@@ -12,7 +12,7 @@ export interface Player {
 
 export interface GameSettings {
   categories: string[];
-  difficulty: "easy" | "medium" | "hard" | "any";
+  difficulties: ("easy" | "medium" | "hard")[];
   questionCount: number;
   scoreMethod: "first-right" | "time-right" | "all-right";
   timerSeconds: number;

@@ -1,9 +1,9 @@
 export type ScoreMethod = "first-right" | "time-right" | "all-right";
-export type Difficulty = "easy" | "medium" | "hard" | "any";
+export type Difficulty = "easy" | "medium" | "hard";
 
 export type GameSettings = {
   categories: string[];
-  difficulty: Difficulty;
+  difficulties: Difficulty[];
   language: string;
   questionCount: number;
   scoreMethod: ScoreMethod;
@@ -12,7 +12,7 @@ export type GameSettings = {
 
 export const DEFAULT_GAME_SETTINGS: GameSettings = {
   categories: ["any"],
-  difficulty: "easy",
+  difficulties: ["easy"],
   language: "english",
   questionCount: 10,
   scoreMethod: "all-right",
@@ -23,7 +23,6 @@ export const DIFFICULTY_OPTIONS: { value: Difficulty; label: string }[] = [
   { value: "easy", label: "Easy" },
   { value: "medium", label: "Medium" },
   { value: "hard", label: "Hard" },
-  { value: "any", label: "Any" },
 ];
 
 export const SCORE_METHOD_OPTIONS: { value: ScoreMethod; label: string; description: string }[] = [

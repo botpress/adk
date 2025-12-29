@@ -82,7 +82,11 @@ const LobbyCard: FC<LobbyCardProps> = ({ data }) => {
           </div>
           <div className="setting-item">
             <span className="setting-label">Difficulty</span>
-            <span className="setting-value capitalize">{settings.difficulty}</span>
+            <span className="setting-value capitalize">
+              {settings.difficulties.length === 3
+                ? "All"
+                : settings.difficulties.join(", ")}
+            </span>
           </div>
           <div className="setting-item">
             <span className="setting-label">Timer</span>
