@@ -264,6 +264,40 @@ export async function fetchQuestions(
     }
   }
 
+  // If we didn't get enough questions, try to fill the gap
+  // This can happen when the API doesn't have enough questions for specific category/difficulty combos
+  if (allQuestions.length < totalCount) {
+    const deficit = totalCount - allQuestions.length;
+    console.log(`[fetchQuestions] Got ${allQuestions.length}/${totalCount} questions, fetching ${deficit} more`);
+
+    // First try: fetch from "any" category with a random difficulty from settings
+    try {
+      const fetched = await fetchTrivia({
+        count: deficit,
+        category: "any",
+        difficulty: pickRandomDifficulty(settings.difficulties),
+      });
+      allQuestions.push(...fetched);
+    } catch (error) {
+      console.error("[fetchQuestions] Failed to fetch backfill questions", error);
+    }
+
+    // Second try: if still short, generate geography questions to fill the gap
+    if (allQuestions.length < totalCount) {
+      const stillNeeded = totalCount - allQuestions.length;
+      console.log(`[fetchQuestions] Still short, generating ${stillNeeded} geography questions`);
+      for (let i = 0; i < stillNeeded; i++) {
+        const difficulty = pickRandomDifficulty(settings.difficulties);
+        const generated = generateGeo({
+          count: 1,
+          difficulty,
+          mapPercentage: 0.5,
+        });
+        allQuestions.push(...(generated as Question[]));
+      }
+    }
+  }
+
   // Shuffle all questions together
   const shuffled = shuffle(allQuestions);
 

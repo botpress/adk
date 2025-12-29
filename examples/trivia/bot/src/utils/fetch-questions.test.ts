@@ -694,17 +694,19 @@ describe("fetch-questions utility", () => {
 
     describe("error handling", () => {
       it("continues fetching other categories if one fails", async () => {
-        // Suppress expected console.error from the error handling code
+        // Suppress expected console.error and console.log from the error handling code
         const originalConsoleError = console.error;
+        const originalConsoleLog = console.log;
         console.error = () => {};
+        console.log = () => {};
 
-        let successCount = 0;
-        const mockFetchTrivia = async ({ category }: { count: number; category?: string }) => {
+        const categoriesFetched: string[] = [];
+        const mockFetchTrivia = async ({ category, count }: { count: number; category?: string }) => {
           if (category === "science") {
             throw new Error("API error");
           }
-          successCount++;
-          return [createMockTriviaQuestion({ category })];
+          categoriesFetched.push(category || "any");
+          return Array(count).fill(null).map(() => createMockTriviaQuestion({ category }));
         };
 
         const mockGenerateGeo = () => [];
@@ -722,11 +724,54 @@ describe("fetch-questions utility", () => {
         });
 
         // Should have fetched from general and history (science failed)
-        expect(successCount).toBe(2);
-        expect(questions.length).toBeGreaterThan(0);
+        expect(categoriesFetched).toContain("general");
+        expect(categoriesFetched).toContain("history");
+        expect(categoriesFetched).not.toContain("science");
+        expect(questions.length).toBe(10);
 
-        // Restore console.error
+        // Restore console
         console.error = originalConsoleError;
+        console.log = originalConsoleLog;
+      });
+
+      it("backfills with geography questions when API returns fewer than requested", async () => {
+        // Suppress console.log from backfill logic
+        const originalConsoleLog = console.log;
+        console.log = () => {};
+
+        // API returns fewer questions than requested
+        const mockFetchTrivia = async ({ count }: { count: number }) => {
+          // Only return half the requested questions
+          return Array(Math.floor(count / 2))
+            .fill(null)
+            .map(() => createMockTriviaQuestion());
+        };
+
+        let geoCount = 0;
+        const mockGenerateGeo = ({ count }: { count: number }) => {
+          geoCount += count;
+          return Array(count)
+            .fill(null)
+            .map(() => createMockMapQuestion());
+        };
+
+        const questions = await fetchQuestions({
+          settings: {
+            questionCount: 10,
+            categories: ["general"],
+            difficulties: ["medium"],
+          },
+          fetchTriviaQuestions: mockFetchTrivia,
+          generateGeographyQuestions: mockGenerateGeo,
+          shuffleArray: (arr) => arr,
+        });
+
+        // Should have exactly 10 questions (backfilled with geography)
+        expect(questions.length).toBe(10);
+        // Some questions should be geography (backfilled)
+        expect(geoCount).toBeGreaterThan(0);
+
+        console.log = originalConsoleLog;
       });
     });
 

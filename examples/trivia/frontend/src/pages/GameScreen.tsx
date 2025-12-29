@@ -782,9 +782,13 @@ export function GameScreen() {
             </span>
             <span>·</span>
             <span className="capitalize">
-              {settings.categories[0] === "any"
+              {settings.categories.includes("any")
                 ? "Any category"
-                : settings.categories[0]}
+                : settings.categories.length === CATEGORY_OPTIONS.filter(c => c.value !== "any").length
+                  ? "All categories"
+                  : settings.categories
+                      .map(cat => CATEGORY_OPTIONS.find(c => c.value === cat)?.label || cat)
+                      .join(", ")}
             </span>
             {settings.language && settings.language !== "english" && (
               <>
