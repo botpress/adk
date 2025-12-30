@@ -1,901 +1,468 @@
-import { describe, expect, it, beforeEach, afterEach } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
+  CATEGORIES,
+  fetchCategories,
   fetchQuestions,
-  calculateMapPercentage,
-  isGeographyCategory,
-  separateCategories,
-  pickRandomDifficulty,
-  type Question,
-  type Difficulty,
+  Question,
 } from "./fetch-questions";
-import type { CustomQuestion } from "./custom-questions";
+import { TEXT_INPUT_EXTRA_SECONDS } from "./drivers";
 
-// Timer constants from custom-questions.ts
-const BASE_TIMER_SECONDS = 20;
-const TEXT_INPUT_EXTRA_SECONDS = 5;
+const roundRobinShuffle = (array: Question[]): Question[] => {
+  const result: Question[] = [];
+  const len = array.length;
+  const typeMap: Record<string, Question[]> = {};
 
-/**
- * Mock question factories
- */
-function createMockTriviaQuestion(overrides: Partial<Question> = {}): Question {
-  return {
-    text: "What is the capital of France?",
-    type: "multiple_choice",
-    correctAnswer: "Paris",
-    options: ["Paris", "London", "Berlin", "Madrid"],
-    category: "Geography",
-    difficulty: "medium",
-    ...overrides,
-  };
-}
+  // Group questions by type
+  for (const item of array) {
+    if (!typeMap[item.category]) {
+      typeMap[item.category] = [];
+    }
+    typeMap[item.category].push(item);
+  }
 
-function createMockMapQuestion(overrides: Partial<CustomQuestion> = {}): CustomQuestion {
-  return {
-    text: "Which country is highlighted on the map?",
-    type: "map_country",
-    correctAnswer: "France",
-    options: ["France", "Germany", "Spain", "Italy"],
-    category: "Geography",
-    difficulty: "medium",
-    timerSeconds: BASE_TIMER_SECONDS,
-    mapData: {
-      countryCode: "fr",
-      countryAlpha3: "FRA",
-      center: [2.2137, 46.2276],
-      zoom: 4,
-    },
-    ...overrides,
-  };
-}
+  const typeKeys = Object.keys(typeMap);
+  let index = 0;
 
-function createMockFlagQuestion(overrides: Partial<CustomQuestion> = {}): CustomQuestion {
-  return {
-    text: "Which country does this flag belong to?",
-    type: "flag_country",
-    correctAnswer: "Japan",
-    options: ["Japan", "China", "Korea", "Vietnam"],
-    category: "Geography",
-    difficulty: "medium",
-    timerSeconds: BASE_TIMER_SECONDS,
-    flagData: {
-      countryCode: "jp",
-      flagUrl: "https://flagcdn.com/w320/jp.png",
-    },
-    ...overrides,
-  };
-}
+  // Round-robin selection
+  while (result.length < len) {
+    const currentType = typeKeys[index % typeKeys.length];
+    const itemsOfType = typeMap[currentType];
 
-function createMockTextInputQuestion(overrides: Partial<CustomQuestion> = {}): CustomQuestion {
-  return {
-    text: "Name the country highlighted on the map:",
-    type: "map_country",
-    correctAnswer: "Brazil",
-    // No options = text input
-    category: "Geography",
-    difficulty: "hard",
-    timerSeconds: BASE_TIMER_SECONDS + TEXT_INPUT_EXTRA_SECONDS,
-    mapData: {
-      countryCode: "br",
-      countryAlpha3: "BRA",
-      center: [-51.9253, -14.235],
-      zoom: 3,
-    },
-    ...overrides,
-  };
-}
+    if (itemsOfType.length > 0) {
+      result.push(itemsOfType.shift()!);
+    }
 
-describe("fetch-questions utility", () => {
-  describe("calculateMapPercentage", () => {
-    it("returns 1.0 for maps only", () => {
-      expect(calculateMapPercentage(["geography-maps"])).toBe(1.0);
-    });
+    index++;
+  }
 
-    it("returns 0.0 for flags only", () => {
-      expect(calculateMapPercentage(["geography-flags"])).toBe(0.0);
-    });
+  return result;
+};
 
-    it("returns 0.5 for mixed geography", () => {
-      expect(calculateMapPercentage(["geography"])).toBe(0.5);
-      expect(calculateMapPercentage(["geography-maps", "geography-flags"])).toBe(0.5);
-      expect(calculateMapPercentage(["geography", "geography-maps"])).toBe(0.5);
-    });
+describe("fetchCategories", () => {
+  it("correctly fetches categories from table", async () => {
+    const categories = await fetchCategories();
+    const sum = Object.values(categories).reduce((a, b) => a + b, 0);
+    expect(categories).toBeDefined();
+    expect(Object.keys(categories).length).toBeGreaterThan(5);
+    expect(categories["Geography"]).toBeGreaterThan(0);
+    expect(categories["General"]).toBeGreaterThan(0);
+    expect(sum).toBeGreaterThan(10_000);
+  });
+});
+
+describe("CATEGORIES constant", () => {
+  it("has all expected categories", () => {
+    expect(CATEGORIES.length).toBe(13);
+
+    const values = CATEGORIES.map((c) => c.value);
+    expect(values).toContain("general");
+    expect(values).toContain("geography");
+    expect(values).toContain("geography-maps");
+    expect(values).toContain("geography-flags");
   });
 
-  describe("isGeographyCategory", () => {
-    it("identifies geography categories", () => {
-      expect(isGeographyCategory("geography")).toBe(true);
-      expect(isGeographyCategory("geography-maps")).toBe(true);
-      expect(isGeographyCategory("geography-flags")).toBe(true);
-      expect(isGeographyCategory("GEOGRAPHY")).toBe(true);
+  it("has correct driver types", () => {
+    const tableCategories = CATEGORIES.filter((c) => c.driver === "table");
+    const mapCategories = CATEGORIES.filter((c) => c.driver === "custom-maps");
+    const flagCategories = CATEGORIES.filter(
+      (c) => c.driver === "custom-flags"
+    );
+
+    expect(tableCategories.length).toBe(11);
+    expect(mapCategories.length).toBe(1);
+    expect(flagCategories.length).toBe(1);
+
+    // Table categories should have tableCategories defined
+    for (const cat of tableCategories) {
+      expect(cat.tableCategories).toBeDefined();
+      expect(cat.tableCategories!.length).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe("fetchQuestions with 'any' category", () => {
+  it("expands 'any' to include all categories", async () => {
+    const questions = await fetchQuestions({
+      settings: {
+        questionCount: CATEGORIES.length,
+        categories: ["any"],
+        difficulties: ["easy", "medium", "hard"],
+        timerSeconds: 20,
+      },
+      shuffleArray: roundRobinShuffle,
     });
 
-    it("rejects non-geography categories", () => {
-      expect(isGeographyCategory("general")).toBe(false);
-      expect(isGeographyCategory("science")).toBe(false);
-      expect(isGeographyCategory("history")).toBe(false);
-    });
+    expect(questions.length).toBe(CATEGORIES.length);
+    const categorySet = new Set(questions.map((q) => q.category.toLowerCase()));
+    expect(categorySet.size).toBe(CATEGORIES.length);
   });
 
-  describe("pickRandomDifficulty", () => {
-    it("returns a difficulty from the provided array", () => {
-      const difficulties: Difficulty[] = ["easy", "medium", "hard"];
-      for (let i = 0; i < 20; i++) {
-        const result = pickRandomDifficulty(difficulties);
-        expect(difficulties).toContain(result);
-      }
+  it("includes multiple question types when shuffled", async () => {
+    const questions = await fetchQuestions({
+      settings: {
+        questionCount: 30,
+        categories: ["any"],
+        difficulties: ["easy", "medium", "hard"],
+        timerSeconds: 20,
+      },
+
+      shuffleArray: roundRobinShuffle,
     });
 
-    it("returns medium as fallback for empty array", () => {
-      expect(pickRandomDifficulty([])).toBe("medium");
+    expect(questions.length).toBe(30);
+
+    // With round-robin shuffle, we should get all question types
+    const types = new Set(questions.map((q) => q.type));
+    expect(types.has("multiple_choice")).toBe(true);
+    expect(types.has("map_country")).toBe(true);
+    expect(types.has("flag_country")).toBe(true);
+  });
+});
+
+describe("fetchQuestions with specific categories", () => {
+  it("fetches only from specified table category", async () => {
+    const questions = await fetchQuestions({
+      settings: {
+        questionCount: 5,
+        categories: ["general"], // general has lots of questions
+        difficulties: ["easy", "medium", "hard"],
+        timerSeconds: 20,
+      },
+      shuffleArray: roundRobinShuffle,
     });
 
-    it("returns the only difficulty when array has one element", () => {
-      expect(pickRandomDifficulty(["hard"])).toBe("hard");
-      expect(pickRandomDifficulty(["easy"])).toBe("easy");
-    });
+    expect(questions.length).toBe(5);
+
+    // All should be multiple choice from table
+    for (const q of questions) {
+      expect(q.type).toBe("multiple_choice");
+      expect(q.options).toBeDefined();
+      expect(q.options!.length).toBe(4);
+    }
   });
 
-  describe("separateCategories", () => {
-    it("separates geography from trivia categories", () => {
-      const result = separateCategories([
-        "general",
-        "geography",
-        "science",
-        "geography-maps",
-      ]);
-      expect(result.geoCategories).toEqual(["geography", "geography-maps"]);
-      expect(result.triviaCategories).toEqual(["general", "science"]);
+  it("fetches from multiple table categories", async () => {
+    const questions = await fetchQuestions({
+      settings: {
+        questionCount: 10,
+        categories: ["general", "history"], // use categories with enough questions
+        difficulties: ["easy", "medium", "hard"],
+        timerSeconds: 20,
+      },
+      shuffleArray: roundRobinShuffle,
     });
 
-    it("handles all geography categories", () => {
-      const result = separateCategories(["geography", "geography-maps", "geography-flags"]);
-      expect(result.geoCategories).toHaveLength(3);
-      expect(result.triviaCategories).toHaveLength(0);
-    });
+    expect(questions.length).toBe(10);
 
-    it("handles all trivia categories", () => {
-      const result = separateCategories(["general", "science", "history"]);
-      expect(result.geoCategories).toHaveLength(0);
-      expect(result.triviaCategories).toHaveLength(3);
-    });
+    // All should be multiple choice
+    for (const q of questions) {
+      expect(q.type).toBe("multiple_choice");
+    }
   });
 
-  describe("fetchQuestions", () => {
-    // Suppress console.log for cleaner test output
-    let originalConsoleLog: typeof console.log;
-    let originalConsoleError: typeof console.error;
-
-    beforeEach(() => {
-      originalConsoleLog = console.log;
-      originalConsoleError = console.error;
-      console.log = () => {};
-      console.error = () => {};
+  it("respects difficulty filter", async () => {
+    const questions = await fetchQuestions({
+      settings: {
+        questionCount: 5,
+        categories: ["general"],
+        difficulties: ["easy"],
+        timerSeconds: 20,
+      },
+      shuffleArray: roundRobinShuffle,
     });
 
-    afterEach(() => {
-      console.log = originalConsoleLog;
-      console.error = originalConsoleError;
+    // All should be easy difficulty
+    for (const q of questions) {
+      expect(q.difficulty).toBe("easy");
+    }
+  });
+});
+
+describe("fetchQuestions with maps & flags only", () => {
+  it("fetches only map questions when geography-maps selected", async () => {
+    const questions = await fetchQuestions({
+      settings: {
+        questionCount: 5,
+        categories: ["geography-maps"],
+        difficulties: ["medium"],
+        timerSeconds: 20,
+      },
+      shuffleArray: roundRobinShuffle,
     });
 
-    describe("single batch strategy (avoids rate limits)", () => {
-      it("fetches trivia in a single batch call", async () => {
-        let fetchCallCount = 0;
+    expect(questions.length).toBe(5);
 
-        const mockFetchTrivia = async ({ count }: { count: number }) => {
-          fetchCallCount++;
-          return Array(count)
-            .fill(null)
-            .map((_, i) =>
-              createMockTriviaQuestion({
-                text: `Q${i}`,
-                category: "General Knowledge",
-                difficulty: "medium",
-              })
-            );
-        };
+    for (const q of questions) {
+      expect(q.type).toBe("map_country");
+      expect(q.mapData).toBeDefined();
+      expect(q.mapData!.countryCode).toBeDefined();
+    }
+  });
 
-        const mockGenerateGeo = () => [];
-
-        await fetchQuestions({
-          settings: {
-            questionCount: 10,
-            categories: ["general", "science", "history"],
-            difficulties: ["easy", "medium", "hard"],
-          },
-          fetchTriviaQuestions: mockFetchTrivia,
-          generateGeographyQuestions: mockGenerateGeo,
-          shuffleArray: (arr) => arr,
-        });
-
-        // Should only make ONE API call (single batch)
-        expect(fetchCallCount).toBe(1);
-      });
-
-      it("filters batch results by user's selected categories", async () => {
-
-        // Return questions from various categories
-        const mockFetchTrivia = async ({ count }: { count: number }) => {
-          return [
-            createMockTriviaQuestion({ category: "General Knowledge", difficulty: "medium" }),
-            createMockTriviaQuestion({ category: "Science & Nature", difficulty: "medium" }),
-            createMockTriviaQuestion({ category: "History", difficulty: "medium" }),
-            createMockTriviaQuestion({ category: "Sports", difficulty: "medium" }),
-            createMockTriviaQuestion({ category: "Art", difficulty: "medium" }),
-            ...Array(count - 5)
-              .fill(null)
-              .map(() => createMockTriviaQuestion({ category: "General Knowledge", difficulty: "medium" })),
-          ];
-        };
-
-        const mockGenerateGeo = () => [];
-
-        const questions = await fetchQuestions({
-          settings: {
-            questionCount: 10,
-            categories: ["general"], // Only want general knowledge
-            difficulties: ["medium"],
-          },
-          fetchTriviaQuestions: mockFetchTrivia,
-          generateGeographyQuestions: mockGenerateGeo,
-          shuffleArray: (arr) => arr,
-        });
-
-        // All questions should be General Knowledge (or geography backfill)
-        for (const q of questions) {
-          if (q.type === "multiple_choice") {
-            expect(q.category).toBe("General Knowledge");
-          }
-        }
-      });
-
-      it("filters batch results by user's selected difficulties", async () => {
-
-        // Return questions with various difficulties
-        const mockFetchTrivia = async ({ count }: { count: number }) => {
-          return [
-            createMockTriviaQuestion({ difficulty: "easy" }),
-            createMockTriviaQuestion({ difficulty: "medium" }),
-            createMockTriviaQuestion({ difficulty: "hard" }),
-            createMockTriviaQuestion({ difficulty: "easy" }),
-            createMockTriviaQuestion({ difficulty: "medium" }),
-            ...Array(count - 5)
-              .fill(null)
-              .map(() => createMockTriviaQuestion({ difficulty: "hard" })),
-          ];
-        };
-
-        const mockGenerateGeo = ({ difficulty }: { count: number; difficulty?: Difficulty }) => {
-          return [createMockMapQuestion({ difficulty })];
-        };
-
-        const questions = await fetchQuestions({
-          settings: {
-            questionCount: 10,
-            categories: ["any"],
-            difficulties: ["hard"], // Only want hard
-          },
-          fetchTriviaQuestions: mockFetchTrivia,
-          generateGeographyQuestions: mockGenerateGeo,
-          shuffleArray: (arr) => arr,
-        });
-
-        // All trivia questions should be hard
-        for (const q of questions) {
-          if (q.type === "multiple_choice") {
-            expect(q.difficulty).toBe("hard");
-          }
-        }
-      });
+  it("fetches only flag questions when geography-flags selected", async () => {
+    const questions = await fetchQuestions({
+      settings: {
+        questionCount: 5,
+        categories: ["geography-flags"],
+        difficulties: ["medium"],
+        timerSeconds: 20,
+      },
+      shuffleArray: roundRobinShuffle,
     });
 
-    describe("mixes traditional Open Trivia DB + maps + flags questions", () => {
-      it("includes trivia, map, and flag questions when geography is selected", async () => {
-        const mockFetchTrivia = async ({ count }: { count: number }) => {
-          return Array(count)
-            .fill(null)
-            .map((_, i) => createMockTriviaQuestion({ text: `Trivia Q${i}`, category: "General Knowledge" }));
-        };
+    expect(questions.length).toBe(5);
 
-        // Use a running counter to alternate between map and flag
-        let geoCallIndex = 0;
-        const mockGenerateGeo = ({ count }: { count: number }) => {
-          const questions: CustomQuestion[] = [];
-          for (let i = 0; i < count; i++) {
-            // Alternate between map and flag using running counter
-            if (geoCallIndex % 2 === 0) {
-              questions.push(createMockMapQuestion({ text: `Map Q${geoCallIndex}` }));
-            } else {
-              questions.push(createMockFlagQuestion({ text: `Flag Q${geoCallIndex}` }));
-            }
-            geoCallIndex++;
-          }
-          return questions;
-        };
+    for (const q of questions) {
+      expect(q.type).toBe("flag_country");
+      expect(q.flagData).toBeDefined();
+      expect(q.flagData!.flagUrl).toBeDefined();
+    }
+  });
 
-        const questions = await fetchQuestions({
-          settings: {
-            questionCount: 10,
-            categories: ["general", "geography-maps", "geography-flags"],
-            difficulties: ["medium"],
-          },
-          fetchTriviaQuestions: mockFetchTrivia,
-          generateGeographyQuestions: mockGenerateGeo,
-          shuffleArray: (arr) => arr,
-        });
-
-        expect(questions.length).toBe(10);
-
-        const types = questions.map((q) => q.type);
-        expect(types).toContain("multiple_choice"); // trivia
-        expect(types).toContain("map_country"); // maps
-        expect(types).toContain("flag_country"); // flags
-      });
+  it("fetches both map and flag questions when both selected", async () => {
+    const questions = await fetchQuestions({
+      settings: {
+        questionCount: 10,
+        categories: ["geography-maps", "geography-flags"],
+        difficulties: ["medium"],
+        timerSeconds: 20,
+      },
+      shuffleArray: roundRobinShuffle,
     });
 
-    describe("difficulty-based text input handling", () => {
-      it("easy difficulty has no text input questions (all multiple choice)", async () => {
-        const mockFetchTrivia = async () => [
-          createMockTriviaQuestion({ difficulty: "easy" }),
-        ];
+    expect(questions.length).toBe(10);
 
-        // For easy, generateMapQuestion/generateFlagQuestion always use multiple choice
-        const mockGenerateGeo = ({ count, difficulty }: { count: number; difficulty?: string }) => {
-          const questions: CustomQuestion[] = [];
-          for (let i = 0; i < count; i++) {
-            // Easy always has options (multiple choice)
-            questions.push(
-              createMockMapQuestion({
-                difficulty: difficulty || "easy",
-                options: ["France", "Germany", "Spain", "Italy"],
-                timerSeconds: BASE_TIMER_SECONDS,
-              })
-            );
-          }
-          return questions;
-        };
+    const mapQuestions = questions.filter((q) => q.type === "map_country");
+    const flagQuestions = questions.filter((q) => q.type === "flag_country");
 
-        const questions = await fetchQuestions({
-          settings: {
-            questionCount: 10,
-            categories: ["geography-maps"],
-            difficulties: ["easy"],
-          },
-          fetchTriviaQuestions: mockFetchTrivia,
-          generateGeographyQuestions: mockGenerateGeo,
-          shuffleArray: (arr) => arr,
-        });
+    // Should have both types with round-robin shuffle
+    expect(mapQuestions.length).toBeGreaterThan(0);
+    expect(flagQuestions.length).toBeGreaterThan(0);
+  });
+});
 
-        // All questions should have options (no text input)
-        for (const q of questions) {
-          expect(q.options).toBeDefined();
-          expect(q.options!.length).toBeGreaterThan(0);
-        }
-      });
-
-      it("medium/hard difficulty has a mix of text input and multiple choice", async () => {
-        const mockFetchTrivia = async () => [];
-
-        // For medium/hard, 50% chance of text input - use running counter
-        let geoCallIndex = 0;
-        const mockGenerateGeo = ({ count }: { count: number }) => {
-          const questions: CustomQuestion[] = [];
-          for (let i = 0; i < count; i++) {
-            if (geoCallIndex % 2 === 0) {
-              // Multiple choice
-              questions.push(
-                createMockMapQuestion({
-                  difficulty: "medium",
-                  options: ["France", "Germany", "Spain", "Italy"],
-                  timerSeconds: BASE_TIMER_SECONDS,
-                })
-              );
-            } else {
-              // Text input (no options)
-              questions.push(createMockTextInputQuestion({ difficulty: "medium" }));
-            }
-            geoCallIndex++;
-          }
-          return questions;
-        };
-
-        const questions = await fetchQuestions({
-          settings: {
-            questionCount: 10,
-            categories: ["geography-maps"],
-            difficulties: ["medium"],
-          },
-          fetchTriviaQuestions: mockFetchTrivia,
-          generateGeographyQuestions: mockGenerateGeo,
-          shuffleArray: (arr) => arr,
-        });
-
-        const withOptions = questions.filter((q) => q.options && q.options.length > 0);
-        const withoutOptions = questions.filter((q) => !q.options || q.options.length === 0);
-
-        expect(withOptions.length).toBeGreaterThan(0);
-        expect(withoutOptions.length).toBeGreaterThan(0);
-      });
+describe("fetchQuestions with mixed categories", () => {
+  it("fetches from table and custom generators together", async () => {
+    const questions = await fetchQuestions({
+      settings: {
+        questionCount: 10,
+        categories: ["general", "geography-maps"],
+        difficulties: ["easy", "medium", "hard"],
+        timerSeconds: 20,
+      },
+      shuffleArray: roundRobinShuffle,
     });
 
-    describe("text input timer bonus", () => {
-      it("text input questions have +5s to their timers", async () => {
-        const mockFetchTrivia = async () => [];
+    expect(questions.length).toBe(10);
 
-        const mockGenerateGeo = ({ count }: { count: number }) => {
-          const questions: CustomQuestion[] = [];
-          for (let i = 0; i < count; i++) {
-            if (i % 2 === 0) {
-              // Multiple choice - base timer
-              questions.push(
-                createMockMapQuestion({
-                  options: ["France", "Germany", "Spain", "Italy"],
-                  timerSeconds: BASE_TIMER_SECONDS,
-                })
-              );
-            } else {
-              // Text input - extra time
-              questions.push(
-                createMockTextInputQuestion({
-                  timerSeconds: BASE_TIMER_SECONDS + TEXT_INPUT_EXTRA_SECONDS,
-                })
-              );
-            }
-          }
-          return questions;
-        };
+    const multipleChoice = questions.filter(
+      (q) => q.type === "multiple_choice"
+    );
+    const mapQuestions = questions.filter((q) => q.type === "map_country");
 
-        const questions = await fetchQuestions({
-          settings: {
-            questionCount: 10,
-            categories: ["geography-maps"],
-            difficulties: ["hard"],
-          },
-          fetchTriviaQuestions: mockFetchTrivia,
-          generateGeographyQuestions: mockGenerateGeo,
-          shuffleArray: (arr) => arr,
-        });
+    // Should have both types with round-robin shuffle
+    expect(multipleChoice.length).toBeGreaterThan(0);
+    expect(mapQuestions.length).toBeGreaterThan(0);
+  });
 
-        for (const q of questions) {
-          if (q.options && q.options.length > 0) {
-            // Multiple choice should have base timer
-            expect(q.timerSeconds).toBe(BASE_TIMER_SECONDS);
-          } else {
-            // Text input should have base + extra
-            expect(q.timerSeconds).toBe(BASE_TIMER_SECONDS + TEXT_INPUT_EXTRA_SECONDS);
-          }
-        }
-      });
+  it("fetches from table, maps, and flags together", async () => {
+    const questions = await fetchQuestions({
+      settings: {
+        questionCount: 15,
+        categories: ["general", "geography-maps", "geography-flags"],
+        difficulties: ["easy", "medium", "hard"],
+        timerSeconds: 20,
+      },
+      shuffleArray: roundRobinShuffle,
     });
 
-    describe("question count", () => {
-      it("returns exactly the requested number of questions", async () => {
-        const mockFetchTrivia = async ({ count }: { count: number }) => {
-          return Array(count)
-            .fill(null)
-            .map((_, i) => createMockTriviaQuestion({ text: `Q${i}`, category: "General Knowledge" }));
-        };
+    expect(questions.length).toBe(15);
 
-        const mockGenerateGeo = ({ count }: { count: number }) => {
-          return Array(count)
-            .fill(null)
-            .map((_, i) => createMockMapQuestion({ text: `Geo Q${i}` }));
-        };
+    const types = new Set(questions.map((q) => q.type));
 
-        for (const questionCount of [5, 10, 15, 20, 50]) {
-          const questions = await fetchQuestions({
-            settings: {
-              questionCount,
-              categories: ["general", "geography-maps"],
-              difficulties: ["medium"],
-            },
-            fetchTriviaQuestions: mockFetchTrivia,
-            generateGeographyQuestions: mockGenerateGeo,
-            shuffleArray: (arr) => arr,
-          });
+    // Should have all three types with round-robin shuffle
+    expect(types.has("multiple_choice")).toBe(true);
+    expect(types.has("map_country")).toBe(true);
+    expect(types.has("flag_country")).toBe(true);
+  });
 
-          expect(questions.length).toBe(questionCount);
-        }
-      });
-
-      it("trims excess questions to match requested count", async () => {
-        // Return more questions than requested
-        const mockFetchTrivia = async () => {
-          return Array(100)
-            .fill(null)
-            .map((_, i) => createMockTriviaQuestion({ text: `Q${i}` }));
-        };
-
-        const mockGenerateGeo = () => {
-          return Array(100)
-            .fill(null)
-            .map((_, i) => createMockMapQuestion({ text: `Geo Q${i}` }));
-        };
-
-        const questions = await fetchQuestions({
-          settings: {
-            questionCount: 10,
-            categories: ["any"],
-            difficulties: ["medium"],
-          },
-          fetchTriviaQuestions: mockFetchTrivia,
-          generateGeographyQuestions: mockGenerateGeo,
-          shuffleArray: (arr) => arr,
-        });
-
-        expect(questions.length).toBe(10);
-      });
+  it("handles geography (table) alongside geography-maps and geography-flags", async () => {
+    const questions = await fetchQuestions({
+      settings: {
+        questionCount: 15,
+        categories: ["geography", "geography-maps", "geography-flags"],
+        difficulties: ["easy", "medium", "hard"],
+        timerSeconds: 20,
+      },
+      shuffleArray: roundRobinShuffle,
     });
 
-    describe("category = any includes maps & flags", () => {
-      it("includes geography questions when category is 'any'", async () => {
-        const mockFetchTrivia = async ({ count }: { count: number }) => {
-          return Array(count)
-            .fill(null)
-            .map((_, i) => createMockTriviaQuestion({ text: `Trivia Q${i}` }));
-        };
+    expect(questions.length).toBe(15);
 
-        let geoCallParams: { count: number; mapPercentage?: number } | null = null;
-        const mockGenerateGeo = (params: { count: number; mapPercentage?: number }) => {
-          geoCallParams = params;
-          const questions: CustomQuestion[] = [];
-          for (let i = 0; i < params.count; i++) {
-            if (i % 2 === 0) {
-              questions.push(createMockMapQuestion({ text: `Map Q${i}` }));
-            } else {
-              questions.push(createMockFlagQuestion({ text: `Flag Q${i}` }));
-            }
-          }
-          return questions;
-        };
+    // All should be geography-related and include all three types
+    const types = new Set(questions.map((q) => q.type));
+    expect(types.has("multiple_choice")).toBe(true);
+    expect(types.has("map_country")).toBe(true);
+    expect(types.has("flag_country")).toBe(true);
+    expect(
+      questions.filter((q) => q.difficulty === "easy").length
+    ).toBeGreaterThan(0);
+    expect(
+      questions.filter((q) => q.difficulty === "medium").length
+    ).toBeGreaterThan(0);
+    expect(
+      questions.filter((q) => q.difficulty === "hard").length
+    ).toBeGreaterThan(0);
+  });
+});
 
-        const questions = await fetchQuestions({
-          settings: {
-            questionCount: 10,
-            categories: ["any"],
-            difficulties: ["medium"],
-          },
-          fetchTriviaQuestions: mockFetchTrivia,
-          generateGeographyQuestions: mockGenerateGeo,
-          shuffleArray: (arr) => arr,
-        });
-
-        // Should have called generateGeographyQuestions
-        expect(geoCallParams).not.toBeNull();
-        expect(geoCallParams!.count).toBeGreaterThan(0);
-        expect(geoCallParams!.mapPercentage).toBe(0.5); // Mix of maps and flags
-
-        // Should have both trivia and geography questions
-        const types = questions.map((q) => q.type);
-        expect(types).toContain("multiple_choice"); // trivia
-        expect(types.some((t) => t === "map_country" || t === "flag_country")).toBe(true);
-      });
-
-      it("allocates ~30% to geography when category is 'any'", async () => {
-        let geoCount = 0;
-
-        const mockFetchTrivia = async ({ count }: { count: number }) => {
-          return Array(count)
-            .fill(null)
-            .map(() => createMockTriviaQuestion());
-        };
-
-        const mockGenerateGeo = ({ count }: { count: number }) => {
-          geoCount += count; // Accumulate
-          return Array(count)
-            .fill(null)
-            .map(() => createMockMapQuestion());
-        };
-
-        await fetchQuestions({
-          settings: {
-            questionCount: 10,
-            categories: ["any"],
-            difficulties: ["medium"],
-          },
-          fetchTriviaQuestions: mockFetchTrivia,
-          generateGeographyQuestions: mockGenerateGeo,
-          shuffleArray: (arr) => arr,
-        });
-
-        // ~30% geography
-        expect(geoCount).toBe(3); // 10 - ceil(10 * 0.7)
-      });
+describe("fetchQuestions edge cases", () => {
+  it("returns empty array for invalid categories", async () => {
+    const questions = await fetchQuestions({
+      settings: {
+        questionCount: 5,
+        categories: ["nonexistent-category"],
+        difficulties: ["medium"],
+        timerSeconds: 20,
+      },
+      shuffleArray: roundRobinShuffle,
     });
 
-    describe("category = [general knowledge + flags] gets both", () => {
-      it("fetches both general knowledge and flags questions", async () => {
-        const mockFetchTrivia = async ({ count }: { count: number }) => {
-          return Array(count)
-            .fill(null)
-            .map(() =>
-              createMockTriviaQuestion({ category: "General Knowledge" })
-            );
-        };
+    expect(questions.length).toBe(0);
+  });
 
-        let geoCallParams: { mapPercentage?: number } | null = null;
-        const mockGenerateGeo = (params: { count: number; mapPercentage?: number }) => {
-          geoCallParams = params;
-          return Array(params.count)
-            .fill(null)
-            .map(() => createMockFlagQuestion());
-        };
-
-        const questions = await fetchQuestions({
-          settings: {
-            questionCount: 10,
-            categories: ["general", "geography-flags"],
-            difficulties: ["medium"],
-          },
-          fetchTriviaQuestions: mockFetchTrivia,
-          generateGeographyQuestions: mockGenerateGeo,
-          shuffleArray: (arr) => arr,
-        });
-
-        // Should have generated flag questions (mapPercentage = 0 for flags only)
-        expect(geoCallParams).not.toBeNull();
-        expect(geoCallParams!.mapPercentage).toBe(0.0);
-
-        // Should have both types
-        const types = questions.map((q) => q.type);
-        expect(types).toContain("multiple_choice"); // general knowledge
-        expect(types).toContain("flag_country"); // flags
-      });
-
-      it("distributes questions proportionally between categories", async () => {
-        let flagCount = 0;
-
-        const mockFetchTrivia = async ({ count }: { count: number }) => {
-          return Array(count)
-            .fill(null)
-            .map(() => createMockTriviaQuestion({ category: "General Knowledge" }));
-        };
-
-        const mockGenerateGeo = ({ count }: { count: number }) => {
-          flagCount += count; // Accumulate
-          return Array(count)
-            .fill(null)
-            .map(() => createMockFlagQuestion());
-        };
-
-        await fetchQuestions({
-          settings: {
-            questionCount: 10,
-            categories: ["general", "geography-flags"],
-            difficulties: ["medium"],
-          },
-          fetchTriviaQuestions: mockFetchTrivia,
-          generateGeographyQuestions: mockGenerateGeo,
-          shuffleArray: (arr) => arr,
-        });
-
-        // 50/50 split (1 geo category, 1 trivia category)
-        expect(flagCount).toBe(5); // ceil(10 * 0.5)
-      });
+  it("handles case-insensitive category matching", async () => {
+    const questions = await fetchQuestions({
+      settings: {
+        questionCount: 5,
+        categories: ["GENERAL", "Geography-Maps"],
+        difficulties: ["medium"],
+        timerSeconds: 20,
+      },
+      shuffleArray: roundRobinShuffle,
     });
 
-    describe("maps only vs flags only", () => {
-      it("generates only map questions when geography-maps is selected", async () => {
-        let mapPercentage: number | undefined;
-        const mockFetchTrivia = async () => [];
-        const mockGenerateGeo = (params: { count: number; mapPercentage?: number }) => {
-          mapPercentage = params.mapPercentage;
-          return Array(params.count)
-            .fill(null)
-            .map(() => createMockMapQuestion());
-        };
+    expect(questions.length).toBe(5);
+    expect(questions.map((x) => x.difficulty)).toEqual(Array(5).fill("medium"));
+  });
 
-        await fetchQuestions({
-          settings: {
-            questionCount: 10,
-            categories: ["geography-maps"],
-            difficulties: ["medium"],
-          },
-          fetchTriviaQuestions: mockFetchTrivia,
-          generateGeographyQuestions: mockGenerateGeo,
-          shuffleArray: (arr) => arr,
-        });
-
-        expect(mapPercentage).toBe(1.0);
-      });
-
-      it("generates only flag questions when geography-flags is selected", async () => {
-        let mapPercentage: number | undefined;
-        const mockFetchTrivia = async () => [];
-        const mockGenerateGeo = (params: { count: number; mapPercentage?: number }) => {
-          mapPercentage = params.mapPercentage;
-          return Array(params.count)
-            .fill(null)
-            .map(() => createMockFlagQuestion());
-        };
-
-        await fetchQuestions({
-          settings: {
-            questionCount: 10,
-            categories: ["geography-flags"],
-            difficulties: ["medium"],
-          },
-          fetchTriviaQuestions: mockFetchTrivia,
-          generateGeographyQuestions: mockGenerateGeo,
-          shuffleArray: (arr) => arr,
-        });
-
-        expect(mapPercentage).toBe(0.0);
-      });
+  it("limits results to requested questionCount", async () => {
+    const questions = await fetchQuestions({
+      settings: {
+        questionCount: 3,
+        categories: ["any"],
+        difficulties: ["easy", "medium", "hard"],
+        timerSeconds: 20,
+      },
+      shuffleArray: roundRobinShuffle,
     });
 
-    describe("error handling", () => {
-      it("backfills with geography questions when API fails", async () => {
+    expect(questions.length).toBe(3);
+  });
 
-        const mockFetchTrivia = async () => {
-          throw new Error("API error");
-        };
+  it("easy general with high offset", async () => {
+    const questions = await fetchQuestions({
+      settings: {
+        questionCount: 5,
+        categories: ["general"],
+        difficulties: ["easy"],
+        timerSeconds: 20,
+      },
+      shuffleArray: roundRobinShuffle,
+    });
+    expect(questions.length).toBe(5);
+    for (const q of questions) {
+      expect(q.difficulty).toBe("easy");
+    }
+  });
+});
 
-        let geoCount = 0;
-        const mockGenerateGeo = ({ count }: { count: number }) => {
-          geoCount += count;
-          return Array(count)
-            .fill(null)
-            .map(() => createMockMapQuestion());
-        };
-
-        // Should not throw, should backfill with geography
-        const questions = await fetchQuestions({
-          settings: {
-            questionCount: 10,
-            categories: ["general"],
-            difficulties: ["medium"],
-          },
-          fetchTriviaQuestions: mockFetchTrivia,
-          generateGeographyQuestions: mockGenerateGeo,
-          shuffleArray: (arr) => arr,
-          retryDelayMs: 0, // Skip delay in tests
-        });
-
-        expect(questions.length).toBe(10);
-        expect(geoCount).toBe(10); // All backfilled with geography
-      });
-
-      it("backfills with geography questions when API returns fewer than requested", async () => {
-
-        // API returns fewer questions than requested
-        const mockFetchTrivia = async ({ count }: { count: number }) => {
-          // Only return 3 questions regardless of count
-          return Array(3)
-            .fill(null)
-            .map(() => createMockTriviaQuestion());
-        };
-
-        let geoCount = 0;
-        const mockGenerateGeo = ({ count }: { count: number }) => {
-          geoCount += count;
-          return Array(count)
-            .fill(null)
-            .map(() => createMockMapQuestion());
-        };
-
-        const questions = await fetchQuestions({
-          settings: {
-            questionCount: 10,
-            categories: ["general"],
-            difficulties: ["medium"],
-          },
-          fetchTriviaQuestions: mockFetchTrivia,
-          generateGeographyQuestions: mockGenerateGeo,
-          shuffleArray: (arr) => arr,
-        });
-
-        // Should have exactly 10 questions (backfilled with geography)
-        expect(questions.length).toBe(10);
-        // Some questions should be geography (backfilled)
-        expect(geoCount).toBeGreaterThan(0);
-      });
+describe("fetchQuestions timer behavior", () => {
+  it("multiple choice questions get configured timer", async () => {
+    const timerSeconds = 15;
+    const questions = await fetchQuestions({
+      settings: {
+        questionCount: 5,
+        categories: ["general"], // table questions are always multiple choice
+        difficulties: ["easy", "medium", "hard"],
+        timerSeconds,
+      },
+      shuffleArray: roundRobinShuffle,
     });
 
-    describe("geography trivia category", () => {
-      it("mixes trivia geography + custom questions when 'geography' category selected", async () => {
-        let triviaCallCount = 0;
-        let customGeoCount = 0;
+    expect(questions.length).toBe(5);
 
-        const mockFetchTrivia = async ({ count }: { count: number }) => {
-          triviaCallCount++;
-          return Array(count)
-            .fill(null)
-            .map(() => createMockTriviaQuestion({ category: "Geography" }));
-        };
+    // All table questions are multiple choice, so they get the base timer
+    for (const q of questions) {
+      expect(q.options).toBeDefined();
+      expect(q.timerSeconds).toBe(timerSeconds);
+    }
+  });
 
-        const mockGenerateGeo = ({ count }: { count: number }) => {
-          customGeoCount += count;
-          return Array(count)
-            .fill(null)
-            .map(() => createMockMapQuestion());
-        };
-
-        await fetchQuestions({
-          settings: {
-            questionCount: 10,
-            categories: ["geography"],
-            difficulties: ["medium"],
-          },
-          fetchTriviaQuestions: mockFetchTrivia,
-          generateGeographyQuestions: mockGenerateGeo,
-          shuffleArray: (arr) => arr,
-        });
-
-        // Should have fetched trivia (for geography trivia questions)
-        expect(triviaCallCount).toBe(1);
-        // Should have generated custom geography questions
-        expect(customGeoCount).toBeGreaterThan(0);
-      });
+  it("easy geography questions (always multiple choice) get configured timer", async () => {
+    const timerSeconds = 10;
+    const questions = await fetchQuestions({
+      settings: {
+        questionCount: 5,
+        categories: ["geography-maps", "geography-flags"],
+        difficulties: ["easy"], // easy always generates multiple choice
+        timerSeconds,
+      },
+      shuffleArray: roundRobinShuffle,
     });
 
-    describe("difficulty filtering", () => {
-      it("filters trivia questions by selected difficulties", async () => {
+    expect(questions.length).toBe(5);
 
-        // Return questions with various difficulties
-        const mockFetchTrivia = async ({ count }: { count: number }) => {
-          return [
-            ...Array(Math.floor(count / 3))
-              .fill(null)
-              .map(() => createMockTriviaQuestion({ difficulty: "easy" })),
-            ...Array(Math.floor(count / 3))
-              .fill(null)
-              .map(() => createMockTriviaQuestion({ difficulty: "medium" })),
-            ...Array(Math.floor(count / 3))
-              .fill(null)
-              .map(() => createMockTriviaQuestion({ difficulty: "hard" })),
-          ];
-        };
+    // Easy questions are always multiple choice
+    for (const q of questions) {
+      expect(q.options).toBeDefined();
+      expect(q.timerSeconds).toBe(timerSeconds);
+    }
+  });
 
-        const mockGenerateGeo = ({ difficulty }: { count: number; difficulty?: Difficulty }) => {
-          return [createMockMapQuestion({ difficulty })];
-        };
+  it("typing questions get configured timer + 5 seconds", async () => {
+    const timerSeconds = 20;
 
-        const questions = await fetchQuestions({
-          settings: {
-            questionCount: 10,
-            categories: ["any"],
-            difficulties: ["easy", "hard"], // No medium
-          },
-          fetchTriviaQuestions: mockFetchTrivia,
-          generateGeographyQuestions: mockGenerateGeo,
-          shuffleArray: (arr) => arr,
-        });
-
-        // Check that no trivia questions are medium
-        for (const q of questions) {
-          if (q.type === "multiple_choice") {
-            expect(q.difficulty).not.toBe("medium");
-          }
-        }
-      });
-
-      it("geography questions use random difficulty from selected pool", async () => {
-        const difficultiesUsed: Set<string> = new Set();
-
-        const mockFetchTrivia = async () => [];
-
-        const mockGenerateGeo = ({ difficulty }: { count: number; difficulty?: Difficulty }) => {
-          if (difficulty) difficultiesUsed.add(difficulty);
-          return [createMockMapQuestion({ difficulty })];
-        };
-
-        // Run multiple times to ensure randomness covers all difficulties
-        for (let i = 0; i < 50; i++) {
-          await fetchQuestions({
-            settings: {
-              questionCount: 1,
-              categories: ["geography-maps"],
-              difficulties: ["easy", "medium", "hard"],
-            },
-            fetchTriviaQuestions: mockFetchTrivia,
-            generateGeographyQuestions: mockGenerateGeo,
-            shuffleArray: (arr) => arr,
-          });
-        }
-
-        // Should have used various difficulties
-        expect(difficultiesUsed.size).toBeGreaterThan(1);
-      });
+    // Generate many medium/hard questions to get some without options
+    const questions = await fetchQuestions({
+      settings: {
+        questionCount: 50,
+        categories: ["geography-maps", "geography-flags"],
+        difficulties: ["hard"], // hard has 50% chance of text input
+        timerSeconds,
+      },
+      shuffleArray: roundRobinShuffle,
     });
+
+    // Find questions with and without options
+    const withOptions = questions.filter((q) => q.options !== undefined);
+    const withoutOptions = questions.filter((q) => q.options === undefined);
+
+    // Multiple choice questions get base timer
+    for (const q of withOptions) {
+      expect(q.timerSeconds).toBe(timerSeconds);
+    }
+
+    // Typing questions get base timer + 5
+    for (const q of withoutOptions) {
+      expect(q.timerSeconds).toBe(timerSeconds + TEXT_INPUT_EXTRA_SECONDS);
+    }
+  });
+
+  it("respects different timer configurations", async () => {
+    const timerSeconds = 30;
+    const questions = await fetchQuestions({
+      settings: {
+        questionCount: 5,
+        categories: ["general"],
+        difficulties: ["medium"],
+        timerSeconds,
+      },
+      shuffleArray: roundRobinShuffle,
+    });
+
+    for (const q of questions) {
+      expect(q.timerSeconds).toBe(timerSeconds);
+    }
   });
 });

@@ -34,14 +34,18 @@ export const SCORE_METHOD_OPTIONS: { value: ScoreMethod; label: string; descript
 export const CATEGORY_OPTIONS = [
   { value: "any", label: "Any Category" },
   { value: "general", label: "General Knowledge" },
-  { value: "science", label: "Science" },
-  { value: "history", label: "History" },
-  { value: "geography", label: "Geography" },
-  { value: "geography-maps", label: "Maps Only" },
-  { value: "geography-flags", label: "Flags Only" },
-  { value: "entertainment", label: "Entertainment" },
-  { value: "sports", label: "Sports" },
+  { value: "science", label: "Science & Nature" },
+  { value: "history", label: "History & Holidays" },
+  { value: "entertainment", label: "Entertainment & Music" },
+  { value: "sports", label: "Sports & Leisure" },
   { value: "art", label: "Art & Literature" },
+  { value: "geography", label: "Geography" },
+  { value: "geography-maps", label: "Geography (Country Maps)" },
+  { value: "geography-flags", label: "Geography (Country Flags)" },
+  { value: "food", label: "Food & Drink" },
+  { value: "people", label: "People & Places" },
+  { value: "religion", label: "Religion & Mythology" },
+  { value: "language", label: "Language" },
 ];
 
 export const QUESTION_COUNT_OPTIONS = [

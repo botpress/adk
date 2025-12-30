@@ -122,7 +122,7 @@ export type QuestionStartEvent = {
   questionIndex: number;
   totalQuestions: number;
   question: string;
-  questionType: "true_false" | "multiple_choice" | "text_input" | "map_country" | "flag_country";
+  questionType: "multiple_choice" | "text_input" | "map_country" | "flag_country";
   options?: string[];
   category?: string;
   difficulty?: string;

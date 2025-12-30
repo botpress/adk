@@ -1,5 +1,5 @@
 import { adk, z } from "@botpress/runtime";
-import type { Question } from "./open-trivia-api";
+import type { Question } from "./fetch-questions";
 
 /**
  * Schema for translated question content

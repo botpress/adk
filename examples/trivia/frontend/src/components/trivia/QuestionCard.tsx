@@ -9,22 +9,6 @@ import {
 import MapQuestionCard from "./MapQuestionCard";
 import FlagQuestionCard from "./FlagQuestionCard";
 
-// Translations for True/False answers by language
-const TRUE_FALSE_TRANSLATIONS: Record<string, { true: string; false: string }> = {
-  english: { true: "True", false: "False" },
-  french: { true: "Vrai", false: "Faux" },
-  spanish: { true: "Verdadero", false: "Falso" },
-  german: { true: "Wahr", false: "Falsch" },
-  italian: { true: "Vero", false: "Falso" },
-  portuguese: { true: "Verdadeiro", false: "Falso" },
-  dutch: { true: "Waar", false: "Onwaar" },
-  polish: { true: "Prawda", false: "Fałsz" },
-  russian: { true: "Правда", false: "Ложь" },
-  japanese: { true: "正しい", false: "間違い" },
-  chinese: { true: "对", false: "错" },
-  korean: { true: "참", false: "거짓" },
-};
-
 interface QuestionCardProps {
   data: QuestionData;
 }
@@ -53,7 +37,6 @@ const StandardQuestionCard: FC<QuestionCardProps> = ({ data }) => {
     category,
     difficulty,
     timerSeconds,
-    language = "english",
     delegate,
   } = data;
 
@@ -126,9 +109,6 @@ const StandardQuestionCard: FC<QuestionCardProps> = ({ data }) => {
   };
 
   const progress = (timeLeft / timerSeconds) * 100;
-
-  // Get translated True/False labels
-  const tfLabels = TRUE_FALSE_TRANSLATIONS[language] || TRUE_FALSE_TRANSLATIONS.english;
   const isLowTime = timeLeft <= 5;
 
   return (
@@ -173,21 +153,6 @@ const StandardQuestionCard: FC<QuestionCardProps> = ({ data }) => {
           <div className="answer-expired">
             <span className="expired-icon">⏱</span>
             <span>Time's up!</span>
-          </div>
-        ) : questionType === "true_false" ? (
-          <div className="answer-buttons tf-buttons">
-            <button
-              className={`answer-btn true-btn ${selectedAnswer === tfLabels.true ? "selected" : ""}`}
-              onClick={() => submitAnswer(tfLabels.true)}
-            >
-              {tfLabels.true}
-            </button>
-            <button
-              className={`answer-btn false-btn ${selectedAnswer === tfLabels.false ? "selected" : ""}`}
-              onClick={() => submitAnswer(tfLabels.false)}
-            >
-              {tfLabels.false}
-            </button>
           </div>
         ) : questionType === "multiple_choice" && options ? (
           <div className="answer-buttons mc-buttons">

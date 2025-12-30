@@ -17,7 +17,6 @@ import { GameSettingsSchema, PlayerSchema } from "../conversations/types";
 const QuestionSchema = z.object({
   text: z.string(),
   type: z.enum([
-    "true_false",
     "multiple_choice",
     "text_input",
     "map_country",
