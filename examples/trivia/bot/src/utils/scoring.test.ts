@@ -812,7 +812,10 @@ describe("scoring utility", () => {
       it("accepts country names with misspellings", async () => {
         const answers: PlayerAnswer[] = [
           createPlayerAnswer({ visibleUserId: "u1", answer: "Austrailia" }), // common misspelling
-          createPlayerAnswer({ visibleUserId: "u2", answer: "Australia" }), // correct
+          createPlayerAnswer({ visibleUserId: "u2", answer: "AUSTRAILIA" }), // common misspelling
+          createPlayerAnswer({ visibleUserId: "u3", answer: "Australia" }), // correct
+          createPlayerAnswer({ visibleUserId: "u4", answer: "astralia" }), // typo
+          createPlayerAnswer({ visibleUserId: "u5", answer: "ostralia" }), // phonetic typo
         ];
 
         const scores = await scoreAnswers(
@@ -829,10 +832,19 @@ describe("scoring utility", () => {
       it("accepts different naming conventions", async () => {
         const answers: PlayerAnswer[] = [
           createPlayerAnswer({ visibleUserId: "u1", answer: "Holland" }),
-          createPlayerAnswer({ visibleUserId: "u2", answer: "Netherlands" }),
+          createPlayerAnswer({ visibleUserId: "u2", answer: "HOLLAND!" }),
+          createPlayerAnswer({ visibleUserId: "u3", answer: "Netherlands" }),
           createPlayerAnswer({
-            visibleUserId: "u3",
+            visibleUserId: "u4",
             answer: "The Netherlands",
+          }),
+          createPlayerAnswer({
+            visibleUserId: "u5",
+            answer: "the netherlands",
+          }),
+          createPlayerAnswer({
+            visibleUserId: "u6",
+            answer: "THE NETHERLANDS",
           }),
         ];
 
