@@ -180,6 +180,10 @@ function AppContent() {
             >
               View source
             </a>
+            {" · "}
+            <span className="disclaimer-text">
+              For educational purposes only. Not legal advice.
+            </span>
           </span>
         </div>
         <StylesheetProvider

@@ -296,6 +296,17 @@
   color: var(--bpGray-700, #374151);
 }
 
+/* Inline disclaimer text */
+.disclaimer-text {
+  color: var(--bpGray-400, #9ca3af);
+}
+
+@media (prefers-color-scheme: dark) {
+  .disclaimer-text {
+    color: #5F6476;
+  }
+}
+
 /* Restart conversation button */
 .restart-button {
   position: absolute;
