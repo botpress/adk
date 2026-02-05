@@ -1,0 +1,11 @@
+{
+  "name": "omni-workspace",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev:agent": "pnpm --filter omni dev",
+    "dev:local-plane": "pnpm --filter @botpress/omni-local-plane dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck"
+  }
+}

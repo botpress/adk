@@ -1,0 +1,32 @@
+{
+  "name": "@botpress/omni-local-plane",
+  "version": "0.1.0",
+  "description": "Local control plane server for omni agent (runs behind Cloudflare Tunnel)",
+  "type": "module",
+  "main": "dist/server.js",
+  "bin": {
+    "omni-local-plane": "./dist/server.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "bun run src/server.ts",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.14.0",
+    "diff": "^8.0.3",
+    "frida": "^17.6.2",
+    "hono": "^4.6.0",
+    "minimatch": "^10.1.1",
+    "playwright-core": "^1.58.1",
+    "ws": "^8.19.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/diff": "^8.0.0",
+    "@types/node": "^22.19.3",
+    "@types/ws": "^8.18.1",
+    "typescript": "^5.9.3"
+  }
+}
