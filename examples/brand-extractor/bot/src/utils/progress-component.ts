@@ -5,6 +5,14 @@ import { BrandProgressData, ExtractionSteps } from "./brand-types";
 // Re-export types for convenience
 export * from "./brand-types";
 
+/**
+ * Creates a custom message in the conversation that the frontend renders
+ * as a brand extraction progress card. The message uses type "custom" with
+ * url "custom://brand_progress" — the frontend matches on this url
+ * to render the BrandCard component.
+ *
+ * Returns the created message so we can store its ID and update it later.
+ */
 export async function createBrandProgressComponent(
   initialData: BrandProgressData
 ): Promise<Message> {
@@ -27,6 +35,12 @@ function isStatusFinal(status: string) {
   return status === "done" || status === "errored" || status === "cancelled";
 }
 
+/**
+ * Updates an existing progress message with new step data.
+ * Merges fields so partial updates don't overwrite previous values —
+ * e.g. updating colorExtraction status won't clear the logoUrl.
+ * Skips updates if the message is already in a terminal state (done/errored/cancelled).
+ */
 export async function updateBrandProgressComponent(
   messageId: string,
   data: Partial<BrandProgressData> & { companyName: string }

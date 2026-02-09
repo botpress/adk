@@ -1,5 +1,11 @@
 import { z } from "@botpress/runtime";
 
+/**
+ * Shared Zod schemas and types for the brand extraction workflow.
+ * Used by both the workflow (to validate data) and the progress component
+ * (to type the custom message payload sent to the frontend).
+ */
+
 // Step status for workflow progress tracking
 export const StepStatus = z.enum(["pending", "in_progress", "done", "error"]);
 export type StepStatus = z.infer<typeof StepStatus>;
