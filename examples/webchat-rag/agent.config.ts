@@ -21,7 +21,6 @@ export default defineConfig({
     integrations: {
       webchat: { version: "webchat@0.3.0", enabled: true },
       chat: { version: "chat@0.7.3", enabled: true },
-      // browser integration is used by the website KB for crawling pages
       browser: { version: "browser@0.8.1", enabled: true },
     },
   },
