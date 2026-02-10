@@ -1,3 +1,13 @@
+/**
+ * Custom message renderer registered in the webchat MessageList.
+ *
+ * The webchat SDK calls this for every message with type "custom".
+ * It matches on the url field to decide what to render:
+ * - url "subagent" → SubAgentCard (only for "start" messages — the card
+ *   pulls in all related steps via SubAgentContext)
+ * - url "step" → legacy plain-text step indicator (backwards compat)
+ * - anything else → null (hidden)
+ */
 import type { FC } from "react";
 import type { BlockObjects } from "@botpress/webchat";
 import { useSubAgentContext } from "../context/SubAgentContext";
@@ -17,9 +27,10 @@ const CustomTextRenderer: FC<BlockObjects["custom"]> = (props) => {
   const data = props.data as SubAgentData | undefined;
   const { groups } = useSubAgentContext();
 
-  // SubAgent messages - only render card on "start" message
+  // Only the "start" message renders a card — useEnrichedMessages already
+  // filtered out thinking/tool/end messages from the message list.
+  // This check is a safety net in case filtering is bypassed.
   if (url === "subagent" && data?.executionId) {
-    // Only render the card for the "start" message to avoid duplicates
     if (data.type !== "start") {
       return null;
     }
