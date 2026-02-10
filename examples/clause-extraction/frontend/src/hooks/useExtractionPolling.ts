@@ -25,6 +25,12 @@ type UseExtractionPollingParams = {
   userId: string | undefined;
 };
 
+/**
+ * Polls the Botpress Chat API for custom message payload updates.
+ * Why polling? The webchat SDK delivers new messages but doesn't push
+ * payload changes to existing messages — so we poll to catch progress
+ * updates written by the workflow via client.updateMessage().
+ */
 export function useExtractionPolling({
   messages,
   conversationId,
@@ -32,6 +38,8 @@ export function useExtractionPolling({
   userId,
 }: UseExtractionPollingParams) {
   const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  // Ref (not state) to avoid re-renders on every poll cycle —
+  // the actual UI update flows through ExtractionDataContext's store.
   const activeMessageIdsRef = useRef<Set<string>>(new Set());
   const updateExtractionData = useUpdateExtractionData();
 
@@ -124,7 +132,7 @@ export function useExtractionPolling({
       const messageIds = Array.from(activeMessageIdsRef.current);
       console.log("Polling: Started for", messageIds.length, "extraction message(s)");
 
-      intervalRef.current = setInterval(() => {
+            intervalRef.current = setInterval(() => {
         pollMessages(messageIds);
       }, 1000);
     }
