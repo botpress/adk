@@ -25,6 +25,13 @@ type UseResearchPollingParams = {
   userId: string | undefined;
 };
 
+/**
+ * Polls the Botpress chat API for updates to in-progress research messages.
+ * The workflow updates the message payload on the server as each phase completes,
+ * but the webchat SDK doesn't push payload changes — so we poll every 1s and
+ * sync updates into ResearchDataContext for the UI to re-render.
+ * Stops automatically when the research reaches a terminal state.
+ */
 export function useResearchPolling({
   messages,
   conversationId,
