@@ -45,6 +45,25 @@ const SectionContentSchema = z.object({
   ),
 });
 
+/**
+ * Multi-phase workflow that produces a full research report from a topic.
+ *
+ * Phases:
+ * 1. surface-research — broad web searches to understand the topic landscape,
+ *    then zai.extract() to pull out key aspects, perspectives, and controversies
+ * 2. generate-toc — zai.extract() turns the insights into a report structure
+ *    (title + sections with specific research questions)
+ * 3. research-sections — step.map() researches all sections in parallel:
+ *    generates search queries, uses zai.filter() to pick the best pages,
+ *    fetches them, then zai.answer() answers each question with citations
+ * 4. draft-report — zai.text() with "best" model writes a cohesive report
+ *    from the Q&A data, plus a separate conclusion
+ * 5. generate-summary — zai.text() produces an executive summary / TLDR
+ * 6. finalize — assembles the full report and updates the progress message
+ *
+ * Each phase is a durable step (survives restarts). Progress and activities
+ * are pushed to the UI throughout via the progress component and activity table.
+ */
 export const DeepResearchWorkflow = new Workflow({
   name: "deep_research",
   input: z.object({
@@ -109,6 +128,8 @@ export const DeepResearchWorkflow = new Workflow({
 
     // ========================================
     // PHASE 1: Initial Surface Research
+    // Runs before TOC generation so the report structure is grounded
+    // in real findings, not assumptions about the topic.
     // ========================================
     console.log("[WORKFLOW] Starting PHASE 1: surface-research");
     const initialInsights = await step("surface-research", async () => {
@@ -251,6 +272,8 @@ Consider balance: if there are controversies, include questions that cover multi
 
     // ========================================
     // PHASE 3: Research Each Section in Parallel
+    // step.map runs sections concurrently — important given the 60m timeout.
+    // Each section: generate queries → filter best pages → fetch → answer questions.
     // ========================================
     console.log("[WORKFLOW] Starting PHASE 3: research-sections (step.map)");
     const sectionContents = await step.map(
@@ -542,6 +565,8 @@ Reject pages that are:
 
     // ========================================
     // PHASE 4: Draft Final Report
+    // Separate from research — the Q&A data is rewritten into cohesive prose
+    // by the "best" model, which produces higher quality than assembling raw answers.
     // ========================================
     console.log("[WORKFLOW] Starting PHASE 4: draft-report", {
       allSourcesCount: allSources.length,
@@ -656,6 +681,8 @@ ${conclusionContent}
 
     // ========================================
     // PHASE 5: Generate Executive Summary (TLDR)
+    // Generated separately (not extracted from the report) so it reads
+    // as a standalone summary from the section-level findings.
     // ========================================
     console.log("[WORKFLOW] Starting PHASE 5: generate-summary");
     const executiveSummary = await step("generate-summary", async () => {

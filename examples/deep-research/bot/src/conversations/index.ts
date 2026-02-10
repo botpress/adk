@@ -14,9 +14,25 @@ import {
 } from "../utils/progress-component";
 import { transcriptHasImages } from "../utils/transcript";
 
+/**
+ * Webchat conversation handler for the deep research agent.
+ *
+ * Manages the lifecycle of a research workflow: starting it, tracking it via
+ * conversation state, and cleaning up when it reaches a terminal state.
+ *
+ * The workflow runs independently in the background. The conversation discovers
+ * its result on the next incoming message — the handler checks the workflow
+ * reference at entry, and if it's reached a terminal state, syncs the result
+ * to the progress message and clears state so a new research can start.
+ *
+ * Tools are dynamic: while a research is running the AI only sees stop_research,
+ * otherwise it sees web_search + start_research. The model also switches to a
+ * vision-capable model if the user has sent images in the conversation.
+ */
 export const Webchat = new Conversation({
   channel: "webchat.channel",
   state: z.object({
+    // Tracks the active research so we can check status / cancel across messages
     messageId: z.string().optional(),
     research: Reference.Workflow("deep_research").optional(),
   }),
@@ -167,6 +183,7 @@ export const Webchat = new Conversation({
     });
 
     await execute({
+      // Switch to a vision-capable model if the user has sent images
       model: (await transcriptHasImages())
         ? "openai:gpt-5-mini"
         : adk.project.config.defaultModels.autonomous,
