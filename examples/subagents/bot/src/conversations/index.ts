@@ -2,25 +2,30 @@ import { Conversation } from "@botpress/runtime";
 import { hrAgent, itAgent, salesAgent, financeAgent, docsAgent } from "../agents";
 import type { StepData } from "../subagent";
 
-// Kill switch for debug step messages
+// Set to false to hide subagent execution traces from the UI
 const DEBUG_STEPS = true;
 
 /**
- * Main Orchestrator
+ * The orchestrator — the only conversation handler that talks to the user.
  *
- * This conversation handler acts as the orchestrator in the multi-agent system.
- * It follows the Claude Code pattern:
- *
+ * This is the core of the orchestrator-worker pattern:
  * 1. Only the orchestrator talks to the user
- * 2. Subagents run in isolated contexts (separate execute() loops)
- * 3. Subagents return results, not full conversation
- * 4. Orchestrator synthesizes results into user-friendly responses
+ * 2. Subagents run in isolated execute() loops (worker mode)
+ * 3. Subagents return structured results, not conversation messages
+ * 4. The orchestrator synthesizes results into one coherent response
+ *
+ * The AI never mentions agents or delegation — from the user's perspective,
+ * they're talking to a single assistant that happens to be good at everything.
+ *
+ * Listens on both chat (CLI testing via `adk chat`) and webchat (browser UI).
  */
 export default new Conversation({
   channel: ["chat.channel", "webchat.channel"],
 
   handler: async ({ execute, conversation, channel }) => {
-    // Step function for UI updates
+    // The step callback is injected into each subagent via asTool(execute, step).
+    // Each call emits a message the frontend renders as a SubAgentCard step.
+    // Channel-aware: webchat gets custom messages (rich UI), chat gets plain text.
     const step = (msg: string, data: StepData) => {
       if (!DEBUG_STEPS) return;
 
@@ -30,6 +35,9 @@ export default new Conversation({
       }
 
       if (channel === "webchat.channel") {
+        // Custom message with url "subagent" — frontend's CustomTextRenderer
+        // matches on this url and renders it as a SubAgentCard.
+        // ts: Date.now() is added so the frontend can sort steps chronologically.
         conversation.send({
           type: "custom",
           payload: { url: "subagent", name: msg, data: { ...data, ts: Date.now() } },
@@ -77,6 +85,10 @@ You: [Call hr_agent with task="book vacation" and context={ employeeId: "EMP123"
 HR returns: { success: true, result: "Vacation booked", data: { confirmationId: "VAC-123" } }
 You: "Your vacation has been booked! Confirmation: VAC-123"
 `,
+      // Each subagent is wrapped as an Autonomous.Tool via asTool().
+      // The orchestrator's AI sees these as regular tools (hr_agent, it_agent, etc.)
+      // and decides which to call based on the user's request.
+      // execute and step are injected here — see SubAgent.asTool() for why.
       tools: [
         hrAgent.asTool(execute, step),
         itAgent.asTool(execute, step),

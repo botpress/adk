@@ -5,6 +5,9 @@ import { SubAgent } from "../subagent";
 // ============================================
 // Sales Tools
 // ============================================
+// All tool handlers return hardcoded mock data — in a real agent these would
+// call a sales/CRM API. The schemas are what matter: they define the contract
+// the AI uses to decide which tool to call and how to present the result.
 
 const getPromotions = new Tool({
   name: "getPromotions",
@@ -112,6 +115,10 @@ const checkOrderStatus = new Tool({
 // ============================================
 // Sales SubAgent Definition
 // ============================================
+// The description is what the orchestrator's AI reads to decide when to delegate.
+// The instructions are what the subagent's own AI reads when running in worker mode.
+// The needsInput pattern in instructions teaches the AI to ask for missing info
+// rather than guessing — the orchestrator relays questions back to the user.
 
 export const salesAgent = new SubAgent({
   name: "sales",

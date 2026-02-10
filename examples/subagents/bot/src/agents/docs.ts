@@ -4,6 +4,9 @@ import { WebsiteKB } from "../knowledge/botpress-docs";
 // ============================================
 // Docs SubAgent Definition
 // ============================================
+// Unlike other agents, docs has no tools — it relies entirely on the knowledge
+// base. When execute() runs with a knowledge source, the AI gets a built-in
+// search_knowledge tool automatically, so it can query the KB without a custom tool.
 
 export const docsAgent = new SubAgent({
   name: "docs",

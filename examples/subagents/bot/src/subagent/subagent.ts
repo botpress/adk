@@ -9,18 +9,28 @@ import {
 } from "./types";
 import { truncate } from "../utils/truncate";
 
-/** Generate a unique execution ID */
+/** Generate a unique execution ID — used to group all step messages from one subagent invocation */
 const generateExecutionId = () => `exec-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
-
 /**
- * SubAgent - A specialized agent that runs in its own context
+ * A specialized agent that runs in its own isolated execute() loop.
  *
- * Inspired by Claude Code's subagent pattern:
- * - Each subagent has its own context window (separate execute() loop)
- * - Returns structured results, not full conversation
- * - Cannot spawn other subagents (no nesting)
- * - Main orchestrator synthesizes results and talks to user
+ * The orchestrator-worker pattern: the orchestrator (conversation handler) owns
+ * the user-facing conversation. Subagents run in "worker" mode — they get their
+ * own context window, can't see the conversation transcript, and can't send
+ * messages to the user. They do their work autonomously and return structured
+ * results via SubAgentExit.
+ *
+ * Why worker mode instead of letting subagents talk to the user directly?
+ * It keeps the orchestrator in control of the conversation — subagents can't
+ * leak implementation details, contradict each other, or confuse the user
+ * with multiple voices. The orchestrator synthesizes results into one coherent
+ * response.
+ *
+ * The dependency injection pattern (asTool receives execute + step) exists
+ * because subagents need the conversation's execute() to run their own AI loop,
+ * but they're defined as standalone modules. Passing execute at call time
+ * avoids coupling subagent definitions to a specific conversation context.
  *
  * @example
  * ```typescript
@@ -34,7 +44,7 @@ const generateExecutionId = () => `exec-${Date.now()}-${Math.random().toString(3
  * // Use in orchestrator
  * await execute({
  *   instructions: "You are a helpful assistant...",
- *   tools: [hrAgent.asTool()],
+ *   tools: [hrAgent.asTool(execute, step)],
  * });
  * ```
  */
@@ -59,8 +69,15 @@ export class SubAgent {
   }
 
   /**
-   * Execute the subagent with a given task
-   * Runs in Worker Mode (autonomous loop until exit)
+   * Runs the subagent in an isolated execute() loop with worker mode.
+   *
+   * The flow: emit a "start" step → run execute() with the agent's instructions,
+   * tools, and knowledge → capture traces (thinking, tool calls) as step messages
+   * for the UI → extract the result from SubAgentExit → emit an "end" step.
+   *
+   * If the agent hits the iteration limit without exiting, we return a fallback
+   * with needsInput=true so the orchestrator can ask the user for clarification
+   * rather than silently failing.
    */
   async run(
     input: { task: string; context?: Record<string, any> },
@@ -72,22 +89,23 @@ export class SubAgent {
     const task = input.task;
     let stepCount = 0;
 
-    // Base data for all steps
+    // Shared fields for all step messages — frontend groups by executionId
     const base = { executionId, agent: agentName, task };
 
     try {
-      // Send START step
       const taskPreview = task.length > 50 ? task.slice(0, 50) + "..." : task;
       step(`⏳ ${agentName.toUpperCase()} → "${taskPreview}"`, { ...base, type: "start" });
 
-      // Build context string from provided context
+      // Flatten context object into a string the AI can read in its instructions
       const contextStr = input.context
         ? Object.entries(input.context)
             .map(([k, v]) => `${k}: ${JSON.stringify(v)}`)
             .join("\n")
         : "No additional context provided.";
 
-      // Run the subagent in Worker Mode (no yielding, autonomous until exit)
+      // mode: "worker" — the subagent runs autonomously in its own context.
+      // It can't see the conversation transcript or send messages to the user.
+      // It must exit via SubAgentExit to return results to the orchestrator.
       const result = await execute({
         mode: "worker",
         instructions: `${this.config.instructions}
@@ -119,19 +137,20 @@ return {
         exits: [SubAgentExit],
         iterations: this.config.maxIterations,
         hooks: {
-          // onTrace is NON-BLOCKING (sync)
+          // onTrace fires synchronously during execute() — used here to stream
+          // real-time UI updates as the subagent thinks and calls tools.
           onTrace: ({ trace }) => {
-            // Capture agent's thinking (comments in generated code)
+            // "comment" traces = the AI's internal reasoning (code comments in llmz)
             if (trace.type === "comment") {
               stepCount++;
               step(`💭 ${trace.comment}`, { ...base, type: "thinking" });
             }
-            // Capture explicit think signals
+            // ThinkSignal traces — thrown from tool handlers to give the AI instructions
             if (trace.type === "think_signal") {
               stepCount++;
               step(`🤔 thinking...`, { ...base, type: "thinking" });
             }
-            // Capture tool calls
+            // Tool call traces — show what tool was called and its result (truncated)
             if (trace.type === "tool_call") {
               stepCount++;
               step(`🔧 ${trace.tool_name}(${truncate(trace.input)}) → ${truncate(trace.output)}`, { ...base, type: "tool" });
@@ -140,12 +159,12 @@ return {
         },
       });
 
-      // Extract result from exit
+      // result.is(SubAgentExit) checks if the AI used the "done" exit
       let output: SubAgentOutput;
       if (result.is(SubAgentExit)) {
         output = result.output;
       } else {
-        // Fallback if no exit was triggered
+        // Hit iteration limit without exiting — treat as incomplete rather than failed
         output = {
           success: false,
           result: "The subagent could not complete the task within the iteration limit",
@@ -154,15 +173,11 @@ return {
         };
       }
 
-      // Determine status icon
       const icon = output.needsInput ? "⚠️" : output.success ? "✅" : "❌";
-
-      // Send END step
       step(`${icon} ${agentName.toUpperCase()} → Done`, { ...base, type: "end", stepCount });
 
       return output;
     } catch (error: any) {
-      // Send END step with error
       step(`❌ ${agentName.toUpperCase()} → Failed: ${error?.message || "Unknown error"}`, { ...base, type: "end", stepCount });
 
       return {
@@ -173,9 +188,7 @@ return {
     }
   }
 
-  /**
-   * Creates a runner function with execute and step bound
-   */
+  /** Binds execute and step so the tool handler only needs the input schema */
   private createRunner(
     execute: Autonomous.ConvoExecuteFn,
     step: StepFn
@@ -184,8 +197,18 @@ return {
   }
 
   /**
-   * Convert this subagent to an Autonomous.Tool for use in orchestrator
-   * Accepts execute and step functions via dependency injection
+   * Wraps this subagent as an Autonomous.Tool the orchestrator can call.
+   *
+   * The dependency injection happens here: execute and step come from the
+   * conversation handler, not from the SubAgent definition. This lets you
+   * define agents as standalone modules (in src/agents/) and wire them up
+   * at call time in the orchestrator:
+   *
+   *   tools: [hrAgent.asTool(execute, step)]
+   *
+   * The resulting tool name is `{name}_agent` (e.g., "hr_agent") and its
+   * I/O schemas are SubAgentInputSchema / SubAgentOutputSchema — shared
+   * across all subagents so the orchestrator treats them uniformly.
    */
   asTool(execute: Autonomous.ConvoExecuteFn, step: StepFn): Autonomous.Tool {
     const runner = this.createRunner(execute, step);
