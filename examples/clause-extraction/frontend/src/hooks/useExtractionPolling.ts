@@ -132,7 +132,7 @@ export function useExtractionPolling({
       const messageIds = Array.from(activeMessageIdsRef.current);
       console.log("Polling: Started for", messageIds.length, "extraction message(s)");
 
-            intervalRef.current = setInterval(() => {
+      intervalRef.current = setInterval(() => {
         pollMessages(messageIds);
       }, 1000);
     }
