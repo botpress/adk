@@ -19,7 +19,8 @@ export const Source = z.object({
   title: z.string(),
 });
 
-// Activity schema matches the table structure
+// Mirrors the table schema — the message payload needs a self-contained
+// copy so the frontend gets everything without having to query the table
 export const Activity = z.object({
   id: z.string(),
   messageId: z.string(),
@@ -43,6 +44,11 @@ export const ResearchData = z.object({
   error: z.string().optional(),
 });
 
+/**
+ * Creates a custom message that the frontend renders as a research progress card.
+ * Uses url "custom://research_progress" — the frontend's CustomTextRenderer
+ * matches on this url to render the ResearchMessage component.
+ */
 export async function createResearchProgressComponent(
   initialData: z.infer<typeof ResearchData>
 ): Promise<Message> {
@@ -65,6 +71,13 @@ function isStatusFinal(status: string) {
   return status === "done" || status === "errored" || status === "cancelled";
 }
 
+/**
+ * Updates the progress message with new data. Designed for concurrent callers:
+ * - Sources are merged (deduplicated by URL) so parallel sections accumulate sources
+ * - Progress only goes forward (takes the max) so out-of-order updates don't regress
+ * - Activities are fetched fresh from the ResearchActivityTable each call
+ * - Skips the update entirely if the message is already in a terminal state
+ */
 export async function updateResearchProgressComponent(
   messageId: string,
   data: Partial<z.infer<typeof ResearchData>> & { topic: string }

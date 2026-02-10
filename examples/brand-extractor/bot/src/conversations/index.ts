@@ -12,9 +12,18 @@ import {
   createInitialSteps,
 } from "../utils/progress-component";
 
+/**
+ * Webchat conversation handler for the brand extractor.
+ * Manages the lifecycle of a brand extraction: starting the workflow,
+ * tracking it via conversation state, and cleaning up when it completes.
+ *
+ * Tools are dynamic — while an extraction is running the AI only sees
+ * stop_extraction, otherwise it only sees start_extraction.
+ */
 export const Webchat = new Conversation({
   channel: "webchat.channel",
   state: z.object({
+    // Tracks the active extraction so we can update/cancel it across messages
     messageId: z.string().optional(),
     extraction: Reference.Workflow("brand_extraction").optional(),
   }),

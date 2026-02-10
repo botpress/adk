@@ -1,3 +1,9 @@
+/**
+ * Page fetching with a two-tier strategy: native fetch first (fast, no integration
+ * overhead), then the browser integration as fallback for JS-rendered pages or
+ * sites that block non-browser requests. Called from inside workflow steps
+ * during the parallel section research phase.
+ */
 import { actions } from "@botpress/runtime";
 
 export type PageContent = {
@@ -8,7 +14,8 @@ export type PageContent = {
 };
 
 /**
- * Extracts favicon URL from HTML, checking multiple patterns
+ * Parses favicon from raw HTML since the native fetch path doesn't go
+ * through the browser integration (which provides favicons automatically).
  */
 function extractFavicon(html: string, pageUrl: string): string | undefined {
   const urlObj = new URL(pageUrl);

@@ -1,3 +1,7 @@
+/**
+ * Maps custom message URLs to specialized components.
+ * "custom://guardrail" → GuardrailMessage (sent by onBeforeExecution when the topic check fails)
+ */
 import type { FC } from "react";
 import type { BlockObjects } from "@botpress/webchat";
 import GuardrailMessage from "./GuardrailMessage";
@@ -8,7 +12,6 @@ const CustomTextRenderer: FC<BlockObjects["custom"]> = (props) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const data = (props as any).data as GuardrailData | undefined;
 
-  // Guardrail messages
   if (url === "custom://guardrail" && data) {
     return <GuardrailMessage data={data as GuardrailData} />;
   }

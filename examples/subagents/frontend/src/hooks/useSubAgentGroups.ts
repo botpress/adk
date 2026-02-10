@@ -21,8 +21,13 @@ export type SubAgentGroup = {
 };
 
 /**
- * Groups subagent messages by executionId
- * Returns a map of executionId -> steps
+ * Groups subagent step messages by executionId into a Map.
+ *
+ * Each subagent invocation sends multiple custom messages (start, thinking,
+ * tool, end) that share the same executionId. This hook collects them so
+ * SubAgentCard can render one card per invocation with all its steps inside.
+ * Steps within each group are sorted by timestamp to ensure correct order
+ * even if messages arrive out of sequence.
  */
 export function useSubAgentGroups(messages: BlockMessage[]) {
   return useMemo(() => {

@@ -6,8 +6,10 @@ import type {
 } from "../tables/research-activity";
 
 /**
- * Helper functions for managing research activities in the table
- * These provide a clean API for creating, updating, and listing activities
+ * CRUD helpers for the ResearchActivityTable.
+ * The workflow calls these from inside step.map to log what it's doing
+ * (searching, reading pages, writing). The progress component calls
+ * listActivities() on each UI update to include them in the message payload.
  */
 
 /**
@@ -77,7 +79,7 @@ export async function updateActivity(
 }
 
 /**
- * Lists all activities for a given messageId, ordered by sortOrder
+ * Lists all activities for a given messageId, ordered by creation time
  */
 export async function listActivities(
   messageId: string

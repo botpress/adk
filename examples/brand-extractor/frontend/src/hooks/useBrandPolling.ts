@@ -25,6 +25,13 @@ type UseBrandPollingParams = {
   userId: string | undefined;
 };
 
+/**
+ * Polls the Botpress chat API for updates to in-progress brand extraction messages.
+ * The workflow updates the message payload on the server as each step completes,
+ * but the webchat SDK doesn't push payload changes — so we poll every 1s and
+ * sync updates into BrandDataContext for the BrandCard to re-render.
+ * Stops automatically when the extraction reaches a terminal state.
+ */
 export function useBrandPolling({
   messages,
   conversationId,

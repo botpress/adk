@@ -1,3 +1,12 @@
+/**
+ * Renders a single subagent invocation as a compact card in the chat.
+ *
+ * While running: shows the agent name, task, and the most recent step.
+ * When complete: shows a summary with step count, expandable to see all steps.
+ *
+ * The card receives all steps for one executionId (grouped by useSubAgentGroups).
+ * It determines running vs complete by checking for an "end" step.
+ */
 import { useState, type FC } from "react";
 
 type StepData = {

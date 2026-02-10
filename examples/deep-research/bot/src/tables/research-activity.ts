@@ -1,8 +1,8 @@
 import { Table, z } from "@botpress/runtime";
 
 /**
- * Activity types for the research workflow
- * Used by frontend to display appropriate icons
+ * Activity types for the research workflow.
+ * Used by the frontend to display appropriate icons.
  */
 export const ActivityType = z.enum([
   "search",     // Web search activity
@@ -20,9 +20,13 @@ export const ActivityStatus = z.enum([
 ]);
 
 /**
- * Research Activity Table
- * Stores individual activities for research workflows
- * Enables race-condition-free updates by allowing direct row updates
+ * Stores individual research activities (searches, page reads, writing steps, etc)
+ * as table rows instead of embedding them in the progress message payload.
+ *
+ * This matters because the workflow researches sections in parallel via step.map —
+ * multiple concurrent steps creating activities would race on the message payload.
+ * With a table, each activity is its own row so updates never conflict.
+ * The progress component reads all rows for a messageId on each UI update.
  */
 export default new Table({
   name: "ResearchActivityTable",

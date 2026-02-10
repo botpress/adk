@@ -1,6 +1,14 @@
 import { adk, Autonomous, user, z } from "@botpress/runtime";
 import { ThinkSignal } from "llmz";
 
+/**
+ * User state schema for admin mode, merged into agent.config.ts.
+ * Persists per user across conversations via user.state.admin.
+ *
+ * - adminUtil: when admin access expires (null = not an admin)
+ * - code: the current one-time login code (null = no code generated)
+ * - codeValidUntil: when the code expires (null = no active code)
+ */
 export const AdminModeUserSchema: z.ZodRawShape = {
   admin: z
     .object({
@@ -21,6 +29,10 @@ export const AdminModeUserSchema: z.ZodRawShape = {
     }),
 };
 
+/**
+ * Admin-only tool that refreshes all knowledge bases in the project.
+ * Uses adk.project.knowledge to access all registered KBs at runtime.
+ */
 const indexKnowledgeBasesTool = new Autonomous.Tool({
   name: "refreshKnowledgeBases",
   description: "Tool to refresh and re-index all knowledge bases.",
@@ -33,6 +45,11 @@ const indexKnowledgeBasesTool = new Autonomous.Tool({
   },
 });
 
+/**
+ * Returns a different login tool depending on where the user is in the auth flow.
+ * If a valid code exists, returns loginWithCode. Otherwise, returns generateLoginCode.
+ * This way the AI only sees the tool that makes sense for the current state.
+ */
 const getLoginTool = () => {
   const CODE_VALIDITY_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -68,6 +85,9 @@ const getLoginTool = () => {
           return true;
         }
 
+        // ThinkSignal is thrown (not returned) to give the AI instructions
+        // without producing a tool result. The AI sees the message and can
+        // decide how to respond — here, telling the user the code was wrong.
         throw new ThinkSignal("Invalid or expired admin access code");
       },
     });
@@ -90,8 +110,11 @@ const getLoginTool = () => {
         ).toISOString(),
       };
 
+      // Code is logged to the Botpress dashboard console, not sent to the user.
+      // The admin retrieves it from the dashboard — this keeps the code out of the chat.
       logCode(generatedCode);
 
+      // ThinkSignal tells the AI what happened so it can relay instructions to the user
       throw new ThinkSignal(
         `An admin login code has been generated and has been logged in the developer console of the Botpress dashboard. Please login to the Botpress dashboard to retrieve the code.`
       );
@@ -99,6 +122,7 @@ const getLoginTool = () => {
   });
 };
 
+// Checks if the user has an active (non-expired) admin session
 function isUserAdmin() {
   return (
     user.state.admin?.adminUtil &&
@@ -107,6 +131,11 @@ function isUserAdmin() {
   );
 }
 
+/**
+ * Builds a description string that includes the current admin status.
+ * This becomes the Autonomous.Object description, which the AI sees —
+ * so the AI knows whether to offer login or admin tools.
+ */
 function getAdminStatus() {
   const isAdmin = isUserAdmin();
   const hasExpired =
@@ -155,6 +184,14 @@ function getAdminStatus() {
   ].join("\n");
 }
 
+/**
+ * Returns an Autonomous.Object — a namespace that groups related tools together
+ * with a description the AI can read. Objects are re-evaluated each iteration
+ * of the agent loop, so returning a fresh one here means the AI always sees
+ * the current auth state and the right set of tools:
+ * - Not authenticated → generateLoginCode or loginWithCode
+ * - Authenticated admin → refreshKnowledgeBases
+ */
 export const getAdminModeObject = () =>
   new Autonomous.Object({
     name: "admin",
