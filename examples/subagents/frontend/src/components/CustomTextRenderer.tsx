@@ -1,3 +1,8 @@
+/**
+ * Maps custom message URLs to specialized components.
+ * "subagent" → SubAgentCard (only "start" messages — the card pulls in related steps via context)
+ * "step" → legacy plain-text step indicator (backwards compat)
+ */
 import type { FC } from "react";
 import type { BlockObjects } from "@botpress/webchat";
 import { useSubAgentContext } from "../context/SubAgentContext";
@@ -17,9 +22,10 @@ const CustomTextRenderer: FC<BlockObjects["custom"]> = (props) => {
   const data = props.data as SubAgentData | undefined;
   const { groups } = useSubAgentContext();
 
-  // SubAgent messages - only render card on "start" message
+  // Only the "start" message renders a card — useEnrichedMessages already
+  // filtered out thinking/tool/end messages from the message list.
+  // This check is a safety net in case filtering is bypassed.
   if (url === "subagent" && data?.executionId) {
-    // Only render the card for the "start" message to avoid duplicates
     if (data.type !== "start") {
       return null;
     }

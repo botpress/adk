@@ -23,6 +23,22 @@ const BrandThemes = z.object({
     .describe("Border radius style in rem units"),
 });
 
+/**
+ * Multi-step workflow that extracts brand identity from a website.
+ *
+ * Steps:
+ * 1. find-website — resolve company name to URL (or normalize a given URL)
+ * 2. discover-pages — find the most visually rich pages using zai.filter()
+ * 3. extract-logo — get the site's logo via the browser integration
+ * 4. take-screenshots — capture pages in parallel with injected JS that
+ *    extracts DOM colors into a visual overlay the vision model can read
+ * 5. extract-brand — send screenshots to a vision model, then use zai.extract()
+ *    to parse the description into structured color themes
+ * 6. finalize — combine everything into BrandData and update the progress message
+ *
+ * Each step is durable (survives restarts) and updates the progress message
+ * so the frontend can show real-time status.
+ */
 export const BrandExtractionWorkflow = new Workflow({
   name: "brand_extraction",
   input: z.object({

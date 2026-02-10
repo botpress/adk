@@ -5,6 +5,9 @@ import { SubAgent } from "../subagent";
 // ============================================
 // IT Tools
 // ============================================
+// All tool handlers return hardcoded mock data — in a real agent these would
+// call an IT system API. The schemas are what matter: they define the contract
+// the AI uses to decide which tool to call and how to present the result.
 
 const resetPassword = new Tool({
   name: "resetPassword",
@@ -93,6 +96,10 @@ const getITPolicies = new Tool({
 // ============================================
 // IT SubAgent Definition
 // ============================================
+// The description is what the orchestrator's AI reads to decide when to delegate.
+// The instructions are what the subagent's own AI reads when running in worker mode.
+// The needsInput pattern in instructions teaches the AI to ask for missing info
+// rather than guessing — the orchestrator relays questions back to the user.
 
 export const itAgent = new SubAgent({
   name: "it",

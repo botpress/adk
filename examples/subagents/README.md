@@ -1,8 +1,24 @@
-# Subagents Example
+# Subagents
 
 A multi-agent conversational AI system built with Botpress ADK using the **orchestrator-worker pattern**. This example demonstrates how to build specialized AI agents (subagents) that work together to handle different domains of user requests.
 
 ![Demo](./demo.gif)
+
+## Use Case
+
+When you need a single chatbot that handles multiple domains — HR, IT, Sales, Finance, Documentation — without becoming a monolithic prompt. Instead of cramming everything into one set of instructions, each domain gets its own specialist agent with scoped tools and knowledge. The user talks to one assistant; behind the scenes, the orchestrator routes to the right specialist and synthesizes the result.
+
+This example shows how to build the orchestrator-worker pattern: dependency injection of `execute()` into subagents, worker mode for isolation, structured result passing via `Autonomous.Exit`, multi-turn information gathering through `needsInput`/`questions`, and real-time execution tracking in the frontend.
+
+## How It Works
+
+The conversation handler is the orchestrator — the only agent that talks to the user. When a message comes in, the orchestrator's AI decides whether to handle it directly (greetings, general questions) or delegate to a specialist subagent.
+
+Each subagent runs in **worker mode** via a separate `execute()` call — it gets its own context window, can't see the conversation transcript, and can't send messages to the user. It does its work autonomously (calling its own tools, searching its own knowledge base) and returns a structured result via `Autonomous.Exit`. The orchestrator then presents that result naturally to the user, never revealing the multi-agent architecture.
+
+If a subagent needs more information (e.g., "What's your employee ID?"), it returns `needsInput: true` with a list of questions. The orchestrator relays those questions to the user, then calls the subagent again with the answers in the `context` field — this is how multi-turn flows work without giving subagents direct user access.
+
+The frontend tracks subagent execution in real-time: the `onTrace` hook inside `SubAgent.run()` emits custom messages for each thinking step and tool call, which the frontend groups by `executionId` and renders as collapsible SubAgentCards.
 
 ## Architecture
 
@@ -118,6 +134,24 @@ bun run dev
 
 4. Refresh the frontend
 
+## Key Components
+
+### SubAgent Framework (`bot/src/subagent/`)
+
+The reusable `SubAgent` class that wraps any specialist as an `Autonomous.Tool` for the orchestrator. Handles worker mode execution, trace-to-UI streaming, exit extraction, and the iteration-limit fallback. `asTool(execute, step)` is the dependency injection point — subagents are defined as standalone modules and wired to a conversation context at call time.
+
+### Specialist Agents (`bot/src/agents/`)
+
+Five domain agents (HR, IT, Sales, Finance, Docs) that each define their own tools and instructions. All tool handlers return mock data — the schemas are what matter for the pattern. The Docs agent is the exception: it has no tools, relying entirely on a knowledge base that gives the AI an auto-generated `search_knowledge` tool.
+
+### Orchestrator (`bot/src/conversations/index.ts`)
+
+The conversation handler that owns the user-facing conversation. Routes requests to subagents via `execute()` with all five agents as tools. Defines the channel-aware `step` callback that emits custom messages (webchat) or plain text (CLI) for execution tracking.
+
+### Frontend Execution Tracking (`frontend/src/`)
+
+`useSubAgentGroups` groups step messages by `executionId` into a Map. `useEnrichedMessages` filters out duplicate step messages (only "start" stays in the message list) and sorts the current turn by timestamp. `CustomTextRenderer` matches on url `"subagent"` and renders a `SubAgentCard` — a collapsible card showing the agent name, task, and all thinking/tool steps.
+
 ## Key Concepts
 
 ### Orchestrator Pattern
@@ -207,7 +241,3 @@ tools: [
 ],
 ```
 
-## Learn More
-
-- [ADK Documentation](https://botpress.com/docs/adk)
-- [Botpress Platform](https://botpress.com)

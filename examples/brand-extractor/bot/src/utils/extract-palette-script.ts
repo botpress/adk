@@ -170,7 +170,7 @@ const scriptContent = `;(() => {
     ...Array.from(headerColors.entries()).map(([color, count]) => ({ color, count, category: 'Header' })),
   ]
 
-  // Sort by count and take top 15
+  // Sort by count and take top 30
   const sortedColors = allColors.sort((a, b) => b.count - a.count).slice(0, 30)
 
   sortedColors.forEach(({ color, count, category }) => {

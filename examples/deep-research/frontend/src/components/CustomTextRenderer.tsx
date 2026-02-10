@@ -1,3 +1,7 @@
+/**
+ * Maps custom message URLs to specialized components.
+ * "custom://research_progress" → ResearchMessage (sent by the workflow as research progresses)
+ */
 import type { FC } from "react";
 import type { BlockObjects } from "@botpress/webchat";
 import ResearchMessage from "./ResearchMessage";

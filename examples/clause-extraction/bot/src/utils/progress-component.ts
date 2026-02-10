@@ -94,7 +94,10 @@ export type ExtractionStatus = z.infer<typeof ExtractionStatus>;
 export type ExtractionData = z.infer<typeof ExtractionData>;
 
 /**
- * Creates a custom message component for extraction progress
+ * Creates a custom webchat message with url "custom://extraction_progress".
+ * The frontend's CustomMessageRenderer matches on this url and renders a
+ * progress card instead of a regular chat bubble. The workflow later calls
+ * updateExtractionProgressComponent() to push new data into this same message.
  */
 export async function createExtractionProgressComponent(
   initialData: ExtractionData
@@ -135,7 +138,8 @@ export async function updateExtractionProgressComponent(
   const msg = await client.getMessage({ id: messageId });
   const existingData = msg.message.payload?.data as ExtractionData | undefined;
 
-  // Don't update if already in final state
+  // Once extraction reaches a terminal state (done/errored/cancelled),
+  // ignore further updates to prevent overwriting final results.
   if (existingData && isStatusFinal(existingData.status)) {
     return msg.message;
   }

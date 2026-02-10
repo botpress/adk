@@ -1,6 +1,10 @@
 /**
- * Smart truncation for objects/arrays to show in step messages
- * Preserves key info while reducing noise
+ * Smart truncation for objects/arrays to show in step messages.
+ * Preserves key info while reducing noise.
+ *
+ * Used by SubAgent.run() to format tool call inputs/outputs in the
+ * onTrace hook — without truncation, large payloads (e.g., a full
+ * product catalog) would flood the UI step messages.
  */
 
 type TruncateOptions = {

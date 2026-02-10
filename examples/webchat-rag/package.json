@@ -13,6 +13,6 @@
   },
   "type": "module",
   "dependencies": {
-    "@botpress/runtime": "1.7.5"
+    "@botpress/runtime": "^1.13.17"
   }
 }
