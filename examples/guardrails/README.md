@@ -19,7 +19,7 @@ When building AI agents, you often need to ensure the conversation stays on topi
 
 ## How It Works
 
-When a message arrives, the handler fetches the full conversation transcript and immediately starts a `zai.check()` — an LLM yes/no classification that evaluates whether the conversation is on-topic. This check runs concurrently with `execute()` setup.
+When a message arrives, the handler fetches the full conversation transcript and immediately starts a `zai.check()` — an LLM yes/no classification that evaluates whether the conversation is on-topic. This check runs concurrently with the agent loop.
 
 The `onBeforeExecution` hook fires before each iteration of the agent loop and awaits the check result. If the topic is valid, the agent proceeds normally. If not, the hook sends a custom guardrail message to the frontend (rendered as a warning card) and throws an error. The error message becomes instructions the AI reads on the next iteration — telling it to "recover seamlessly" by redirecting the user back to Botpress topics.
 

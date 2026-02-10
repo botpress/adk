@@ -1,3 +1,7 @@
+/**
+ * Maps custom message URLs to specialized components.
+ * "custom://brand_progress" → BrandMessage (sent by the workflow as extraction progresses)
+ */
 import type { FC } from "react";
 import type { BlockObjects } from "@botpress/webchat";
 import BrandMessage from "./BrandMessage";

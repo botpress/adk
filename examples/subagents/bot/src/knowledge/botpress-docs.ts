@@ -3,8 +3,7 @@ import { DataSource, Knowledge } from "@botpress/runtime";
 /**
  * Crawls Botpress documentation from the sitemap.
  * Content is synced at dev/deploy time and can be refreshed at runtime
- * via KB.refresh(). The filter excludes the bulk LLM export
- * file which is too large for useful chunking.
+ * via KB.refresh(). The filter excludes the bulk LLM export file.
  */
 const WebsiteSource = DataSource.Website.fromSitemap(
   "https://www.botpress.com/docs/sitemap.xml",

@@ -1,8 +1,6 @@
 /**
- * Custom message renderer for the webchat MessageList.
- * Matches on url "custom://guardrail" — sent by the bot's onBeforeExecution
- * hook when the topic check fails — and renders it as a GuardrailMessage
- * warning card instead of a regular chat bubble.
+ * Maps custom message URLs to specialized components.
+ * "custom://guardrail" → GuardrailMessage (sent by onBeforeExecution when the topic check fails)
  */
 import type { FC } from "react";
 import type { BlockObjects } from "@botpress/webchat";

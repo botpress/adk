@@ -9,7 +9,7 @@ export * from "./brand-types";
  * Creates a custom message in the conversation that the frontend renders
  * as a brand extraction progress card. The message uses type "custom" with
  * url "custom://brand_progress" — the frontend matches on this url
- * to render the BrandCard component.
+ * to render the BrandMessage component.
  *
  * Returns the created message so we can store its ID and update it later.
  */

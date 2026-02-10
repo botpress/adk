@@ -6,10 +6,10 @@ export const Webchat = new Conversation({
   state: z.object({}),
 
   handler: async ({ execute, conversation }) => {
-    // context.get("chat") accesses the lower-level chat API.
-    // fetchTranscript() returns the full conversation history as a string —
-    // we pass this to zai.check() so it can evaluate the overall topic, not
-    // just the latest message.
+    // context.get("chat") accesses the chat context for the current conversation.
+    // fetchTranscript() returns the full conversation history as TranscriptItem[] —
+    // zai.check() stringifies it internally. We pass the full transcript so it can
+    // evaluate the overall topic, not just the latest message.
     const transcript = await context.get("chat").fetchTranscript();
 
     // Prevents sending the guardrail UI message more than once per handler
@@ -18,9 +18,7 @@ export const Webchat = new Conversation({
     let triggered = false;
 
     // adk.zai.check() asks the LLM a yes/no question about the input.
-    // Returns a promise — started here (before execute) so it runs concurrently.
-    // If the check hasn't resolved by the time onBeforeExecution fires, the agent
-    // blocks briefly; on subsequent iterations the promise is already resolved.
+    // Started here (before execute) so it runs concurrently with the agent loop.
     // The examples improve classification accuracy by showing the LLM
     // what counts as on-topic vs off-topic.
     const guardAsync = adk.zai.check(

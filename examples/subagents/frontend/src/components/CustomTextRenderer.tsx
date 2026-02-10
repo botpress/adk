@@ -1,12 +1,7 @@
 /**
- * Custom message renderer registered in the webchat MessageList.
- *
- * The webchat SDK calls this for every message with type "custom".
- * It matches on the url field to decide what to render:
- * - url "subagent" → SubAgentCard (only for "start" messages — the card
- *   pulls in all related steps via SubAgentContext)
- * - url "step" → legacy plain-text step indicator (backwards compat)
- * - anything else → null (hidden)
+ * Maps custom message URLs to specialized components.
+ * "subagent" → SubAgentCard (only "start" messages — the card pulls in related steps via context)
+ * "step" → legacy plain-text step indicator (backwards compat)
  */
 import type { FC } from "react";
 import type { BlockObjects } from "@botpress/webchat";

@@ -4,8 +4,7 @@ import { DataSource, Knowledge } from "@botpress/runtime";
  * Crawls Botpress documentation pages from the sitemap.
  * Using fromSitemap() automatically discovers all indexed pages,
  * so the KB stays comprehensive as new docs are added to the site.
- * The filter excludes the bulk LLM export file which is a single massive
- * page not useful for chunked retrieval.
+ * The filter excludes the bulk LLM export file.
  */
 const WebsiteSource = DataSource.Website.fromSitemap(
   "https://www.botpress.com/docs/sitemap.xml",

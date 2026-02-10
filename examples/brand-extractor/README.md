@@ -18,7 +18,7 @@ The conversation handler starts a background workflow and tracks it via `Referen
 
 The workflow runs 6 durable steps:
 
-1. **Find website** — resolves a company name to a URL via web search (skipped if given a URL directly)
+1. **Find website** — resolves a company name to a URL via web search (short-circuits to URL normalization if given a URL directly)
 2. **Discover pages** — searches for pages on the domain, then `zai.filter()` picks the top 3 most visually rich pages (homepage, about, features — not docs or blog posts)
 3. **Extract logo** — fetches the site's logo via the browser integration
 4. **Take screenshots** — `step.map()` captures all pages in parallel, injecting JavaScript that extracts DOM colors into a visual overlay the vision model can read (see below)
