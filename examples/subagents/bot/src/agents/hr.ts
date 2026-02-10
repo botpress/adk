@@ -1,9 +1,39 @@
+/**
+ * @subagent HR Agent
+ * @pattern Specialist Worker with Domain-Specific Tools
+ *
+ * WHY THIS FILE IS STRUCTURED THIS WAY:
+ * Each subagent file follows a consistent pattern: define domain tools, then create a
+ * SubAgent that combines those tools with specialist instructions. This separation means
+ * tools are reusable (could be shared with other agents) and the SubAgent config is declarative.
+ *
+ * WHY MOCK TOOL HANDLERS (not real API calls):
+ * These are example/demo implementations. In production, the handlers would call real HR
+ * systems (Workday, BambooHR, etc.) via API. The tool schemas (input/output types) are the
+ * important part — they define the contract between the LLM and the backend system.
+ *
+ * WHY THE INSTRUCTIONS INCLUDE EXPLICIT RETURN FORMAT:
+ * Worker-mode LLMs need very explicit instructions about how to complete their task. The
+ * instructions include code-block examples of the SubAgentExit format because the LLM
+ * needs to understand that it returns structured data via the "done" exit, not by sending
+ * messages. Without these examples, the LLM often tries to conversationally respond instead
+ * of triggering the exit.
+ *
+ * WHY needsInput PATTERN:
+ * The instructions teach the subagent to return immediately with needsInput=true when it
+ * doesn't have required information (e.g., employee ID). This is more efficient than having
+ * the subagent try to call a tool with missing parameters, fail, and then figure out what
+ * to do. The early-return pattern saves LLM iterations and provides clear questions for the
+ * orchestrator to relay to the user.
+ */
 import { z, Autonomous } from "@botpress/runtime";
 const { Tool } = Autonomous;
 import { SubAgent } from "../subagent";
 
 // ============================================
-// HR Tools
+// HR Tools — Mock implementations for demo purposes.
+// In production, these handlers would call real HR system APIs.
+// The Zod schemas define the contract between the LLM and the backend.
 // ============================================
 
 const bookVacation = new Tool({

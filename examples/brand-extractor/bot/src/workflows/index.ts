@@ -1,3 +1,41 @@
+/**
+ * @workflow BrandExtractionWorkflow
+ * @pattern Durable Multi-Step Pipeline with Real-Time Progress Updates
+ *
+ * WHY THIS IS A WORKFLOW (not inline in the conversation):
+ * Brand extraction is a 6-step pipeline that takes 30-120 seconds. Workflows in ADK are
+ * durable — each `step()` is checkpointed, so if the process crashes mid-extraction, it
+ * resumes from the last completed step rather than restarting. This is critical for a
+ * pipeline that makes expensive API calls (web search, screenshots, vision analysis).
+ *
+ * THE 6-STEP PIPELINE AND WHY EACH STEP EXISTS:
+ * 1. find-website: Resolves company name -> URL via web search (skipped if user gave URL)
+ * 2. discover-pages: Finds important pages beyond homepage using site: search + zai.filter
+ *    (WHY: A single homepage screenshot may not capture the full brand palette — product
+ *    pages, about pages, etc. often use different brand colors)
+ * 3. extract-logo: Gets logo via domain-based logo API (non-critical — continues on failure)
+ * 4. screenshot: Captures screenshots of all discovered pages IN PARALLEL via step.map
+ *    (WHY step.map: Each screenshot is independent and takes 2-5 seconds; parallelizing
+ *    3-5 screenshots cuts total time from 15s to 5s)
+ * 5. extract-brand: Vision analysis of ALL screenshots using the cognitive API's "best"
+ *    model, then zai.extract to structure the natural language description into typed data
+ *    (WHY two-phase: Vision model excels at describing what it sees in natural language;
+ *    zai.extract excels at structuring text into Zod schemas. Combining them is more
+ *    reliable than asking vision to directly output structured JSON)
+ * 6. finalize: Assembles all extracted data and marks the progress UI as complete
+ *
+ * WHY extractPaletteScript IS INJECTED INTO SCREENSHOTS:
+ * The browser integration's captureScreenshot accepts a JavaScript payload that runs on
+ * the page before capture. This script extracts CSS color values from the page's stylesheets
+ * and renders them as a color bar overlay at the top of the screenshot. This gives the
+ * vision model exact HEX values to read, rather than trying to eyeball colors from pixels
+ * (which is unreliable for subtle shades).
+ *
+ * WHY 10-MINUTE TIMEOUT:
+ * The pipeline involves network-dependent steps (web search, screenshots, logo fetch).
+ * Under normal conditions it completes in 30-90 seconds, but slow websites or retries
+ * can extend this. 10 minutes provides generous headroom without allowing runaway workflows.
+ */
 import { Workflow, z, actions, context, adk } from "@botpress/runtime";
 import {
   updateBrandProgressComponent,
@@ -9,7 +47,8 @@ import {
 } from "../utils/progress-component";
 import extractPaletteScript from "../utils/extract-palette-script";
 
-// Schema for final brand theme extraction
+// Schema for final brand theme extraction — Zod schema used by zai.extract to structure
+// the vision model's natural language description into typed brand data
 const BrandThemes = z.object({
   lightTheme: ColorTheme,
   darkTheme: ColorTheme,

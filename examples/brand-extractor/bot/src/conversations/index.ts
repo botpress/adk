@@ -1,3 +1,35 @@
+/**
+ * @conversation Brand Extractor - Webchat Conversation
+ *
+ * WHY IT'S BUILT THIS WAY:
+ * This conversation handler implements the "workflow monitor" pattern. It has two concerns:
+ * 1. Chat with the user to understand what brand they want extracted
+ * 2. Monitor a background Workflow and update the UI when it finishes
+ *
+ * HOW THE CONVERSATION-WORKFLOW BRIDGE WORKS:
+ * - The conversation stores a Reference.Workflow in state, which is a live pointer to a
+ *   running workflow instance. On every handler invocation (every new user message), the
+ *   handler checks if the workflow has reached a terminal state (completed/failed/timedout).
+ * - If terminal: it updates the progress UI component and clears the reference from state.
+ * - If still running: it skips — the workflow itself updates progress via direct message updates.
+ *
+ * WHY Reference.Workflow (not a workflow ID string):
+ * Reference.Workflow provides typed access to the workflow's status, input, and output
+ * directly from conversation state. Without it, you'd need to manually call the API to
+ * fetch workflow status on every message — Reference.Workflow does this automatically.
+ *
+ * WHY DYNAMIC TOOLS (tools as a function, not an array):
+ * The `tools` parameter is a function `() => [...]` that returns different tools based on
+ * whether an extraction is active. This prevents the LLM from calling start_extraction
+ * while one is already running, or stop_extraction when nothing is running. Dynamic tools
+ * are more reliable than instruction-based constraints because the LLM physically cannot
+ * call a tool that isn't in its tool list.
+ *
+ * WHY messageId IS STORED IN STATE:
+ * The progress UI is a custom message component that gets updated in-place (not new messages).
+ * The messageId connects the conversation to the specific message being updated by the
+ * workflow, so the conversation can do a final status update when the workflow terminates.
+ */
 import {
   adk,
   Autonomous,
@@ -19,7 +51,9 @@ export const Webchat = new Conversation({
     extraction: Reference.Workflow("brand_extraction").optional(),
   }),
   handler: async ({ execute, conversation, state }) => {
-    // Check workflow status on every handler call if we have an active extraction
+    // Check workflow status on every handler call if we have an active extraction.
+    // This is the "workflow monitor" pattern — on each user message, we check if the
+    // background workflow has finished and update the UI accordingly.
     if (state.extraction && state.messageId) {
       const workflowStatus = state.extraction.workflow.status;
       const workflowInput = state.extraction.workflow.input;

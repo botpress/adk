@@ -19,12 +19,57 @@ import { EXTRACTION_CONFIG } from "../utils/constants";
 const { BATCH_CONCURRENCY, DB_INSERT_BATCH_SIZE } = EXTRACTION_CONFIG;
 
 /**
- * Clause Extraction Workflow
+ * @workflow ExtractClausesWorkflow
+ * @pattern Document Ingestion -> Batch LLM Extraction -> Database Persistence
  *
- * Extracts contractual clauses from uploaded documents with:
- * - Smart passage batching (by document sections, max 10 per batch)
- * - Rich progress tracking with passage stats
- * - Parallel batch processing
+ * WHY THIS IS A WORKFLOW (not inline in the conversation):
+ * Contract extraction processes hundreds of document passages through an LLM, which can take
+ * 2-10 minutes. Workflows provide durable execution with step-level checkpointing — if the
+ * process crashes at passage 150/200, it resumes from the last completed step, not from scratch.
+ *
+ * THE 5-PHASE PIPELINE AND WHY EACH PHASE EXISTS:
+ *
+ * Phase 1 - fetch-and-batch:
+ *   Fetches document passages from the Files API and groups them into batches by document
+ *   section. WHY section-based batching: Clauses span multiple passages, so batching by
+ *   section keeps related passages together. This dramatically reduces duplicate clause
+ *   detection compared to arbitrary fixed-size batching. Also creates a contract record
+ *   in the database to serve as the parent for all extracted clauses.
+ *
+ * Phase 2 - extract-batch (step.map, parallel):
+ *   Runs LLM extraction on each passage batch concurrently using step.map. WHY parallel:
+ *   Each batch is independent (section-based batching ensures no clause spans batches), so
+ *   parallel processing cuts total time by the concurrency factor. Individual batch failures
+ *   return empty arrays rather than failing the entire workflow — partial results are better
+ *   than no results for a 200-page contract.
+ *
+ * Phase 3 - flatten (no LLM):
+ *   Simple array flatten of batch results. WHY no LLM deduplication: An earlier version used
+ *   an LLM consolidation step to merge duplicate clauses across batches, but section-based
+ *   batching (Phase 1) made this unnecessary. The LLM cost and latency wasn't justified by
+ *   the minimal deduplication it achieved.
+ *
+ * Phase 4 - store-results:
+ *   Batch-inserts clauses into the clausesTable and updates the contract record. WHY chunked
+ *   inserts (DB_INSERT_BATCH_SIZE): The API has row-count limits per request. Inserting in
+ *   chunks avoids hitting these limits while still being faster than one-by-one insertion.
+ *   Also transforms raw clause data into the frontend display format.
+ *
+ * Phase 5 - generate-summary:
+ *   Uses adk.zai.text (not zai.answer) to generate an executive summary. WHY zai.text
+ *   instead of zai.answer: zai.answer adds citation markers ([1], [2]) to the output,
+ *   which aren't appropriate for a clean executive summary. zai.text generates plain text.
+ *
+ * WHY userParty IS PASSED TO THE WORKFLOW:
+ * Risk assessment (low/medium/high) is perspective-dependent. The same indemnification clause
+ * might be "low risk" for the indemnified party but "high risk" for the indemnifying party.
+ * The userParty parameter flows from conversation -> workflow -> extractFromBatch so the LLM
+ * evaluates risk from the correct perspective.
+ *
+ * WHY 10-MINUTE TIMEOUT:
+ * Large contracts (100+ pages) can have 200+ passages, each requiring LLM analysis. Even
+ * with parallel processing (BATCH_CONCURRENCY), this can take 3-7 minutes. 10 minutes
+ * provides generous headroom without allowing runaway workflows.
  */
 export default new Workflow({
   name: "extract_clauses",

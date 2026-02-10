@@ -1,3 +1,39 @@
+/**
+ * @conversation Deep Research - Webchat Conversation
+ *
+ * WHY IT'S BUILT THIS WAY:
+ * This conversation handler implements three key patterns:
+ *
+ * 1. TOPIC REFINEMENT BEFORE HANDOFF:
+ *    Unlike brand-extractor (which starts immediately), deep-research deliberately asks
+ *    clarifying questions before starting the workflow. Research quality depends heavily on
+ *    topic specificity — "AI agents" is too broad, but "comparison of AI agent frameworks
+ *    for enterprise customer support in 2025" produces vastly better results. The LLM is
+ *    instructed to ask 1-2 clarifying questions (not more, to avoid annoying the user).
+ *
+ * 2. WORKFLOW MONITOR PATTERN:
+ *    Same as brand-extractor: stores a Reference.Workflow in state, checks terminal status
+ *    on every handler invocation, and updates the progress UI component accordingly.
+ *
+ * 3. DYNAMIC MODEL SELECTION:
+ *    The model is chosen at runtime: if the conversation transcript contains images (e.g.,
+ *    user sent a screenshot), it uses a vision-capable model (gpt-5-mini). Otherwise, it
+ *    uses the configured default (Cerebras). This is because Cerebras doesn't support image
+ *    inputs, so the conversation would fail if the user sends an image.
+ *
+ * WHY DYNAMIC TOOLS (function, not array):
+ *    When research is running: only stop_research is available (prevents starting duplicates).
+ *    When no research is running: web_search + start_research are available.
+ *    The web_search tool is available pre-research so the LLM can understand unfamiliar topics
+ *    before formulating the research question — this produces more specific, better-quality
+ *    research topics.
+ *
+ * WHY web_search IS A SEPARATE TOOL (not just part of the workflow):
+ *    The LLM uses web_search during the topic clarification phase (before starting research)
+ *    to understand unfamiliar terms, recent events, or technical concepts. This helps it ask
+ *    better clarifying questions. The workflow has its own deeper search logic — the
+ *    conversation-level web_search is lightweight and conversational.
+ */
 import {
   actions,
   adk,

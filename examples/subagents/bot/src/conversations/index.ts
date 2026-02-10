@@ -1,26 +1,59 @@
+/**
+ * @conversation Subagents - Orchestrator Conversation
+ *
+ * WHY IT'S BUILT THIS WAY:
+ * This conversation handler is the ORCHESTRATOR in a multi-agent system. It implements the
+ * "tools-as-subagents" pattern: each SubAgent is converted to an Autonomous.Tool via
+ * `.asTool()`, making subagent invocation look like a regular tool call to the orchestrator LLM.
+ *
+ * HOW THE MULTI-AGENT FLOW WORKS:
+ * 1. User sends "I want to book vacation"
+ * 2. Orchestrator LLM sees 5 tools (hr_agent, it_agent, sales_agent, finance_agent, docs_agent)
+ * 3. It calls hr_agent tool with { task: "book vacation for user" }
+ * 4. SubAgent.asTool() delegates to SubAgent.run(), which starts a NEW execute() in worker mode
+ * 5. The HR subagent's LLM runs autonomously: checks if it has enough info -> if not,
+ *    returns { needsInput: true, questions: ["What is your employee ID?", "What dates?"] }
+ * 6. The orchestrator receives this structured output and asks the user those questions
+ * 7. User answers -> orchestrator calls hr_agent again with the context
+ * 8. HR subagent calls bookVacation tool -> returns { success: true, data: { confirmationId: ... } }
+ * 9. Orchestrator presents the result naturally to the user
+ *
+ * WHY SUBAGENTS AS TOOLS (not separate conversation handlers):
+ * By converting subagents to tools, the orchestrator LLM natively handles routing — it
+ * decides which "tool" (subagent) to call based on the user's message, just like it decides
+ * to call any other tool. This is more reliable than explicit if/else routing because the
+ * LLM understands natural language intent.
+ *
+ * WHY execute AND step ARE PASSED TO asTool():
+ * Subagents need the `execute` function to create their own isolated LLM context (worker mode).
+ * The `step` function provides UI feedback (debug messages showing what the subagent is doing).
+ * These are injected via asTool() rather than being global because each conversation handler
+ * has its own execute instance tied to its conversation context.
+ *
+ * WHY THE step FUNCTION ADAPTS BY CHANNEL:
+ * In webchat, steps are sent as custom messages with structured data for the frontend to
+ * render as a visual "thinking" indicator. In CLI chat, steps are plain text prefixed with
+ * [>] for readability. This demonstrates channel-adaptive UI patterns.
+ *
+ * WHY DEBUG_STEPS EXISTS:
+ * The step messages (showing subagent thinking, tool calls) are useful during development
+ * but may be noisy in production. The DEBUG_STEPS flag is a kill switch to disable them.
+ */
 import { Conversation } from "@botpress/runtime";
 import { hrAgent, itAgent, salesAgent, financeAgent, docsAgent } from "../agents";
 import type { StepData } from "../subagent";
 
-// Kill switch for debug step messages
+// Kill switch for debug step messages — set to false in production to hide
+// subagent thinking/tool-call traces from the user
 const DEBUG_STEPS = true;
 
-/**
- * Main Orchestrator
- *
- * This conversation handler acts as the orchestrator in the multi-agent system.
- * It follows the Claude Code pattern:
- *
- * 1. Only the orchestrator talks to the user
- * 2. Subagents run in isolated contexts (separate execute() loops)
- * 3. Subagents return results, not full conversation
- * 4. Orchestrator synthesizes results into user-friendly responses
- */
 export default new Conversation({
   channel: ["chat.channel", "webchat.channel"],
 
   handler: async ({ execute, conversation, channel }) => {
-    // Step function for UI updates
+    // Step function for UI updates — adapts output format based on channel.
+    // This function is passed to each subagent via asTool() for real-time
+    // progress feedback during subagent execution.
     const step = (msg: string, data: StepData) => {
       if (!DEBUG_STEPS) return;
 

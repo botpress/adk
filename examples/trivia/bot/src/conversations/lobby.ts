@@ -1,9 +1,53 @@
+/**
+ * @handler Lobby Handler
+ * @pattern JSON Protocol Over Text Messages
+ *
+ * WHY THIS EXISTS:
+ * The lobby handler manages the pre-game lifecycle: creating game rooms, joining with codes,
+ * and leaving games. It communicates with the frontend via a JSON protocol encoded in text
+ * messages — not natural language.
+ *
+ * WHY JSON OVER TEXT MESSAGES (not a custom integration):
+ * ADK's webchat integration supports text messages natively. By encoding structured data as
+ * JSON strings in text messages, we get a bidirectional communication channel without needing
+ * a custom integration. The handler checks if messages start with "{" and attempts Zod parsing.
+ * Non-JSON messages pass through to other handlers.
+ *
+ * HOW THE GAME ROOM SYSTEM WORKS:
+ * 1. CREATING: Creator sends { type: "create_request", gameConversationId: "..." }
+ *    - The frontend pre-creates the conversation via the Botpress API
+ *    - The lobby handler tags it with type="game", code="ABCD", status="waiting"
+ *    - The creator is added as a participant (not just a conversation member)
+ *    - A join code is generated and returned to the creator
+ *
+ * 2. JOINING: Player sends { type: "join_request", joinCode: "ABCD" }
+ *    - The handler searches for conversations with matching code and status="waiting"
+ *    - Player is added as a participant to the game conversation
+ *    - A participant_added event is broadcast to all players in the game
+ *
+ * 3. LEAVING: Player sends { type: "leave_request", gameConversationId: "..." }
+ *    - If the creator leaves: game is cancelled and all players notified
+ *    - If a non-creator leaves: they're removed as a participant
+ *
+ * WHY CONVERSATION TAGS (not a database):
+ * Game rooms are modeled as conversations with tags (type, code, status, creatorUserId).
+ * This leverages ADK's built-in conversation search — finding a game by join code is just
+ * `client.listConversations({ tags: { code: "ABCD", type: "game", status: "waiting" } })`.
+ * No separate database needed.
+ *
+ * WHY DISCRIMINATED UNION FOR REQUEST SCHEMA:
+ * z.discriminatedUnion on the "type" field ensures type safety: each request type has
+ * exactly the fields it needs (create_request has gameConversationId, join_request has
+ * joinCode). Zod validation catches malformed requests before any logic runs.
+ */
 import { context, z } from "@botpress/runtime";
 import { generateUniqueJoinCode } from "../utils/join-code";
 import { PartialHandler } from "./types";
 
 // ============================================
 // Lobby Request Messages (Frontend -> Bot)
+// Each request type has a Zod schema for validation.
+// The discriminated union on "type" enables type-safe parsing.
 // ============================================
 
 export const LobbyInitSchema = z.object({

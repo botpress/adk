@@ -1,3 +1,63 @@
+/**
+ * @workflow DeepResearchWorkflow
+ * @pattern Surface Research -> Structured Outline -> Parallel Deep Dive -> Report Assembly
+ *
+ * WHY THIS IS A WORKFLOW (not inline in the conversation):
+ * Research involves dozens of web searches, page fetches, and LLM calls that take 2-10 minutes
+ * total. Workflows provide durable execution with step-level checkpointing — if the process
+ * fails at step 4/6, it resumes from step 4 rather than repeating all the web searches.
+ *
+ * THE 6-PHASE PIPELINE AND WHY EACH PHASE EXISTS:
+ *
+ * Phase 1 - surface-research:
+ *   Broad initial web searches to understand the topic landscape. WHY this exists: The LLM
+ *   needs context about the topic before it can create a meaningful report structure. Without
+ *   surface research, the table of contents would be based on the LLM's training data, which
+ *   may miss recent developments or niche aspects.
+ *
+ * Phase 2 - generate-toc:
+ *   Creates a report structure (title + sections + research questions) using zai.extract.
+ *   WHY zai.extract (not zai.text): We need structured data (arrays of sections with arrays
+ *   of questions) that will be iterated over in Phase 3. zai.extract outputs typed data
+ *   matching the TOCSchema, which is more reliable than parsing free-form text.
+ *
+ * Phase 3 - research-sections (step.map, parallel):
+ *   Each section is researched independently and concurrently. For each section:
+ *   a) Generate diverse search queries (not just the section title)
+ *   b) Execute searches WITHOUT browsing pages (faster, get more URLs)
+ *   c) Use zai.filter to select the best 5 pages from candidates (quality over quantity)
+ *   d) Fetch selected pages (full content)
+ *   e) Answer each research question using zai.answer with citations
+ *
+ *   WHY step.map (parallel): Each section is independent — researching "Market Trends" doesn't
+ *   depend on "Technical Architecture". Parallelizing cuts total time by the section count.
+ *
+ *   WHY zai.filter for page selection: Without filtering, the LLM would read 20+ pages per
+ *   section (slow, expensive, noisy). zai.filter uses LLM intelligence to select the 5 most
+ *   authoritative and relevant pages, dramatically improving quality-per-token.
+ *
+ *   WHY zai.answer (not zai.text) for questions: zai.answer provides structured citations
+ *   linking each claim to its source page. This enables the final report to include inline
+ *   source links, which is critical for research credibility.
+ *
+ * Phase 4 - draft-report:
+ *   Assembles all Q&A content into a cohesive markdown report using zai.text with "best" model.
+ *   WHY "best" model: Report writing requires synthesizing information from multiple sections
+ *   into coherent prose — this is the most reasoning-intensive step and benefits from the
+ *   highest-quality model available.
+ *
+ * Phase 5 - generate-summary:
+ *   Creates a standalone executive summary (TLDR) from the section findings.
+ *   WHY a separate step (not part of Phase 4): The summary is displayed separately in the UI
+ *   (above the fold) and needs to be independently generated to ensure it's truly standalone
+ *   rather than just the report's first paragraph.
+ *
+ * Phase 6 - finalize:
+ *   Prepends executive summary to report and marks the progress UI as complete.
+ *   WHY a separate step: This ensures the final UI update only happens after ALL content is
+ *   generated. If we updated the UI in Phase 4, the user would see "complete" before the
+ *   summary exists.
+ */
 import { Workflow, z, actions, adk } from "@botpress/runtime";
 import {
   updateResearchProgressComponent,
@@ -10,7 +70,7 @@ import {
 } from "../utils/research-activity";
 import { fetchPages } from "../utils/fetch-page";
 
-// Types for structured research
+// Types for structured research — Zod schemas used by zai.extract to structure LLM output
 const SectionSchema = z.object({
   title: z.string(),
   questions: z.array(z.string()),

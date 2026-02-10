@@ -1,3 +1,42 @@
+/**
+ * @extension Admin Mode
+ * @pattern Time-Limited Code-Based Authentication with Dynamic Tool Sets
+ *
+ * WHY THIS EXTENSION EXISTS:
+ * Certain operations (like re-indexing knowledge bases) should only be available to
+ * authenticated admins. This extension implements a code-based authentication flow where:
+ * 1. User requests admin access -> a one-time code is generated and logged to the console
+ * 2. User retrieves the code from the Botpress dashboard and enters it in chat
+ * 3. If valid, user gets 1-hour admin access with privileged tools
+ *
+ * WHY CODE-BASED AUTH (not password):
+ * The code is generated server-side and logged to the developer console — only someone
+ * with access to the Botpress dashboard can see it. This provides two-factor-like security
+ * without requiring a password database. The code expires after 5 minutes to prevent replay.
+ *
+ * WHY Autonomous.Object (not just tools):
+ * Autonomous.Object groups tools under a named namespace ("admin") with a dynamic description.
+ * The description changes based on auth state — telling the LLM whether admin mode is
+ * "ENABLED", "EXPIRED", "CODE GENERATED", or "CODE NOT GENERATED". This gives the LLM
+ * context about what admin tools are available and why.
+ *
+ * WHY DYNAMIC TOOL SELECTION (isUserAdmin() ? [refreshTool] : [loginTool]):
+ * Admin users see the refreshKnowledgeBases tool. Non-admin users see either loginWithCode
+ * (if a code was generated) or generateLoginCode (if no code exists). The LLM physically
+ * cannot call tools that aren't in its tool list, so this enforces access control structurally.
+ *
+ * WHY ThinkSignal (not throw Error):
+ * ThinkSignal is a special signal from the llmz library that interrupts the current tool
+ * execution and sends a message back to the LLM's thinking loop. Unlike a regular Error
+ * (which the LLM sees as a failure), ThinkSignal is treated as an informational redirect —
+ * the LLM adjusts its approach rather than entering error recovery mode. Used here to tell
+ * the LLM "the code was generated, check the dashboard" without triggering error handling.
+ *
+ * WHY user.state (not conversation state):
+ * Admin status persists in user.state, which survives across conversations. Once authenticated,
+ * the user stays admin for 1 hour regardless of which conversation they're in. If this were
+ * in conversation state, the user would lose admin access when opening a new chat.
+ */
 import { adk, Autonomous, user, z } from "@botpress/runtime";
 import { ThinkSignal } from "llmz";
 
