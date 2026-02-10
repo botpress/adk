@@ -1,3 +1,9 @@
+/**
+ * Custom message renderer for the webchat MessageList.
+ * Matches on url "custom://guardrail" — sent by the bot's onBeforeExecution
+ * hook when the topic check fails — and renders it as a GuardrailMessage
+ * warning card instead of a regular chat bubble.
+ */
 import type { FC } from "react";
 import type { BlockObjects } from "@botpress/webchat";
 import GuardrailMessage from "./GuardrailMessage";
@@ -8,7 +14,6 @@ const CustomTextRenderer: FC<BlockObjects["custom"]> = (props) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const data = (props as any).data as GuardrailData | undefined;
 
-  // Guardrail messages
   if (url === "custom://guardrail" && data) {
     return <GuardrailMessage data={data as GuardrailData} />;
   }

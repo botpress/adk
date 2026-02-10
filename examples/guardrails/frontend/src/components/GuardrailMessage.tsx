@@ -1,3 +1,8 @@
+/**
+ * Renders a guardrail warning card in the chat when the topic check fails.
+ * The data shape (name + message) comes from the custom message payload
+ * sent by the bot's onBeforeExecution hook.
+ */
 import type { FC } from "react";
 
 export interface GuardrailData {
