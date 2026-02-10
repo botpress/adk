@@ -20,7 +20,7 @@ export const Source = z.object({
 });
 
 // Mirrors the table schema — the message payload needs a self-contained
-// copy so the frontend gets everything without having to  query the table
+// copy so the frontend gets everything without having to query the table
 export const Activity = z.object({
   id: z.string(),
   messageId: z.string(),
