@@ -12,6 +12,10 @@ When building AI agents that need to answer questions accurately from a specific
 
 This example shows how to wire up a website-sourced knowledge base, force the AI to search it before answering, and give admins the ability to refresh the index on demand.
 
+## How It Works
+
+When a user sends a message, the guardrail immediately starts classifying it (fire-and-forget via `zai.check()`). The agent loop then runs normally — but if the agent tries to respond without first calling `search_knowledge`, the `onBeforeTool` hook blocks the built-in `Message` tool and throws an error, forcing the agent to search the KB first. Once the search has been performed, the agent can respond with grounded answers. Admin users can trigger a manual KB refresh by authenticating with a one-time login code, which exposes the `refreshKnowledgeBases` tool.
+
 ## Key Components
 
 ### Knowledge Base (`src/knowledge/website-docs.ts`)

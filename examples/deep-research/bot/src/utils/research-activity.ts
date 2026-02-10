@@ -79,7 +79,7 @@ export async function updateActivity(
 }
 
 /**
- * Lists all activities for a given messageId, ordered by sortOrder
+ * Lists all activities for a given messageId, ordered by creation time
  */
 export async function listActivities(
   messageId: string

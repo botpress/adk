@@ -25,7 +25,16 @@ The conversation handler starts the workflow and tracks it via `Reference.Workfl
 
 The workflow writes progress to a custom message on the server (`custom://research_progress`). The frontend polls this message every 1s to pick up changes — the workflow and frontend never communicate directly.
 
-Surface research runs first so the TOC is grounded in real findings, not assumptions. Sections are researched in parallel via `step.map` to stay within the 60-minute timeout. The final report is rewritten by the "best" model from the raw Q&A data for higher quality than assembling answers directly.
+The 6 phases are:
+
+1. **Surface research** — broad web searches to understand the topic landscape, then `zai.extract()` to identify key aspects, perspectives, and controversies
+2. **Generate TOC** — turns the surface insights into a report structure (title + sections with specific research questions)
+3. **Research sections** — `step.map()` researches all sections in parallel: generates search queries, `zai.filter()` picks the best pages, fetches them, then `zai.answer()` answers each question with citations
+4. **Draft report** — `zai.text()` with the "best" model rewrites the raw Q&A data into cohesive prose (higher quality than assembling answers directly)
+5. **Generate summary** — `zai.text()` produces an executive summary as a standalone TLDR from the section-level findings
+6. **Finalize** — assembles the full report and updates the progress message
+
+Surface research runs first so the TOC is grounded in real findings, not assumptions. Sections are researched in parallel to stay within the 60-minute timeout.
 
 ## Key Components
 
