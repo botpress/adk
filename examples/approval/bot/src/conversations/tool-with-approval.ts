@@ -1,12 +1,53 @@
 import { Autonomous, context, z } from "@botpress/runtime";
 
 /**
- * A tool that requires user approval before execution.
- * When executed, if there is no pending approval for the given input,
- * it will throw an error indicating that approval is needed.
+ * @class ToolWithApproval
+ * @pattern Error-Driven Approval Gate (extends Autonomous.Tool)
  *
- * This tool keeps track of pending approvals in the conversation state.
- * You need to extend the conversation state with `ToolWithApproval.ApprovalState` to use it.
+ * WHY THIS APPROACH (error-throwing instead of a separate approval tool):
+ * The approval mechanism works by exploiting the LLM's error-recovery loop. When the
+ * tool throws an error saying "requires approval", the LLM naturally responds by asking
+ * the user for confirmation. This is more elegant than a separate "request_approval" tool
+ * because:
+ * 1. No extra tool definition needed — any tool can become approval-gated
+ * 2. The LLM's built-in error handling drives the UX naturally
+ * 3. The approval state is invisible to the LLM — it just retries the same tool call
+ *
+ * HOW THE STATE MACHINE WORKS:
+ * State transitions for a single tool call:
+ *
+ *   [No approval] --LLM calls tool--> [Pending approval created, error thrown]
+ *       |                                        |
+ *       |                              [LLM asks user to approve]
+ *       |                                        |
+ *       |                              [User sends new message]
+ *       |                                        |
+ *       v                              [LLM retries same tool call]
+ *   [Tool executes]  <----match found + new user message----+
+ *       |
+ *   [Approval record cleaned up]
+ *
+ * WHY DEEP EQUALITY CHECK (not approval IDs):
+ * Approvals are matched by comparing the tool name + full input object via deep equality.
+ * This was chosen over unique approval IDs because the LLM doesn't need to track IDs —
+ * it simply retries the exact same tool call. This keeps the LLM prompt clean and reduces
+ * the chance of the LLM fabricating or misremembering an approval ID.
+ *
+ * WHY lastUserMessageId CHECK:
+ * When the LLM retries a tool call, we verify that the user has sent a NEW message since
+ * the approval was created. This prevents auto-approval: without this check, the LLM could
+ * call the tool, get the error, immediately retry, and auto-approve itself. The message ID
+ * check guarantees a real human interaction happened between attempts.
+ *
+ * WHY .slice(-10) ON PENDING APPROVALS:
+ * The pending approvals array is capped at 10 entries to prevent unbounded state growth.
+ * In practice, there should only be 1-2 pending approvals at a time, but the cap prevents
+ * edge cases where the LLM repeatedly proposes different inputs without user response.
+ *
+ * WHY structuredClone:
+ * The input object is deep-cloned before storing in state to prevent reference sharing
+ * between the approval record and the LLM's working memory. Without cloning, mutations
+ * to the input object could silently break the deep equality check on retry.
  */
 export class ToolWithApproval extends Autonomous.Tool {
   private state: {

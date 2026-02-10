@@ -1,9 +1,38 @@
+/**
+ * @tools Clause Query and Analysis Tools
+ * @pattern Retrieve-then-Analyze (two-tool chain)
+ *
+ * WHY TWO SEPARATE TOOLS (query_clauses + summarize_clauses):
+ * This implements the "retrieve-then-analyze" pattern:
+ * 1. query_clauses: Pure data retrieval — fetches clauses from the database with filters
+ * 2. summarize_clauses: LLM analysis — takes retrieved clauses and answers questions about them
+ *
+ * WHY NOT A SINGLE "ask about clauses" TOOL:
+ * Separating retrieval from analysis gives the LLM control over what data to analyze. The LLM
+ * can first query for high-risk clauses, look at the results, then query for related payment
+ * terms, and finally summarize both sets together. A single tool would force the LLM to
+ * specify its analysis question before seeing any data — which produces worse results.
+ *
+ * WHY TOOLS ARE FACTORY FUNCTIONS (createQueryClausesTool, createSummarizeClausesTool):
+ * The query tool needs the `client` and `userId` injected via closure for security — the
+ * userId filter is hardcoded at tool creation time, preventing the LLM from being tricked
+ * into querying another user's data. Factory functions enable this dependency injection
+ * pattern while keeping the tool definitions reusable.
+ *
+ * SECURITY MODEL:
+ * The userId is captured in the closure when createQueryClausesTool is called, NOT exposed
+ * as a tool input parameter. This means even if a malicious prompt injection tells the LLM
+ * to "query clauses for user X", the tool physically cannot do so — the userId filter is
+ * always the authenticated user's ID, enforced at the code level.
+ */
 import { Autonomous, z, adk } from "@botpress/runtime";
 import type { Client } from "@botpress/client";
 import { ClauseTypeEnum, RiskLevelEnum } from "../utils/constants";
 
 /**
- * Clause schema used by tools
+ * Schema for clause data returned by tools — defines the shape of clause objects that flow
+ * between query_clauses output and summarize_clauses input. Having a shared schema ensures
+ * type safety when the LLM chains these tools together.
  */
 export const ClauseToolSchema = z.object({
   id: z.number(),

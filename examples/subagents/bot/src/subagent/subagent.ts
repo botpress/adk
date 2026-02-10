@@ -1,3 +1,52 @@
+/**
+ * @class SubAgent
+ * @pattern Tool-Wrapper Around Isolated Worker-Mode execute() Calls
+ *
+ * WHY THIS CLASS EXISTS:
+ * SubAgent is the bridge between the orchestrator pattern and ADK's execute() system.
+ * It wraps a full execute() call (with its own instructions, tools, and knowledge) into an
+ * Autonomous.Tool that the orchestrator can invoke like any other tool. This is the core
+ * abstraction that enables multi-agent architectures in ADK.
+ *
+ * HOW IT WORKS INTERNALLY:
+ * 1. Orchestrator LLM calls hr_agent tool with { task: "book vacation", context: {...} }
+ * 2. asTool() delegates to run(), which calls execute() in worker mode
+ * 3. Worker-mode execute() creates a NEW, ISOLATED LLM context:
+ *    - Its own system prompt (this.config.instructions + task + context)
+ *    - Its own tools (this.config.tools — only HR tools, not other subagent tools)
+ *    - Its own knowledge (this.config.knowledge — only HR docs)
+ *    - Its own iteration limit (this.config.maxIterations)
+ * 4. The worker LLM runs autonomously until it triggers SubAgentExit
+ * 5. The structured output flows back to the orchestrator
+ *
+ * WHY worker MODE (not default conversation mode):
+ * Default mode allows the LLM to send messages to the user and wait for replies. Worker mode
+ * disables this — the subagent can only use tools and return via exits. This prevents
+ * subagents from talking to the user directly, which would break the orchestrator's control
+ * over the conversation UX.
+ *
+ * WHY DEPENDENCY INJECTION (execute + step passed to asTool/run):
+ * Each conversation has its own execute() function bound to its conversation context. The
+ * orchestrator passes its execute to the subagent so the subagent's worker-mode execution
+ * runs within the same conversation's context (same memory, same transcript awareness).
+ * The step function is similarly injected so subagents can emit UI progress updates.
+ *
+ * WHY onTrace HOOK (not explicit step calls):
+ * The subagent's LLM thinking and tool calls are captured via the onTrace hook and forwarded
+ * to the step() function for UI display. This is non-invasive — the subagent doesn't need
+ * to know about the step system. The orchestrator transparently observes the subagent's
+ * internal execution.
+ *
+ * WHY maxIterations DEFAULTS TO 10:
+ * This caps the subagent's autonomous loop to prevent runaway execution. Most subagent tasks
+ * (check a balance, create a ticket) complete in 1-3 iterations. The cap prevents edge cases
+ * where the LLM gets stuck in a reasoning loop without triggering the exit.
+ *
+ * WHY FALLBACK ON NO EXIT:
+ * If the subagent exhausts its iterations without triggering SubAgentExit, the run() method
+ * returns a fallback output with needsInput=true. This handles the edge case gracefully —
+ * the orchestrator will ask the user for more details, which usually resolves the issue.
+ */
 import { Autonomous } from "@botpress/runtime";
 import {
   type SubAgentConfig,
@@ -9,35 +58,9 @@ import {
 } from "./types";
 import { truncate } from "../utils/truncate";
 
-/** Generate a unique execution ID */
+/** Generate a unique execution ID for tracing/debugging subagent runs */
 const generateExecutionId = () => `exec-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
-
-/**
- * SubAgent - A specialized agent that runs in its own context
- *
- * Inspired by Claude Code's subagent pattern:
- * - Each subagent has its own context window (separate execute() loop)
- * - Returns structured results, not full conversation
- * - Cannot spawn other subagents (no nesting)
- * - Main orchestrator synthesizes results and talks to user
- *
- * @example
- * ```typescript
- * const hrAgent = new SubAgent({
- *   name: "hr",
- *   description: "Handles HR tasks like vacation booking and benefits",
- *   instructions: "You are an HR specialist...",
- *   tools: [bookVacation, getBenefits],
- * });
- *
- * // Use in orchestrator
- * await execute({
- *   instructions: "You are a helpful assistant...",
- *   tools: [hrAgent.asTool()],
- * });
- * ```
- */
 export class SubAgent {
   private config: SubAgentConfig;
 

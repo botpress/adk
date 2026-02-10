@@ -1,8 +1,34 @@
+/**
+ * @types SubAgent Type System
+ * @pattern Structured Input/Output Contract Between Orchestrator and Workers
+ *
+ * WHY THESE TYPES EXIST:
+ * The orchestrator-worker pattern requires a well-defined contract: the orchestrator must
+ * know what to send to each subagent (SubAgentInput) and what to expect back (SubAgentOutput).
+ * These schemas are shared between the orchestrator (which provides them to the LLM as tool
+ * schemas) and the subagent (which uses SubAgentExit to return structured results).
+ *
+ * WHY SubAgentOutputSchema HAS needsInput + questions:
+ * Subagents run in worker mode (no user interaction). When a subagent needs information it
+ * doesn't have (e.g., employee ID for vacation booking), it can't ask the user directly.
+ * Instead, it sets needsInput=true and provides questions. The orchestrator sees this
+ * structured output and asks the user those questions, then calls the subagent again with
+ * the answers in the context field. This creates a clean feedback loop without breaking the
+ * worker isolation boundary.
+ *
+ * WHY SubAgentExit (not just returning from handler):
+ * Worker-mode execute() loops run until the LLM triggers an Exit. Exits are Autonomous.Exit
+ * objects with typed schemas — the LLM must provide all required fields (success, result,
+ * etc.) to complete the exit. This ensures the orchestrator always receives well-structured
+ * data, even when the subagent fails.
+ */
 import { z, Knowledge, Autonomous } from "@botpress/runtime";
 
 /**
- * Configuration for defining a SubAgent
- * Similar to Claude Code's markdown files with YAML frontmatter
+ * Configuration for defining a SubAgent.
+ * Each config defines a specialist: its name (used as tool name), description (used by
+ * orchestrator LLM for routing), instructions (system prompt for the subagent's LLM),
+ * and the tools/knowledge available to it.
  */
 export type SubAgentConfig = {
   /** Unique identifier for the subagent */

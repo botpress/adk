@@ -1,12 +1,54 @@
+/**
+ * @conversation Clause Extraction - Webchat Conversation
+ *
+ * WHY IT'S BUILT THIS WAY:
+ * This conversation handler manages the full lifecycle of contract analysis:
+ * 1. FILE UPLOAD HANDLING: Intercepts file/bloc messages before the LLM loop
+ * 2. GUIDED WORKFLOW: Ensures the user specifies which party they represent (critical for risk)
+ * 3. BACKGROUND EXTRACTION: Launches a durable workflow for the heavy processing
+ * 4. POST-EXTRACTION Q&A: Provides query + summarize tools for interactive analysis
+ *
+ * KEY DESIGN PATTERNS:
+ *
+ * File processing before execute():
+ *   File uploads are handled BEFORE the LLM autonomous loop (execute()). This is because
+ *   file messages arrive as raw binary data that needs to be processed and stored — the LLM
+ *   can't directly handle file bytes. By processing files first, we store the fileId in state
+ *   and then the LLM works with file references, not raw data.
+ *
+ * uploadedFiles array (not single file):
+ *   Files are tracked as an array in state to support users uploading multiple documents across
+ *   a conversation. The array persists across workflow failures — if extraction fails, the user
+ *   doesn't need to re-upload. Only the most recent file (.at(-1)) is used for new extractions.
+ *
+ * Dynamic tools (function, not array):
+ *   Tools change based on whether an extraction is running. During extraction, the
+ *   analyze_contract tool is hidden to prevent starting a second extraction. After extraction,
+ *   all tools are available. This is enforced structurally (tool not in list) rather than
+ *   through instructions alone.
+ *
+ * Dynamic instructions (buildInstructions function):
+ *   The system prompt changes based on state — whether a file has been uploaded, whether the
+ *   user has selected a party, etc. This gives the LLM exactly the right context for its current
+ *   situation without overloading it with irrelevant instructions.
+ *
+ * WHY userParty is a required tool parameter (not just state):
+ *   The party selection (party_a vs party_b) is a required input to analyze_contract rather
+ *   than being read from state silently. This forces the LLM to explicitly ask the user and
+ *   pass their answer, creating an auditable decision point. Risk assessment is subjective —
+ *   the same clause can be "high risk" for one party and "low risk" for the other.
+ *
+ * SECURITY: userId scoping:
+ *   The query_clauses tool always includes userId in its database filter, injected via closure
+ *   (not via LLM input). This prevents the LLM from being prompt-injected into querying
+ *   another user's clauses — the userId filter is hardcoded at tool creation time.
+ */
 import { Conversation, z, Autonomous, Reference } from "@botpress/runtime";
 import ExtractClausesWorkflow from "../workflows/extract-clauses";
 import { createExtractionProgressComponent } from "../utils/progress-component";
 import { processFileMessage } from "../utils/file-upload";
 import { createQueryClausesTool, createSummarizeClausesTool } from "../tools/clause-tools";
 
-/**
- * Main conversation handler for clause extraction bot
- */
 export default new Conversation({
   channel: ["webchat.channel"],
   state: z.object({

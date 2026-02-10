@@ -1,3 +1,28 @@
+/**
+ * @handler Game Host Handler
+ * @pattern Creator-Only Command Processing with Dual Input Sources
+ *
+ * WHY THIS EXISTS:
+ * The game host handler processes game management commands (update_settings, start_game,
+ * close_game) that can ONLY be executed by the game creator. This handler enforces the
+ * creator-only access control and routes commands to their specific handlers.
+ *
+ * WHY CREATOR-ONLY CHECK (user.id === creatorUserId):
+ * Only the game creator can start, configure, or close a game. This prevents players from
+ * accidentally or maliciously modifying game settings. The check happens at the handler
+ * level (before routing to specific handlers) as a security gate.
+ *
+ * WHY DUAL INPUT SOURCES (events + text messages):
+ * Game commands arrive from two sources:
+ * 1. webchat:trigger events — preferred for game actions (invisible in chat transcript)
+ * 2. Text messages with JSON — fallback for testing or compatibility
+ * The parseGameRequest function normalizes both into the same GameRequest type.
+ *
+ * WHY EVENTS OVER MESSAGES FOR GAME ACTIONS:
+ * Events (webchat:trigger) don't appear in the conversation transcript. Game commands like
+ * "start_game" or "update_settings" are control signals, not user messages — they shouldn't
+ * pollute the chat history that the LLM might read later.
+ */
 import { user, z } from "@botpress/runtime";
 import { PartialHandler } from "../types";
 import { handleUpdateSettings, UpdateSettingsRequestSchema } from "./update-settings";
@@ -13,7 +38,8 @@ const GameRequestSchema = z.discriminatedUnion("type", [
 type GameRequest = z.infer<typeof GameRequestSchema>;
 
 /**
- * Parse incoming event/message to extract a GameRequest
+ * Parse incoming event/message to extract a GameRequest.
+ * Handles both webchat:trigger events and JSON text messages.
  */
 function parseGameRequest(props: Parameters<PartialHandler>[0]): GameRequest | null {
   if (props.event?.type === "webchat:trigger") {
