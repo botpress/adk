@@ -2,9 +2,9 @@
 
 A pattern for implementing topic guardrails that keep your AI agent focused on specific subjects using the Botpress ADK.
 
-## Live Demo
+## Demo
 
-Try it out: https://guardrails.botpress.bot
+Try it live: **[https://guardrails.botpress.bot](https://guardrails.botpress.bot)**
 
 ![Demo](./demo.gif)
 
@@ -19,11 +19,11 @@ When building AI agents, you often need to ensure the conversation stays on topi
 
 ## How It Works
 
-1. **Before each agent execution**, the conversation transcript is analyzed using `zai.check()`
-2. The check runs **asynchronously** to avoid blocking the response
-3. If the topic drifts off-topic, a **custom guardrail message** is sent to the UI
-4. The agent receives an error with instructions to **recover gracefully**
-5. The agent redirects the user back to the intended topic
+When a message arrives, the handler fetches the full conversation transcript and immediately starts a `zai.check()` — an LLM yes/no classification that evaluates whether the conversation is on-topic. This check runs concurrently with `execute()` setup.
+
+The `onBeforeExecution` hook fires before each iteration of the agent loop and awaits the check result. If the topic is valid, the agent proceeds normally. If not, the hook sends a custom guardrail message to the frontend (rendered as a warning card) and throws an error. The error message becomes instructions the AI reads on the next iteration — telling it to "recover seamlessly" by redirecting the user back to Botpress topics.
+
+The key design choice is using `onBeforeExecution` instead of `onBeforeTool` (which the webchat-rag example uses). `onBeforeTool` only fires when the AI calls a tool — if the AI tries to respond directly without tools, the guardrail would never trigger. `onBeforeExecution` fires before every agent iteration, so nothing gets through.
 
 ## Key Components
 
@@ -88,3 +88,20 @@ Try these prompts to see the guardrail in action:
 - ✅ "How do I build a chatbot?" - Related to Botpress, agent responds
 - ❌ "Tell me a recipe for pizza" - Off topic, guardrail triggers
 - ❌ "What's the weather like?" - Off topic, guardrail triggers
+
+## Getting Started
+
+1. Install dependencies:
+   ```bash
+   bun install
+   ```
+
+2. Start development server:
+   ```bash
+   adk dev
+   ```
+
+3. Deploy:
+   ```bash
+   adk deploy
+   ```
