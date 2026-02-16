@@ -1,7 +1,7 @@
 export const mockReviews = [
   {
     id: 1,
-    hotelName: "The MARA Hotel",
+    hotelName: "The JIXU Hotel",
     platforms: ["google", "booking"],
     rating: 4,
     title: "Great but no kids allowed in pool",
@@ -18,7 +18,7 @@ In regard to your experience with the pool, it's important to clarify that we in
 We're looking forward to having you and your family back with us in the future for a more comprehensive experience.
 
 Best regards,
-Tobi from MARA`,
+Tobi from JIXU`,
     translation: {
       language: "DE",
       content: `Lieber Chris,
@@ -30,12 +30,12 @@ Was Ihre Erfahrung mit dem Pool betrifft, so ist es wichtig, klarzustellen, dass
 Wir freuen uns darauf, Sie und Ihre Familie in Zukunft wieder bei uns begruBen zu durfen, um Ihnen ein noch umfassenderes Erlebnis zu bieten.
 
 Mit freundlichen GruBen,
-Tobi von MARA`
+Tobi von JIXU`
     }
   },
   {
     id: 2,
-    hotelName: "The MARA Hotel",
+    hotelName: "The JIXU Hotel",
     platforms: ["google"],
     rating: 5,
     title: "Lovely hotel and a warm welcome",
@@ -52,12 +52,12 @@ Our team works hard to create a comfortable and inviting atmosphere for all our 
 We hope to welcome you back soon for another memorable stay!
 
 Warm regards,
-The MARA Hotel Team`,
+The JIXU Hotel Team`,
     translation: null
   },
   {
     id: 3,
-    hotelName: "The MARA Hotel",
+    hotelName: "The JIXU Hotel",
     platforms: ["google", "tripadvisor"],
     rating: 5,
     title: "Everything was perfect",
@@ -71,15 +71,15 @@ We are absolutely delighted to receive such glowing feedback! It's wonderful to 
 
 Our entire team is dedicated to providing exceptional service, and reviews like yours motivate us to maintain our high standards.
 
-Thank you for choosing The MARA Hotel. We look forward to welcoming you again!
+Thank you for choosing The JIXU Hotel. We look forward to welcoming you again!
 
 Best regards,
-The MARA Hotel Team`,
+The JIXU Hotel Team`,
     translation: null
   },
   {
     id: 4,
-    hotelName: "The MARA Hotel",
+    hotelName: "The JIXU Hotel",
     platforms: ["google"],
     rating: 4,
     title: "Cheap place",
@@ -96,12 +96,12 @@ We take all guest feedback seriously and have noted your comments about the bedd
 We would appreciate the opportunity to make things right. Please reach out to us directly so we can address your concerns.
 
 Sincerely,
-The MARA Hotel Management`,
+The JIXU Hotel Management`,
     translation: null
   },
   {
     id: 5,
-    hotelName: "The MARA Hotel",
+    hotelName: "The JIXU Hotel",
     platforms: ["booking", "google"],
     rating: 5,
     title: "Room was fine but there were issues",
@@ -118,16 +118,16 @@ We apologize for any inconvenience caused by other guests. Guest comfort is our 
 We hope you'll give us another chance to provide you with an exceptional experience.
 
 Kind regards,
-The MARA Hotel Team`,
+The JIXU Hotel Team`,
     translation: null
   },
   {
     id: 6,
-    hotelName: "The MARA Hotel",
+    hotelName: "The JIXU Hotel",
     platforms: ["tripadvisor"],
     rating: 5,
     title: "Perfect vacation spot",
-    content: "We had an amazing time at The MARA Hotel. The staff went above and beyond to make our anniversary special. Highly recommend the spa services!",
+    content: "We had an amazing time at The JIXU Hotel. The staff went above and beyond to make our anniversary special. Highly recommend the spa services!",
     date: "Jan 7, 2024",
     status: "replied",
     guestName: "David & Emma",
@@ -140,12 +140,12 @@ It warms our hearts to know that our team made your stay memorable. We'll be sur
 Wishing you many more years of happiness together. We hope to see you again for another special celebration!
 
 With warm wishes,
-The MARA Hotel Team`,
+The JIXU Hotel Team`,
     translation: null
   },
   {
     id: 7,
-    hotelName: "The MARA Hotel",
+    hotelName: "The JIXU Hotel",
     platforms: ["google", "booking"],
     rating: 3,
     title: "Average experience",
@@ -162,12 +162,12 @@ We're sorry that your stay didn't fully meet your expectations. We're constantly
 We hope you'll consider staying with us again to experience the improvements we're making.
 
 Best regards,
-The MARA Hotel Team`,
+The JIXU Hotel Team`,
     translation: null
   },
   {
     id: 8,
-    hotelName: "The MARA Hotel",
+    hotelName: "The JIXU Hotel",
     platforms: ["google"],
     rating: 5,
     title: "Will definitely come back",
@@ -184,12 +184,12 @@ We're glad the room upgrade added a special touch to your stay. It's guests like
 We can't wait to welcome you back!
 
 Warmest regards,
-The MARA Hotel Team`,
+The JIXU Hotel Team`,
     translation: null
   },
   {
     id: 9,
-    hotelName: "The MARA Hotel",
+    hotelName: "The JIXU Hotel",
     platforms: ["booking"],
     rating: 4,
     title: "Great location, minor issues",
@@ -206,12 +206,12 @@ We apologize about the street noise. For future stays, we recommend requesting a
 We hope to host you again soon!
 
 Best regards,
-The MARA Hotel Team`,
+The JIXU Hotel Team`,
     translation: null
   },
   {
     id: 10,
-    hotelName: "The MARA Hotel",
+    hotelName: "The JIXU Hotel",
     platforms: ["tripadvisor", "google"],
     rating: 5,
     title: "Exceeded all expectations",
@@ -225,10 +225,10 @@ Your review has truly made our day! We strive to make every guest feel special, 
 
 Our rooftop restaurant team will be delighted to hear your recommendation. It's one of our most beloved features.
 
-Thank you for choosing The MARA Hotel. We look forward to your return visit!
+Thank you for choosing The JIXU Hotel. We look forward to your return visit!
 
 With gratitude,
-The MARA Hotel Team`,
+The JIXU Hotel Team`,
     translation: null
   }
 ];
