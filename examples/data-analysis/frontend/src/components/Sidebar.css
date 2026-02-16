@@ -1,7 +1,7 @@
 .sidebar {
   width: 56px;
-  background: #fff;
-  border-right: 1px solid #e5e7eb;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -43,18 +43,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6b7280;
+  color: var(--text-tertiary);
   transition: all 0.2s ease;
 }
 
-.nav-item:hover {
-  background: #f3f4f6;
-  color: #374151;
+.nav-item:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
 }
 
 .nav-item.active {
-  background: #eff6ff;
-  color: #3b82f6;
+  background: var(--accent-bg);
+  color: var(--accent-color);
+}
+
+.nav-item.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .sidebar-bottom {

@@ -3,8 +3,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px 24px;
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .header-left {
@@ -16,7 +16,7 @@
 .header-title {
   font-size: 20px;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -25,16 +25,16 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background: #e8f0fe;
+  background: var(--accent-bg);
   border-radius: 16px;
   font-size: 13px;
-  color: #1a73e8;
+  color: var(--accent-color);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .data-source-badge:hover {
-  background: #d2e3fc;
+  filter: brightness(0.95);
 }
 
 .data-source-badge .change-icon {
@@ -55,7 +55,7 @@
 
 .sort-label {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--text-tertiary);
 }
 
 .sort-select {
@@ -63,7 +63,7 @@
   border: none;
   background: transparent;
   font-size: 14px;
-  color: #374151;
+  color: var(--text-secondary);
   cursor: pointer;
   outline: none;
 }
@@ -73,7 +73,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: #1a73e8;
+  background: var(--accent-color);
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -84,5 +84,5 @@
 }
 
 .analytics-btn:hover {
-  background: #1557b0;
+  background: var(--accent-hover);
 }

@@ -37,13 +37,9 @@ function ReviewList({ reviews, stats, page, totalPages, onPageChange }) {
       </div>
 
       <div className="review-list-footer">
-        <div className="last-updated">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-          </svg>
-          Last Updated 15 min ago
-        </div>
+        <a href="https://botpress.com" target="_blank" rel="noopener noreferrer" className="built-with">
+          Built with the Botpress ADK
+        </a>
         <div className="pagination">
           <span className="page-info">{stats.displayedRange} of {stats.totalReviews}</span>
           <div className="pagination-buttons">

@@ -4,9 +4,9 @@
   justify-content: center;
   flex: 1;
   margin: 24px;
-  border: 2px dashed #e2e8f0;
+  border: 2px dashed var(--border-color);
   border-radius: 12px;
-  background: #fafbfc;
+  background: var(--bg-tertiary);
 }
 
 .empty-state-content {
@@ -15,20 +15,20 @@
 }
 
 .empty-icon {
-  color: #94a3b8;
+  color: var(--text-muted);
   margin-bottom: 16px;
 }
 
 .empty-title {
   font-size: 16px;
   font-weight: 500;
-  color: #334155;
+  color: var(--text-secondary);
   margin: 0 0 4px 0;
 }
 
 .empty-subtitle {
   font-size: 14px;
-  color: #64748b;
+  color: var(--text-tertiary);
   margin: 0 0 20px 0;
 }
 
@@ -41,43 +41,43 @@
 .empty-btn {
   padding: 8px 16px;
   font-size: 14px;
-  border: 1px solid #e2e8f0;
-  background: #fff;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
   border-radius: 6px;
-  color: #475569;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .empty-btn:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+  background: var(--bg-hover);
+  border-color: var(--text-muted);
 }
 
 .empty-btn.primary {
-  background: #1a73e8;
-  border-color: #1a73e8;
+  background: var(--accent-color);
+  border-color: var(--accent-color);
   color: #fff;
 }
 
 .empty-btn.primary:hover {
-  background: #1557b0;
+  background: var(--accent-hover);
 }
 
 .empty-error {
-  color: #dc2626;
+  color: var(--error-color);
   font-size: 13px;
   margin: 16px 0 0 0;
 }
 
 .schema-note {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--text-muted);
   margin: 20px 0 0 0;
 }
 
 .schema-note code {
-  background: #e2e8f0;
+  background: var(--bg-hover);
   padding: 1px 4px;
   border-radius: 3px;
   font-size: 11px;

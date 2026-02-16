@@ -1,6 +1,6 @@
 .review-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 16px;
   transition: all 0.2s ease;
@@ -12,16 +12,15 @@
 }
 
 .review-card:hover {
-  border-color: #d1d5db;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border-color: var(--text-muted);
+  box-shadow: var(--shadow-sm);
 }
 
 .review-card.expanded {
   height: auto !important;
   min-height: 160px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-color: #3b82f6;
-  background: #fefefe;
+  box-shadow: var(--shadow-md);
+  border-color: var(--accent-color);
   overflow: visible;
 }
 
@@ -41,7 +40,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #1a73e8;
+  background: var(--accent-color);
   color: white;
   display: flex;
   align-items: center;
@@ -60,7 +59,7 @@
 .reviewer-name {
   font-size: 14px;
   font-weight: 500;
-  color: #202124;
+  color: var(--text-primary);
 }
 
 .rating-row {
@@ -76,17 +75,17 @@
 }
 
 .star {
-  color: #dadce0;
+  color: var(--star-empty);
   font-size: 12px;
 }
 
 .star.filled {
-  color: #fbbc04;
+  color: var(--star-filled);
 }
 
 .review-date {
   font-size: 12px;
-  color: #70757a;
+  color: var(--text-tertiary);
   white-space: nowrap;
 }
 
@@ -104,7 +103,7 @@
 
 .review-content {
   font-size: 14px;
-  color: #202124;
+  color: var(--text-primary);
   margin: 0;
   line-height: 1.58;
   overflow: hidden;

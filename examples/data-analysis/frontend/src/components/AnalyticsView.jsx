@@ -1,6 +1,6 @@
 import './AnalyticsView.css';
 
-function AnalyticsView({ onBackToInbox }) {
+function AnalyticsView({ reviews, onBackToInbox }) {
   return (
     <div className="analytics-view">
       <div className="analytics-placeholder">

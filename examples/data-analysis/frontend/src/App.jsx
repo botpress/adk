@@ -16,6 +16,23 @@ function App() {
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [activeView, setActiveView] = useState('inbox'); // 'inbox' or 'analytics'
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved === 'true';
+  });
+  const [disabledButtons, setDisabledButtons] = useState(new Set());
+
+  const handleToggleDarkMode = () => {
+    setDarkMode(prev => {
+      const newValue = !prev;
+      localStorage.setItem('darkMode', String(newValue));
+      return newValue;
+    });
+  };
+
+  const handleDisableButton = (buttonId) => {
+    setDisabledButtons(prev => new Set([...prev, buttonId]));
+  };
 
   const sortedReviews = useMemo(() => {
     if (!reviews) return [];
@@ -81,7 +98,7 @@ function App() {
 
   const renderContent = () => {
     if (activeView === 'analytics') {
-      return <AnalyticsView onBackToInbox={() => setActiveView('inbox')} />;
+      return <AnalyticsView reviews={reviews} onBackToInbox={() => setActiveView('inbox')} />;
     }
 
     if (!reviews) {
@@ -107,8 +124,15 @@ function App() {
   };
 
   return (
-    <div className="app">
-      <Sidebar activeView={activeView} onViewChange={setActiveView} />
+    <div className={`app ${darkMode ? 'dark' : ''}`}>
+      <Sidebar
+        activeView={activeView}
+        onViewChange={setActiveView}
+        darkMode={darkMode}
+        onToggleDarkMode={handleToggleDarkMode}
+        disabledButtons={disabledButtons}
+        onDisableButton={handleDisableButton}
+      />
       <div className="main-content">
         <Header
           sortBy={sortBy}
