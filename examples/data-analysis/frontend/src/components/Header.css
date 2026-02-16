@@ -1,0 +1,80 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.sort-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sort-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.sort-select {
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  outline: none;
+}
+
+.configure-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 2px solid #3b82f6;
+  background: #fff;
+  border-radius: 20px;
+  font-size: 14px;
+  color: #3b82f6;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.configure-btn:hover {
+  background: #eff6ff;
+}

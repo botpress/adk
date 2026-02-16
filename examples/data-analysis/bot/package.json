@@ -1,0 +1,17 @@
+{
+  "name": "bot",
+  "version": "1.0.0",
+  "description": "A Botpress Agent built with the ADK",
+  "type": "module",
+  "scripts": {
+    "dev": "adk dev",
+    "build": "adk build",
+    "deploy": "adk deploy"
+  },
+  "dependencies": {
+    "@botpress/runtime": "^1.13.17"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

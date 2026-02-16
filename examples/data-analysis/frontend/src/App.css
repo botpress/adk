@@ -1,0 +1,19 @@
+.app {
+  display: flex;
+  min-height: 100vh;
+  background: #f3f4f6;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 56px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.content-area {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
