@@ -1,0 +1,28 @@
+Quantitative Metrics                                                                                                                                                                                 
+  - Average rating over time (trending up or down?)                                                                                                                                                    
+  - Rating distribution (% of 5-star, 4-star, etc.)                                                                                                                                                    
+  - Review volume trends (more reviews during certain seasons?)                                                                                                                                        
+                                                                                                                                                                                                       
+  Sentiment & Topic Analysis                                                                                                                                                                           
+  - Overall sentiment score                                                                                                                                                                            
+  - Sentiment breakdown by topic (cleanliness, service, location, amenities, food)                                                                                                                     
+  - Which topics correlate with low vs high ratings                                                                                                                                                    
+                                                                                                                                                                                                       
+  Operational Insights                                                                                                                                                                                 
+  - Most frequently mentioned complaints (noise, slow check-in, room issues)                                                                                                                           
+  - Most frequently mentioned praise (friendly staff, great breakfast, nice view)                                                                                                                      
+  - Emerging issues - new complaints that weren't appearing before                                                                                                                                     
+                                                                                                                                                                                                       
+  Actionable Summaries                                                                                                                                                                                 
+  - Top 3 things to fix (with supporting quotes)                                                                                                                                                       
+  - Top 3 strengths to highlight in marketing                                                                                                                                                          
+  - Staff training opportunities based on service feedback                                                                                                                                             
+                                                                                                                                                                                                       
+  Keyword Extraction                                                                                                                                                                                   
+  - Common phrases in positive reviews                                                                                                                                                                 
+  - Common phrases in negative reviews                                                                                                                                                                 
+  - Specific amenities mentioned (pool, gym, spa, parking, wifi)                                                                                                                                       
+                                                                                                                                                                                                       
+  Guest Segmentation                                                                                                                                                                                   
+  - What do business travelers care about vs families vs couples?                                                                                                                                      
+  - Different expectations by guest type                                               

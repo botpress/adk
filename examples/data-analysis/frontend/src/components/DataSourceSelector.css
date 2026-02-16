@@ -1,0 +1,84 @@
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  margin: 24px;
+  border: 2px dashed #e2e8f0;
+  border-radius: 12px;
+  background: #fafbfc;
+}
+
+.empty-state-content {
+  text-align: center;
+  padding: 40px;
+}
+
+.empty-icon {
+  color: #94a3b8;
+  margin-bottom: 16px;
+}
+
+.empty-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #334155;
+  margin: 0 0 4px 0;
+}
+
+.empty-subtitle {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0 0 20px 0;
+}
+
+.empty-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.empty-btn {
+  padding: 8px 16px;
+  font-size: 14px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  border-radius: 6px;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.empty-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.empty-btn.primary {
+  background: #1a73e8;
+  border-color: #1a73e8;
+  color: #fff;
+}
+
+.empty-btn.primary:hover {
+  background: #1557b0;
+}
+
+.empty-error {
+  color: #dc2626;
+  font-size: 13px;
+  margin: 16px 0 0 0;
+}
+
+.schema-note {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 20px 0 0 0;
+}
+
+.schema-note code {
+  background: #e2e8f0;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 11px;
+}
