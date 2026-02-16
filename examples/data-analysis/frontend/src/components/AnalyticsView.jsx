@@ -1,6 +1,46 @@
+import { useEffect, useRef } from 'react';
 import './AnalyticsView.css';
+import { Client } from '@botpress/chat'
 
 function AnalyticsView({ reviews, onBackToInbox }) {
+  const clientRef = useRef(null);
+  const conversationRef = useRef(null);
+
+  const sendEvent = async () => {
+    await clientRef.current.createEvent({
+      conversationId: conversationRef.current.id,
+      type: 'event1',
+      payload: {}
+    });
+  };
+
+  // auth client, create convo, setup listeners
+  useEffect(() => {
+    (async () => {
+
+      // auth client
+      clientRef.current = await Client.connect({
+        webhookId: import.meta.env.VITE_BOTPRESS_WEBHOOK_ID
+      });
+
+      // create conversation
+      const { conversation } = await clientRef.current.createConversation({})
+      conversationRef.current = conversation
+
+      const serverStream = await clientRef.current.listenConversation({
+        id: conversationRef.current.id
+      })
+
+      serverStream.on("message_created", (event) => {
+      })
+
+      serverStream.on("event_created", (event) => {
+
+      });
+
+    })();
+  }, []);
+
   return (
     <div className="analytics-view">
       <div className="analytics-placeholder">
@@ -11,8 +51,11 @@ function AnalyticsView({ reviews, onBackToInbox }) {
             <path d="M6 20v-6" />
           </svg>
         </div>
-        <h2>AI Analytics</h2>
+        <h2>Analytics</h2>
         <p>Analytics features coming soon</p>
+        <button className="send-event-btn" onClick={sendEvent}>
+          Send Event
+        </button>
         <button className="back-btn" onClick={onBackToInbox}>
           Back to Reviews
         </button>

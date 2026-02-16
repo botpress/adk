@@ -1,8 +1,9 @@
-/**
- * TODO: Add your triggers here
- *
- * This is a placeholder file to initialize the triggers directory.
- * You can delete this file once you add your own triggers.
- */
+import { Trigger } from "@botpress/runtime";
 
-export default {};
+export default new Trigger({
+  name: "event1",
+  event: "event1",
+  handler: async ({ event }) => {
+    
+  },
+});

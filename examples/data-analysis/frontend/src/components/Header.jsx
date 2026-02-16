@@ -1,7 +1,7 @@
 import './Header.css';
 
 function Header({ sortBy, onSortChange, dataSourceName, onChangeDataSource, activeView, onGoToAnalytics, hasReviews }) {
-  const title = activeView === 'analytics' ? 'AI Analytics' : 'Review Inbox';
+  const title = activeView === 'analytics' ? 'Analytics' : 'Review Inbox';
 
   return (
     <header className="header">
@@ -46,7 +46,7 @@ function Header({ sortBy, onSortChange, dataSourceName, onChangeDataSource, acti
             <path d="M12 20V4" />
             <path d="M6 20v-6" />
           </svg>
-          See AI Analytics
+          See Analytics
         </button>
       )}
     </header>

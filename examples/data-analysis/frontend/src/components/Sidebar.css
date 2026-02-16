@@ -19,12 +19,26 @@
   gap: 24px;
 }
 
-.logo-placeholder {
-  width: 32px;
-  height: 32px;
+.logo-btn {
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.logo-btn:hover {
+  transform: scale(1.05);
+}
+
+.logo-btn:active {
+  transform: scale(0.95);
 }
 
 .sidebar-nav {

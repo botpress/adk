@@ -24,12 +24,20 @@ function Sidebar({ activeView, onViewChange, darkMode, onToggleDarkMode, disable
   return (
     <aside className="sidebar">
       <div className="sidebar-top">
-        <div className="logo-placeholder">
+        <button className="logo-btn" onClick={() => onViewChange('inbox')} title="Home">
           <svg viewBox="0 0 32 32" width="32" height="32">
-            <rect x="4" y="4" width="24" height="24" rx="4" fill="#3B82F6" />
-            <path d="M10 16 L16 10 L22 16 L16 14 Z" fill="white" />
+            <defs>
+              <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#3B82F6" />
+                <stop offset="100%" stopColor="#8B5CF6" />
+              </linearGradient>
+            </defs>
+            <rect x="2" y="2" width="28" height="28" rx="8" fill="url(#logoGradient)" />
+            <path d="M9 12h14M9 16h10M9 20h12" stroke="white" strokeWidth="2" strokeLinecap="round" />
+            <circle cx="22" cy="22" r="5" fill="white" />
+            <path d="M20.5 22l1 1 2-2" stroke="url(#logoGradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
           </svg>
-        </div>
+        </button>
 
         <nav className="sidebar-nav">
           <button

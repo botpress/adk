@@ -13,6 +13,8 @@ export default defineConfig({
   },
 
   dependencies: {
-    integrations: {},
+    integrations: {
+      chat: { version: "chat@0.2.0", enabled: true },
+    },
   },
 });
