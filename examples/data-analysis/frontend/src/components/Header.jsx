@@ -1,6 +1,6 @@
 import './Header.css';
 
-function Header() {
+function Header({ sortBy, onSortChange }) {
   return (
     <header className="header">
       <div className="header-left">
@@ -15,11 +15,15 @@ function Header() {
 
         <div className="sort-dropdown">
           <span className="sort-label">Sort By:</span>
-          <select className="sort-select">
-            <option>Most recent</option>
-            <option>Oldest first</option>
-            <option>Highest rated</option>
-            <option>Lowest rated</option>
+          <select
+            className="sort-select"
+            value={sortBy}
+            onChange={(e) => onSortChange(e.target.value)}
+          >
+            <option value="most-recent">Most recent</option>
+            <option value="oldest-first">Oldest first</option>
+            <option value="highest-rated">Highest rated</option>
+            <option value="lowest-rated">Lowest rated</option>
           </select>
         </div>
 
