@@ -67,3 +67,22 @@
   cursor: pointer;
   outline: none;
 }
+
+.analytics-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #1a73e8;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.analytics-btn:hover {
+  background: #1557b0;
+}

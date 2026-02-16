@@ -2,11 +2,25 @@ import { useState } from 'react';
 import ReviewCard from './ReviewCard';
 import './ReviewList.css';
 
-function ReviewList({ reviews, stats }) {
+function ReviewList({ reviews, stats, page, totalPages, onPageChange }) {
   const [expandedIndex, setExpandedIndex] = useState(null);
 
   const handleCardClick = (index) => {
     setExpandedIndex(expandedIndex === index ? null : index);
+  };
+
+  const handlePrevPage = () => {
+    if (page > 1) {
+      onPageChange(page - 1);
+      setExpandedIndex(null);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (page < totalPages) {
+      onPageChange(page + 1);
+      setExpandedIndex(null);
+    }
   };
 
   return (
@@ -33,12 +47,12 @@ function ReviewList({ reviews, stats }) {
         <div className="pagination">
           <span className="page-info">{stats.displayedRange} of {stats.totalReviews}</span>
           <div className="pagination-buttons">
-            <button className="page-btn" disabled>
+            <button className="page-btn" disabled={page <= 1} onClick={handlePrevPage}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="15 18 9 12 15 6" />
               </svg>
             </button>
-            <button className="page-btn">
+            <button className="page-btn" disabled={page >= totalPages} onClick={handleNextPage}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="9 18 15 12 9 6" />
               </svg>

@@ -1,12 +1,12 @@
 Quantitative Metrics                                                                                                                                                                                 
-  - Average rating over time (trending up or down?)                                                                                                                                                    
-  - Rating distribution (% of 5-star, 4-star, etc.)                                                                                                                                                    
-  - Review volume trends (more reviews during certain seasons?)                                                                                                                                        
+  - Average rating over time (trending up or down?)                                     \                                                                                                               
+  - Rating distribution (% of 5-star, 4-star, etc.)                                     | these are not AI, but could be nice to see   (high fidelity?)                                                                                                         
+  - Review volume trends (more reviews during certain seasons?)                         /                                                                                                              
                                                                                                                                                                                                        
   Sentiment & Topic Analysis                                                                                                                                                                           
-  - Overall sentiment score                                                                                                                                                                            
-  - Sentiment breakdown by topic (cleanliness, service, location, amenities, food)                                                                                                                     
-  - Which topics correlate with low vs high ratings                                                                                                                                                    
+  - Overall sentiment score                                                                 ------                 average of rate()                                                                                     
+  - Sentiment breakdown by topic (cleanliness, service, location, amenities, food)        -----                             group(by topic) ->                                                                          
+  - Which topics correlate with low vs high ratings                                                  -------                               group(by topic)                                                                   
                                                                                                                                                                                                        
   Operational Insights                                                                                                                                                                                 
   - Most frequently mentioned complaints (noise, slow check-in, room issues)                                                                                                                           

@@ -1,31 +1,31 @@
 export const mockReviews = [
   {
     "rating": 4,
-    "content": "The facility as well as the staff were way above our expectations. The location of this hotel is strategically located at the center of places you can visit... and if not, public transportation was a few steps away. The only downside: We wanted to visit the pool with our kids, but we were not allowed to as kids aren't welcome there - which was a bummer.",
+    "content": "The facility as well as the staff were way above our expectations. The location of this hotel is strategically located at the center of places you can visit, and if not, public transportation was a few steps away. The only downside: We wanted to visit the pool with our kids, but we were not allowed to as kids aren't welcome there - which was a bummer.",
     "date": "Jan 8, 2024",
     "guestName": "Chris"
   },
   {
     "rating": 5,
-    "content": "Stayed here in Jan 24. Lovely hotel and a warm welcome upon arrival...",
+    "content": "Stayed here in Jan 24. Lovely hotel and a warm welcome upon arrival.",
     "date": "Jan 8, 2024",
     "guestName": "Sarah"
   },
   {
     "rating": 5,
-    "content": "Cons: Nothing - everything was perfect and exceeded expectations...",
+    "content": "Cons: Nothing - everything was perfect and exceeded expectations.",
     "date": "Jan 8, 2024",
     "guestName": "Michael B."
   },
   {
     "rating": 4,
-    "content": "Hard bed, cheap duvet, scratchy linen, awful cheap lumpy pillows. Cheap TP. Weird pictures ...",
+    "content": "Hard bed, cheap duvet, scratchy linen, awful cheap lumpy pillows. Cheap TP. Weird pictures ,",
     "date": "Jan 8, 2024",
     "guestName": "Anonymous"
   },
   {
     "rating": 5,
-    "content": "Pros: Everything\nCons: The room was fine but there were guests ...",
+    "content": "Pros: EverythingCons: The room was fine but there were guests ,",
     "date": "Jan 8, 2024",
     "guestName": "Jennifer"
   },

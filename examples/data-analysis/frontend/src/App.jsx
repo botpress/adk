@@ -2,15 +2,20 @@ import { useState, useMemo } from 'react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import ReviewList from './components/ReviewList';
+import AnalyticsView from './components/AnalyticsView';
 import DataSourceSelector from './components/DataSourceSelector';
 import { mockReviews } from './data/mockData';
 import './App.css';
+
+const PAGE_SIZE = 50;
 
 function App() {
   const [reviews, setReviews] = useState(null);
   const [dataSourceName, setDataSourceName] = useState(null);
   const [sortBy, setSortBy] = useState('most-recent');
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [activeView, setActiveView] = useState('inbox'); // 'inbox' or 'analytics'
 
   const sortedReviews = useMemo(() => {
     if (!reviews) return [];
@@ -30,24 +35,35 @@ function App() {
     }
   }, [reviews, sortBy]);
 
+  const totalPages = Math.ceil((reviews?.length || 0) / PAGE_SIZE);
+
+  const paginatedReviews = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return sortedReviews.slice(start, start + PAGE_SIZE);
+  }, [sortedReviews, page]);
+
   const stats = useMemo(() => {
     if (!reviews) return { displayedRange: '0', totalReviews: 0 };
+    const start = (page - 1) * PAGE_SIZE + 1;
+    const end = Math.min(page * PAGE_SIZE, reviews.length);
     return {
-      displayedRange: `1-${reviews.length}`,
+      displayedRange: `${start}-${end}`,
       totalReviews: reviews.length
     };
-  }, [reviews]);
+  }, [reviews, page]);
 
   const handleDataLoaded = (loadedReviews, fileName) => {
     setReviews(loadedReviews);
     setDataSourceName(fileName);
     setError(null);
+    setPage(1);
   };
 
   const handleUseMockData = () => {
     setReviews([...mockReviews]);
     setDataSourceName('Demo Reviews');
     setError(null);
+    setPage(1);
   };
 
   const handleChangeDataSource = () => {
@@ -55,32 +71,56 @@ function App() {
     setDataSourceName(null);
     setSortBy('most-recent');
     setError(null);
+    setPage(1);
+  };
+
+  const handleSortChange = (newSort) => {
+    setSortBy(newSort);
+    setPage(1);
+  };
+
+  const renderContent = () => {
+    if (activeView === 'analytics') {
+      return <AnalyticsView onBackToInbox={() => setActiveView('inbox')} />;
+    }
+
+    if (!reviews) {
+      return (
+        <DataSourceSelector
+          onDataLoaded={handleDataLoaded}
+          onUseMockData={handleUseMockData}
+          error={error}
+          setError={setError}
+        />
+      );
+    }
+
+    return (
+      <ReviewList
+        reviews={paginatedReviews}
+        stats={stats}
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
+    );
   };
 
   return (
     <div className="app">
-      <Sidebar />
+      <Sidebar activeView={activeView} onViewChange={setActiveView} />
       <div className="main-content">
         <Header
           sortBy={sortBy}
-          onSortChange={setSortBy}
+          onSortChange={handleSortChange}
           dataSourceName={dataSourceName}
           onChangeDataSource={handleChangeDataSource}
+          activeView={activeView}
+          onGoToAnalytics={() => setActiveView('analytics')}
+          hasReviews={!!reviews}
         />
         <div className="content-area">
-          {!reviews ? (
-            <DataSourceSelector
-              onDataLoaded={handleDataLoaded}
-              onUseMockData={handleUseMockData}
-              error={error}
-              setError={setError}
-            />
-          ) : (
-            <ReviewList
-              reviews={sortedReviews}
-              stats={stats}
-            />
-          )}
+          {renderContent()}
         </div>
       </div>
     </div>

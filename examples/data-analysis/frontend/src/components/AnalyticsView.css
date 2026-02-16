@@ -1,0 +1,46 @@
+.analytics-view {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f9fafb;
+}
+
+.analytics-placeholder {
+  text-align: center;
+  padding: 40px;
+}
+
+.analytics-icon {
+  color: #94a3b8;
+  margin-bottom: 16px;
+}
+
+.analytics-placeholder h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #334155;
+  margin: 0 0 8px 0;
+}
+
+.analytics-placeholder p {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0 0 24px 0;
+}
+
+.back-btn {
+  padding: 8px 16px;
+  font-size: 14px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.back-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
