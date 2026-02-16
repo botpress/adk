@@ -3,9 +3,12 @@
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 16px;
-  cursor: pointer;
   transition: all 0.2s ease;
-  position: relative;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  height: 160px;
+  overflow: hidden;
 }
 
 .review-card:hover {
@@ -13,73 +16,21 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-.review-card.selected {
+.review-card.expanded {
+  height: auto !important;
+  min-height: 160px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border-color: #3b82f6;
-  box-shadow: 0 0 0 1px #3b82f6, 0 4px 12px rgba(59, 130, 246, 0.15);
+  background: #fefefe;
+  overflow: visible;
 }
 
 .review-card-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 12px;
-}
-
-.hotel-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.hotel-avatar {
-  width: 32px;
-  height: 32px;
-  background: #f3f4f6;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.hotel-name {
-  font-weight: 600;
-  font-size: 14px;
-  color: #111827;
-}
-
-.review-meta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.platform-icons {
-  display: flex;
-  gap: 4px;
-}
-
-.platform-icon {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 600;
-  color: #fff;
-}
-
-.platform-icon.google {
-  background: #4285f4;
-}
-
-.platform-icon.booking {
-  background: #003580;
-}
-
-.platform-icon.tripadvisor {
-  background: #00af87;
+  flex-shrink: 0;
 }
 
 .rating {
@@ -89,76 +40,67 @@
 }
 
 .star {
-  color: #fbbf24;
+  color: #d1d5db;
   font-size: 14px;
+}
+
+.star.filled {
+  color: #fbbf24;
 }
 
 .rating-text {
   font-size: 13px;
   color: #374151;
   font-weight: 500;
-}
-
-.review-card-body {
-  margin-bottom: 8px;
-}
-
-.review-title-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 8px;
-}
-
-.review-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: #111827;
-  margin: 0;
-  flex: 1;
-  line-height: 1.4;
+  margin-left: 4px;
 }
 
 .review-date {
   font-size: 12px;
   color: #6b7280;
   white-space: nowrap;
-  margin-left: 12px;
 }
 
-.review-snippet {
-  font-size: 13px;
-  color: #6b7280;
-  margin: 0;
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+.review-card-body {
+  flex: 1;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.review-card.expanded .review-card-body {
+  overflow: visible;
+}
+
+.review-content {
+  font-size: 13px;
+  color: #374151;
+  margin: 0;
+  line-height: 1.6;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.review-content.expanded {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
 }
 
 .review-card-footer {
   display: flex;
   justify-content: flex-end;
+  padding-top: 8px;
+  border-top: 1px solid #f3f4f6;
+  margin-top: auto;
+  flex-shrink: 0;
 }
 
-.status-badge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.status-badge.replied {
-  color: #3b82f6;
-}
-
-.status-badge.pending {
-  padding: 4px;
-}
-
-.pending-dot {
-  width: 8px;
-  height: 8px;
-  background: #3b82f6;
-  border-radius: 50%;
+.guest-name {
+  font-size: 12px;
+  color: #9ca3af;
+  font-style: italic;
 }

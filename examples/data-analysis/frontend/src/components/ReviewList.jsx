@@ -1,23 +1,23 @@
+import { useState } from 'react';
 import ReviewCard from './ReviewCard';
 import './ReviewList.css';
 
-function ReviewList({ reviews, selectedReview, onSelectReview, stats }) {
+function ReviewList({ reviews, stats }) {
+  const [expandedIndex, setExpandedIndex] = useState(null);
+
+  const handleCardClick = (index) => {
+    setExpandedIndex(expandedIndex === index ? null : index);
+  };
+
   return (
     <div className="review-list">
-      <div className="review-list-header">
-        <label className="select-all">
-          <input type="checkbox" />
-          <span>Select All</span>
-        </label>
-      </div>
-
       <div className="review-list-content">
-        {reviews.map((review) => (
+        {reviews.map((review, index) => (
           <ReviewCard
-            key={review.id}
+            key={index}
             review={review}
-            isSelected={selectedReview?.id === review.id}
-            onClick={() => onSelectReview(review)}
+            isExpanded={expandedIndex === index}
+            onClick={() => handleCardClick(index)}
           />
         ))}
       </div>
