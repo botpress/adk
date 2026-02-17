@@ -61,17 +61,16 @@ function App() {
           const { type, data } = event.payload || {};
 
           if (type === 'problemsResult') {
-            setAnalyticsData(prev => ({ ...prev, problems: data }));
+            // setAnalyticsData(prev => ({ ...prev, problems: data }));
           }
           if (type === 'polarizingResult') {
-            setAnalyticsData(prev => ({ ...prev, polarizingTopics: data }));
+            // setAnalyticsData(prev => ({ ...prev, polarizingTopics: data }));
           }
           if (type === 'departmentsResult') {
-            setAnalyticsData(prev => ({ ...prev, departmentScores: data }));
+            // setAnalyticsData(prev => ({ ...prev, departmentScores: data }));
           }
         });
 
-        console.log('Bot client initialized');
       } catch (err) {
         console.error('Failed to initialize bot client:', err);
       }
@@ -80,14 +79,14 @@ function App() {
     initClient();
   }, []);
 
-  // Trigger analytics when reviews change
-  const triggerAnalysis = useCallback(async (reviewsToAnalyze) => {
+  // Trigger all analytics when reviews change (problems, polarizing, departments)
+  const triggerFullAnalysis = useCallback(async (reviewsToAnalyze) => {
     if (!clientRef.current || !conversationRef.current) {
       console.log('Client not ready, skipping analysis');
       return;
     }
 
-    console.log('Triggering analysis for', reviewsToAnalyze.length, 'reviews');
+    console.log('Triggering full analysis for', reviewsToAnalyze.length, 'reviews');
     setAnalyticsData(prev => ({ ...prev, isLoading: true }));
 
     try {
@@ -110,19 +109,39 @@ function App() {
         })
       ]);
 
-      console.log('Analysis events sent');
+      console.log('Full analysis events sent');
     } catch (err) {
-      console.error('Failed to trigger analysis:', err);
+      console.error('Failed to trigger full analysis:', err);
       setAnalyticsData(prev => ({ ...prev, isLoading: false }));
     }
   }, []);
 
-  // Function to manually trigger reanalysis (e.g., from DepartmentsPanel)
-  const handleReanalyze = useCallback(() => {
-    if (reviews?.length) {
-      triggerAnalysis(reviews);
+  // Trigger only department analysis (for manual regeneration from DepartmentsPanel)
+  const triggerDepartmentAnalysis = useCallback(async (departments) => {
+    if (!clientRef.current || !conversationRef.current || !reviews?.length) {
+      console.log('Client not ready or no reviews, skipping department analysis');
+      return;
     }
-  }, [reviews, triggerAnalysis]);
+
+    console.log('Triggering department analysis with departments:', departments);
+
+    try {
+      const conversationId = conversationRef.current.id;
+
+      await clientRef.current.createEvent({
+        conversationId,
+        payload: {
+          type: 'departmentTrigger',
+          reviews,
+          departments
+        }
+      });
+
+      console.log('Department analysis event sent');
+    } catch (err) {
+      console.error('Failed to trigger department analysis:', err);
+    }
+  }, [reviews]);
 
   const handleToggleDarkMode = () => {
     setDarkMode(prev => {
@@ -176,8 +195,8 @@ function App() {
     setDataSourceName(fileName);
     setError(null);
     setPage(1);
-    // Trigger analysis in background
-    triggerAnalysis(loadedReviews);
+    // Trigger full analysis in background
+    triggerFullAnalysis(loadedReviews);
   };
 
   const handleUseMockData = () => {
@@ -186,8 +205,8 @@ function App() {
     setDataSourceName('Demo Reviews');
     setError(null);
     setPage(1);
-    // Trigger analysis in background
-    triggerAnalysis(mockData);
+    // Trigger full analysis in background
+    triggerFullAnalysis(mockData);
   };
 
   const handleChangeDataSource = () => {
@@ -217,7 +236,7 @@ function App() {
           reviews={reviews}
           analyticsData={analyticsData}
           onBackToInbox={() => setActiveView('inbox')}
-          onReanalyze={handleReanalyze}
+          onRegenerateDepartments={triggerDepartmentAnalysis}
         />
       );
     }

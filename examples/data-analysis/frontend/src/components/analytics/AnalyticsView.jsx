@@ -5,7 +5,7 @@ import PolarizingTopicsSection from './PolarizingTopicsSection';
 import DepartmentScoresSection from './DepartmentScoresSection';
 import DepartmentsPanel from './DepartmentsPanel';
 
-function AnalyticsView({ reviews, analyticsData, onBackToInbox, onReanalyze }) {
+function AnalyticsView({ reviews, analyticsData, onBackToInbox, onRegenerateDepartments }) {
   const [activeSection, setActiveSection] = useState('problems');
 
   const { problems, polarizingTopics, departmentScores, isLoading } = analyticsData;
@@ -69,7 +69,7 @@ function AnalyticsView({ reviews, analyticsData, onBackToInbox, onReanalyze }) {
         {activeSection === 'departments' && (
           <DepartmentsPanel
             isLoading={isLoading}
-            onReanalyze={onReanalyze}
+            onRegenerateDepartments={onRegenerateDepartments}
           />
         )}
       </div>

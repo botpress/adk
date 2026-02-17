@@ -11,7 +11,7 @@ const MOCK_AI_DEPARTMENTS = [
   'Spa & Wellness'
 ];
 
-function DepartmentsPanel({ isLoading, onReanalyze }) {
+function DepartmentsPanel({ isLoading, onRegenerateDepartments }) {
   const [selectedDepartments, setSelectedDepartments] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [simulatedLoading, setSimulatedLoading] = useState(true);
@@ -45,7 +45,7 @@ function DepartmentsPanel({ isLoading, onReanalyze }) {
 
   const handleRegenerate = () => {
     setSimulatedLoading(true);
-    onReanalyze?.();
+    onRegenerateDepartments?.(selectedDepartments);
     // Simulate completion after a delay for demo
     setTimeout(() => setSimulatedLoading(false), 1500);
   };
