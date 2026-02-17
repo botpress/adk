@@ -14,7 +14,7 @@ export default defineConfig({
 
   dependencies: {
     integrations: {
-      chat: { version: "chat@latest", enabled: true },
+      chat: { version: "chat@0.7.4", enabled: true },
     },
   },
 });
