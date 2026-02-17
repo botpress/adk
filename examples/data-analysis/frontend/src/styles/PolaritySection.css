@@ -1,12 +1,12 @@
-.polarizing-section {
+.polarity-section {
   max-width: 1200px;
 }
 
-.polarizing-section .section-header {
+.polarity-section .section-header {
   margin-bottom: 24px;
 }
 
-.polarizing-section .section-title {
+.polarity-section .section-title {
   font-size: 18px;
   font-weight: 700;
   color: var(--text-primary);
@@ -15,36 +15,36 @@
   letter-spacing: -0.01em;
 }
 
-.polarizing-section .section-description {
+.polarity-section .section-description {
   font-size: 14px;
   color: var(--text-tertiary);
   margin: 0;
 }
 
-.polarizing-list {
+.polarity-list {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
 }
 
 @media (max-width: 900px) {
-  .polarizing-list {
+  .polarity-list {
     grid-template-columns: 1fr;
   }
 }
 
-.polarizing-card {
+.polarity-card {
   padding: 20px 24px;
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   transition: border-color 0.15s ease;
 }
 
-.polarizing-card:hover {
+.polarity-card:hover {
   border-color: var(--text-muted);
 }
 
-.polarizing-header {
+.polarity-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -52,14 +52,14 @@
   margin-bottom: 16px;
 }
 
-.polarizing-title {
+.polarity-title {
   font-size: 15px;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
 }
 
-.imbalance-badge {
+.polarity-badge {
   padding: 4px 10px;
   font-size: 12px;
   font-weight: 600;
@@ -106,7 +106,7 @@
   font-family: var(--font-mono);
 }
 
-.polarizing-samples {
+.polarity-samples {
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -144,7 +144,7 @@
 }
 
 /* Loading State */
-.polarizing-section .loading-state {
+.polarity-section .loading-state {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -153,12 +153,12 @@
   border: 1px solid var(--border-color);
 }
 
-.polarizing-section .loading-content {
+.polarity-section .loading-content {
   text-align: center;
   padding: 48px;
 }
 
-.polarizing-section .loading-spinner {
+.polarity-section .loading-spinner {
   width: 32px;
   height: 32px;
   border: 2px solid var(--border-color);
@@ -172,13 +172,13 @@
   to { transform: rotate(360deg); }
 }
 
-.polarizing-section .loading-text {
+.polarity-section .loading-text {
   font-size: 14px;
   color: var(--text-tertiary);
   margin: 0 0 24px 0;
 }
 
-.polarizing-section .simulate-btn {
+.polarity-section .simulate-btn {
   padding: 8px 16px;
   font-size: 11px;
   font-weight: 500;
@@ -189,7 +189,7 @@
   transition: all 0.15s ease;
 }
 
-.polarizing-section .simulate-btn:hover {
+.polarity-section .simulate-btn:hover {
   color: var(--text-secondary);
   border-color: var(--text-muted);
 }

@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import '../../styles/PolarizingTopicsSection.css';
+import '../../styles/PolaritySection.css';
 
 // Mock data - will be populated by API later
-const MOCK_POLARIZING_TOPICS = [
+const MOCK_POLARITY_TOPICS = [
   {
     id: 1,
     topic: 'Modern minimalist decor',
     positiveCount: 34,
     negativeCount: 29,
-    imbalanceScore: 85,
+    polarityScore: 85,
     positiveSample: 'Loved the clean, modern aesthetic',
     negativeSample: 'Room felt cold and sterile'
   },
@@ -17,7 +17,7 @@ const MOCK_POLARIZING_TOPICS = [
     topic: 'Rooftop bar atmosphere',
     positiveCount: 52,
     negativeCount: 41,
-    imbalanceScore: 72,
+    polarityScore: 72,
     positiveSample: 'Amazing views and vibe',
     negativeSample: 'Way too crowded and loud'
   },
@@ -26,7 +26,7 @@ const MOCK_POLARIZING_TOPICS = [
     topic: 'Breakfast buffet variety',
     positiveCount: 28,
     negativeCount: 31,
-    imbalanceScore: 68,
+    polarityScore: 68,
     positiveSample: 'Great selection of local dishes',
     negativeSample: 'Not enough healthy options'
   },
@@ -35,20 +35,20 @@ const MOCK_POLARIZING_TOPICS = [
     topic: 'Location near nightlife',
     positiveCount: 45,
     negativeCount: 22,
-    imbalanceScore: 55,
+    polarityScore: 55,
     positiveSample: 'Perfect for going out',
     negativeSample: 'Too noisy at night for families'
   }
 ];
 
-function PolarizingTopicsSection({ topics: topicsProp, isLoading: isLoadingProp }) {
+function PolaritySection({ topics: topicsProp, isLoading: isLoadingProp }) {
   const [simulatedLoading, setSimulatedLoading] = useState(true);
-  const topics = topicsProp ?? MOCK_POLARIZING_TOPICS;
+  const topics = topicsProp ?? MOCK_POLARITY_TOPICS;
   const isLoading = isLoadingProp || simulatedLoading;
 
   if (isLoading) {
     return (
-      <div className="polarizing-section">
+      <div className="polarity-section">
         <div className="section-header">
           <h2 className="section-title">Polarizing Topics</h2>
           <p className="section-description">Topics with mixed sentiment — opportunities to understand diverse guest preferences</p>
@@ -67,18 +67,18 @@ function PolarizingTopicsSection({ topics: topicsProp, isLoading: isLoadingProp 
   }
 
   return (
-    <div className="polarizing-section">
+    <div className="polarity-section">
       <div className="section-header">
         <h2 className="section-title">Polarizing Topics</h2>
         <p className="section-description">Topics with mixed sentiment — opportunities to understand diverse guest preferences</p>
       </div>
-      <div className="polarizing-list">
+      <div className="polarity-list">
         {topics.map((topic) => (
-          <div key={topic.id} className="polarizing-card">
-            <div className="polarizing-header">
-              <h3 className="polarizing-title">{topic.topic}</h3>
-              <div className="imbalance-badge">
-                {topic.imbalanceScore}% split
+          <div key={topic.id} className="polarity-card">
+            <div className="polarity-header">
+              <h3 className="polarity-title">{topic.topic}</h3>
+              <div className="polarity-badge">
+                {topic.polarityScore}% split
               </div>
             </div>
             <div className="sentiment-bar">
@@ -95,7 +95,7 @@ function PolarizingTopicsSection({ topics: topicsProp, isLoading: isLoadingProp 
               <span className="positive-count">+{topic.positiveCount}</span>
               <span className="negative-count">−{topic.negativeCount}</span>
             </div>
-            <div className="polarizing-samples">
+            <div className="polarity-samples">
               <div className="sample positive">
                 <span className="sample-label">Positive</span>
                 <p>"{topic.positiveSample}"</p>
@@ -112,4 +112,4 @@ function PolarizingTopicsSection({ topics: topicsProp, isLoading: isLoadingProp 
   );
 }
 
-export default PolarizingTopicsSection;
+export default PolaritySection;

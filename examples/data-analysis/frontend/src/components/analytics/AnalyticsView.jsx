@@ -1,18 +1,18 @@
 import { useState } from 'react';
 import '../../styles/AnalyticsView.css';
 import ProblemsSection from './ProblemsSection';
-import PolarizingTopicsSection from './PolarizingTopicsSection';
+import PolaritySection from './PolaritySection';
 import DepartmentScoresSection from './DepartmentScoresSection';
 import DepartmentsPanel from './DepartmentsPanel';
 
 function AnalyticsView({ reviews, analyticsData, onBackToInbox, onRegenerateDepartments }) {
   const [activeSection, setActiveSection] = useState('problems');
 
-  const { problems, polarizingTopics, departmentScores, isLoading } = analyticsData;
+  const { problems, polarityTopics, departmentScores, isLoading } = analyticsData;
 
   const sectionCounts = {
     problems: problems?.length ?? 5,
-    balance: polarizingTopics?.length ?? 4,
+    balance: polarityTopics?.length ?? 4,
     departments: departmentScores?.length ?? 6
   };
 
@@ -60,7 +60,7 @@ function AnalyticsView({ reviews, analyticsData, onBackToInbox, onRegenerateDepa
             <ProblemsSection problems={problems} isLoading={isLoading} />
           )}
           {activeSection === 'balance' && (
-            <PolarizingTopicsSection topics={polarizingTopics} isLoading={isLoading} />
+            <PolaritySection topics={polarityTopics} isLoading={isLoading} />
           )}
           {activeSection === 'departments' && (
             <DepartmentScoresSection departments={departmentScores} isLoading={isLoading} />

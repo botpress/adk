@@ -27,7 +27,7 @@ function App() {
   // Analytics state - prefetched when reviews load
   const [analyticsData, setAnalyticsData] = useState({
     problems: null,
-    polarizingTopics: null,
+    polarityTopics: null,
     departmentScores: null,
     isLoading: false
   });
@@ -57,16 +57,18 @@ function App() {
 
         // Listen for response events from bot
         serverStream.on("event_created", (event) => {
-          console.log('Event received:', event);
           const { type, data } = event.payload || {};
 
-          if (type === 'problemsResult') {
+          if (type === 'problemsResponse') {
+            console.log('problems response event received', event);
             // setAnalyticsData(prev => ({ ...prev, problems: data }));
           }
-          if (type === 'polarizingResult') {
-            // setAnalyticsData(prev => ({ ...prev, polarizingTopics: data }));
+          if (type === 'polarityResponse') {
+            console.log('polarity response event received', event);
+            // setAnalyticsData(prev => ({ ...prev, polarityTopics: data }));
           }
-          if (type === 'departmentsResult') {
+          if (type === 'departmentResponse') {
+            console.log('departments response event received', event);
             // setAnalyticsData(prev => ({ ...prev, departmentScores: data }));
           }
         });
@@ -79,7 +81,7 @@ function App() {
     initClient();
   }, []);
 
-  // Trigger all analytics when reviews change (problems, polarizing, departments)
+  // Trigger all analytics when reviews change (problems, polarity, departments)
   const triggerFullAnalysis = useCallback(async (reviewsToAnalyze) => {
     if (!clientRef.current || !conversationRef.current) {
       console.log('Client not ready, skipping analysis');
@@ -97,11 +99,11 @@ function App() {
       await Promise.all([
         clientRef.current.createEvent({
           conversationId,
-          payload: { type: 'harmfulTrigger', ...payload }
+          payload: { type: 'problemsTrigger', ...payload }
         }),
         clientRef.current.createEvent({
           conversationId,
-          payload: { type: 'imbalanceTrigger', ...payload }
+          payload: { type: 'polarityTrigger', ...payload }
         }),
         clientRef.current.createEvent({
           conversationId,
@@ -218,7 +220,7 @@ function App() {
     // Reset analytics data
     setAnalyticsData({
       problems: null,
-      polarizingTopics: null,
+      polarityTopics: null,
       departmentScores: null,
       isLoading: false
     });

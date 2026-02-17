@@ -2,15 +2,15 @@
 
 ## Trigger Events (Frontend → Bot)
 
-### `harmfulTrigger`
+### `problemsTrigger`
 - **Triggered by:** Reviews loaded (file upload or demo data)
-- **Payload:** `{ type: 'harmfulTrigger', reviews }`
+- **Payload:** `{ type: 'problemsTrigger', reviews }`
 - **Affects:** `analyticsData.problems`
 
-### `imbalanceTrigger`
+### `polarityTrigger`
 - **Triggered by:** Reviews loaded (file upload or demo data)
-- **Payload:** `{ type: 'imbalanceTrigger', reviews }`
-- **Affects:** `analyticsData.polarizingTopics`
+- **Payload:** `{ type: 'polarityTrigger', reviews }`
+- **Affects:** `analyticsData.polarityTopics`
 
 ### `departmentTrigger`
 - **Triggered by:** Reviews loaded OR "Regenerate Scores" button
@@ -23,6 +23,6 @@
 
 | Event Type | Updates State |
 |------------|---------------|
-| `problemsResult` | `analyticsData.problems` |
-| `polarizingResult` | `analyticsData.polarizingTopics` |
-| `departmentsResult` | `analyticsData.departmentScores` |
+| `problemsResponse` | `analyticsData.problems` |
+| `polarityResponse` | `analyticsData.polarityTopics` |
+| `departmentsResponse` | `analyticsData.departmentScores` |
