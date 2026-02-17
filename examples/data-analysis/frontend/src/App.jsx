@@ -81,12 +81,24 @@ function App() {
     initClient();
   }, []);
 
+  // Helper to wait for client to be ready, retrying every 1 second
+  const waitForClient = useCallback(() => {
+    return new Promise((resolve) => {
+      const check = () => {
+        if (clientRef.current && conversationRef.current) {
+          resolve();
+        } else {
+          console.log('Client not ready, retrying in 1s...');
+          setTimeout(check, 1000);
+        }
+      };
+      check();
+    });
+  }, []);
+
   // Trigger all analytics when reviews change (problems, polarity, departments)
   const triggerFullAnalysis = useCallback(async (reviewsToAnalyze) => {
-    if (!clientRef.current || !conversationRef.current) {
-      console.log('Client not ready, skipping analysis');
-      return;
-    }
+    await waitForClient();
 
     console.log('Triggering full analysis for', reviewsToAnalyze.length, 'reviews');
     setAnalyticsData(prev => ({ ...prev, isLoading: true }));
@@ -116,14 +128,16 @@ function App() {
       console.error('Failed to trigger full analysis:', err);
       setAnalyticsData(prev => ({ ...prev, isLoading: false }));
     }
-  }, []);
+  }, [waitForClient]);
 
   // Trigger only department analysis (for manual regeneration from DepartmentsPanel)
   const triggerDepartmentAnalysis = useCallback(async (departments) => {
-    if (!clientRef.current || !conversationRef.current || !reviews?.length) {
-      console.log('Client not ready or no reviews, skipping department analysis');
+    if (!reviews?.length) {
+      console.log('No reviews, skipping department analysis');
       return;
     }
+
+    await waitForClient();
 
     console.log('Triggering department analysis with departments:', departments);
 
@@ -143,7 +157,7 @@ function App() {
     } catch (err) {
       console.error('Failed to trigger department analysis:', err);
     }
-  }, [reviews]);
+  }, [reviews, waitForClient]);
 
   const handleToggleDarkMode = () => {
     setDarkMode(prev => {
