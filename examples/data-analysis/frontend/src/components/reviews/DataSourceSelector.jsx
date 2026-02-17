@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import './DataSourceSelector.css';
+import '../../styles/DataSourceSelector.css';
 
 function DataSourceSelector({ onDataLoaded, onUseMockData, error, setError }) {
   const fileInputRef = useRef(null);

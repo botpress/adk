@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import './DepartmentScoresSection.css';
+import '../../styles/DepartmentScoresSection.css';
 
 // Mock data - will be populated by API later
 const MOCK_DEPARTMENT_SCORES = [
@@ -53,10 +53,10 @@ const MOCK_DEPARTMENT_SCORES = [
   }
 ];
 
-function DepartmentScoresSection({ departments: departmentsProp, isLoading }) {
-  const [localLoading, setLocalLoading] = useState(true);
+function DepartmentScoresSection({ departments: departmentsProp, isLoading: isLoadingProp }) {
+  const [simulatedLoading, setSimulatedLoading] = useState(true);
   const departments = departmentsProp ?? MOCK_DEPARTMENT_SCORES;
-  const loading = isLoading ?? localLoading;
+  const loading = isLoadingProp || simulatedLoading;
 
   const getScoreColor = (score) => {
     if (score >= 4.0) return 'score-good';
@@ -81,7 +81,7 @@ function DepartmentScoresSection({ departments: departmentsProp, isLoading }) {
           <div className="loading-content">
             <div className="loading-spinner" />
             <p className="loading-text">Scoring department performance...</p>
-            <button className="simulate-btn" onClick={() => setLocalLoading(false)}>
+            <button className="simulate-btn" onClick={() => setSimulatedLoading(false)}>
               Simulate Complete
             </button>
           </div>

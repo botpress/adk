@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import './DepartmentsPanel.css';
+import '../../styles/DepartmentsPanel.css';
 
 // Mock AI-generated departments
 const MOCK_AI_DEPARTMENTS = [
@@ -11,9 +11,13 @@ const MOCK_AI_DEPARTMENTS = [
   'Spa & Wellness'
 ];
 
-function DepartmentsPanel({ isLoading, onSimulateComplete }) {
+function DepartmentsPanel({ isLoading, onReanalyze }) {
   const [selectedDepartments, setSelectedDepartments] = useState([]);
   const [inputValue, setInputValue] = useState('');
+  const [simulatedLoading, setSimulatedLoading] = useState(true);
+
+  // Use actual loading state or simulated for demo
+  const showLoading = isLoading || simulatedLoading;
 
   const handleAddDepartment = () => {
     const trimmed = inputValue.trim();
@@ -36,11 +40,14 @@ function DepartmentsPanel({ isLoading, onSimulateComplete }) {
 
   const handleSimulateComplete = () => {
     setSelectedDepartments(MOCK_AI_DEPARTMENTS);
-    onSimulateComplete?.();
+    setSimulatedLoading(false);
   };
 
   const handleRegenerate = () => {
-    // TODO: Trigger regeneration
+    setSimulatedLoading(true);
+    onReanalyze?.();
+    // Simulate completion after a delay for demo
+    setTimeout(() => setSimulatedLoading(false), 1500);
   };
 
   return (
@@ -50,7 +57,7 @@ function DepartmentsPanel({ isLoading, onSimulateComplete }) {
       </div>
 
       <div className="panel-content">
-        {isLoading ? (
+        {showLoading ? (
           <div className="panel-loading">
             <div className="panel-spinner" />
             <span>Detecting...</span>

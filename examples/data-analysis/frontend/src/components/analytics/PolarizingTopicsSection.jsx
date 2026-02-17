@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import './PolarizingTopicsSection.css';
+import '../../styles/PolarizingTopicsSection.css';
 
 // Mock data - will be populated by API later
 const MOCK_POLARIZING_TOPICS = [
@@ -41,9 +41,10 @@ const MOCK_POLARIZING_TOPICS = [
   }
 ];
 
-function PolarizingTopicsSection({ topics: topicsProp }) {
-  const [isLoading, setIsLoading] = useState(true);
+function PolarizingTopicsSection({ topics: topicsProp, isLoading: isLoadingProp }) {
+  const [simulatedLoading, setSimulatedLoading] = useState(true);
   const topics = topicsProp ?? MOCK_POLARIZING_TOPICS;
+  const isLoading = isLoadingProp || simulatedLoading;
 
   if (isLoading) {
     return (
@@ -56,7 +57,7 @@ function PolarizingTopicsSection({ topics: topicsProp }) {
           <div className="loading-content">
             <div className="loading-spinner" />
             <p className="loading-text">Identifying polarizing topics...</p>
-            <button className="simulate-btn" onClick={() => setIsLoading(false)}>
+            <button className="simulate-btn" onClick={() => setSimulatedLoading(false)}>
               Simulate Complete
             </button>
           </div>

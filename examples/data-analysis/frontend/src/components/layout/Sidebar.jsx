@@ -1,4 +1,4 @@
-import './Sidebar.css';
+import '../../styles/Sidebar.css';
 
 function Sidebar({ activeView, onViewChange, darkMode, onToggleDarkMode, disabledButtons, onDisableButton }) {
   const handleUnimplementedClick = (buttonId) => {

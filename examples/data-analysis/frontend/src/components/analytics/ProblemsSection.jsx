@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import './ProblemsSection.css';
+import '../../styles/ProblemsSection.css';
 
 // Mock data - will be populated by API later
 const MOCK_PROBLEMS = [
@@ -55,9 +55,10 @@ const MOCK_PROBLEMS = [
   }
 ];
 
-function ProblemsSection({ problems: problemsProp }) {
-  const [isLoading, setIsLoading] = useState(true);
+function ProblemsSection({ problems: problemsProp, isLoading: isLoadingProp }) {
+  const [simulatedLoading, setSimulatedLoading] = useState(true);
   const problems = problemsProp ?? MOCK_PROBLEMS;
+  const isLoading = isLoadingProp || simulatedLoading;
 
   const getSeverityColor = (score) => {
     if (score >= 80) return 'severity-critical';
@@ -77,7 +78,7 @@ function ProblemsSection({ problems: problemsProp }) {
           <div className="loading-content">
             <div className="loading-spinner" />
             <p className="loading-text">Analyzing reviews for critical issues...</p>
-            <button className="simulate-btn" onClick={() => setIsLoading(false)}>
+            <button className="simulate-btn" onClick={() => setSimulatedLoading(false)}>
               Simulate Complete
             </button>
           </div>

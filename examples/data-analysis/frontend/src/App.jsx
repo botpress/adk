@@ -1,11 +1,12 @@
-import { useState, useMemo } from 'react';
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import ReviewList from './components/ReviewList';
-import AnalyticsView from './components/AnalyticsView';
-import DataSourceSelector from './components/DataSourceSelector';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { Client } from '@botpress/chat';
+import Sidebar from './components/layout/Sidebar';
+import Header from './components/layout/Header';
+import ReviewList from './components/reviews/ReviewList';
+import AnalyticsView from './components/analytics/AnalyticsView';
+import DataSourceSelector from './components/reviews/DataSourceSelector';
 import { mockReviews } from './data/mockData';
-import './App.css';
+import './styles/App.css';
 
 const PAGE_SIZE = 50;
 
@@ -22,6 +23,106 @@ function App() {
     return saved === null ? true : saved === 'true';
   });
   const [disabledButtons, setDisabledButtons] = useState(new Set());
+
+  // Analytics state - prefetched when reviews load
+  const [analyticsData, setAnalyticsData] = useState({
+    problems: null,
+    polarizingTopics: null,
+    departmentScores: null,
+    isLoading: false
+  });
+
+  // Bot client refs
+  const clientRef = useRef(null);
+  const conversationRef = useRef(null);
+  const clientInitializedRef = useRef(false);
+
+  // Initialize bot client once on mount
+  useEffect(() => {
+    if (clientInitializedRef.current) return;
+    clientInitializedRef.current = true;
+
+    const initClient = async () => {
+      try {
+        clientRef.current = await Client.connect({
+          webhookId: import.meta.env.VITE_BOTPRESS_WEBHOOK_ID
+        });
+
+        const { conversation } = await clientRef.current.createConversation({});
+        conversationRef.current = conversation;
+
+        const serverStream = await clientRef.current.listenConversation({
+          id: conversationRef.current.id
+        });
+
+        // Listen for response events from bot
+        serverStream.on("event_created", (event) => {
+          console.log('Event received:', event);
+          const { type, data } = event.payload || {};
+
+          if (type === 'problemsResult') {
+            setAnalyticsData(prev => ({ ...prev, problems: data }));
+          }
+          if (type === 'polarizingResult') {
+            setAnalyticsData(prev => ({ ...prev, polarizingTopics: data }));
+          }
+          if (type === 'departmentsResult') {
+            setAnalyticsData(prev => ({ ...prev, departmentScores: data }));
+          }
+        });
+
+        console.log('Bot client initialized');
+      } catch (err) {
+        console.error('Failed to initialize bot client:', err);
+      }
+    };
+
+    initClient();
+  }, []);
+
+  // Trigger analytics when reviews change
+  const triggerAnalysis = useCallback(async (reviewsToAnalyze) => {
+    if (!clientRef.current || !conversationRef.current) {
+      console.log('Client not ready, skipping analysis');
+      return;
+    }
+
+    console.log('Triggering analysis for', reviewsToAnalyze.length, 'reviews');
+    setAnalyticsData(prev => ({ ...prev, isLoading: true }));
+
+    try {
+      const payload = { reviews: reviewsToAnalyze };
+      const conversationId = conversationRef.current.id;
+
+      // Send all 3 trigger events in parallel
+      await Promise.all([
+        clientRef.current.createEvent({
+          conversationId,
+          payload: { type: 'harmfulTrigger', ...payload }
+        }),
+        clientRef.current.createEvent({
+          conversationId,
+          payload: { type: 'imbalanceTrigger', ...payload }
+        }),
+        clientRef.current.createEvent({
+          conversationId,
+          payload: { type: 'departmentTrigger', ...payload }
+        })
+      ]);
+
+      console.log('Analysis events sent');
+    } catch (err) {
+      console.error('Failed to trigger analysis:', err);
+      setAnalyticsData(prev => ({ ...prev, isLoading: false }));
+    }
+  }, []);
+
+  // Function to manually trigger reanalysis (e.g., from DepartmentsPanel)
+  const handleReanalyze = useCallback(() => {
+    if (reviews?.length) {
+      triggerAnalysis(reviews);
+    }
+  }, [reviews, triggerAnalysis]);
 
   const handleToggleDarkMode = () => {
     setDarkMode(prev => {
@@ -75,13 +176,18 @@ function App() {
     setDataSourceName(fileName);
     setError(null);
     setPage(1);
+    // Trigger analysis in background
+    triggerAnalysis(loadedReviews);
   };
 
   const handleUseMockData = () => {
-    setReviews([...mockReviews]);
+    const mockData = [...mockReviews];
+    setReviews(mockData);
     setDataSourceName('Demo Reviews');
     setError(null);
     setPage(1);
+    // Trigger analysis in background
+    triggerAnalysis(mockData);
   };
 
   const handleChangeDataSource = () => {
@@ -90,6 +196,13 @@ function App() {
     setSortBy('most-recent');
     setError(null);
     setPage(1);
+    // Reset analytics data
+    setAnalyticsData({
+      problems: null,
+      polarizingTopics: null,
+      departmentScores: null,
+      isLoading: false
+    });
   };
 
   const handleSortChange = (newSort) => {
@@ -99,7 +212,14 @@ function App() {
 
   const renderContent = () => {
     if (activeView === 'analytics') {
-      return <AnalyticsView reviews={reviews} onBackToInbox={() => setActiveView('inbox')} />;
+      return (
+        <AnalyticsView
+          reviews={reviews}
+          analyticsData={analyticsData}
+          onBackToInbox={() => setActiveView('inbox')}
+          onReanalyze={handleReanalyze}
+        />
+      );
     }
 
     if (!reviews) {

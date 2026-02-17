@@ -1,4 +1,4 @@
-import './ReviewCard.css';
+import '../../styles/ReviewCard.css';
 
 function ReviewCard({ review, isExpanded, onClick }) {
   const renderRating = () => {

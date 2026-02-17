@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import ReviewCard from './ReviewCard';
-import './ReviewList.css';
+import '../../styles/ReviewList.css';
 
 function ReviewList({ reviews, stats, page, totalPages, onPageChange }) {
   const [expandedIndex, setExpandedIndex] = useState(null);

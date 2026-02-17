@@ -1,4 +1,4 @@
-import './Header.css';
+import '../../styles/Header.css';
 
 function Header({ sortBy, onSortChange, dataSourceName, onChangeDataSource, activeView, onGoToAnalytics, hasReviews }) {
   const title = activeView === 'analytics' ? 'Analytics' : 'Review Inbox';
