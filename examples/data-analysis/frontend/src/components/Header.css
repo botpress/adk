@@ -2,7 +2,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 28px;
+  padding: 24px 32px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
 }
@@ -10,63 +10,63 @@
 .header-left {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
 }
 
 .header-title {
-  font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 400;
+  font-size: 20px;
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0;
   letter-spacing: -0.02em;
+  font-family: var(--font-display);
 }
 
 .data-source-badge {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  background: transparent;
-  border: 1px solid var(--accent-color);
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--bg-tertiary);
+  border: none;
   font-size: 11px;
   font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--accent-color);
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background 0.15s ease;
+  letter-spacing: 0.01em;
 }
 
 .data-source-badge:hover {
-  background: var(--accent-bg);
+  background: var(--bg-hover);
 }
 
 .data-source-badge svg {
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
 .data-source-badge .change-icon {
   opacity: 0;
-  margin-left: 2px;
+  margin-left: 4px;
   transition: opacity 0.15s ease;
 }
 
 .data-source-badge:hover .change-icon {
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
 .sort-dropdown {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .sort-label {
   font-size: 11px;
   color: var(--text-muted);
+  font-weight: 400;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
 }
 
 .sort-select {
@@ -84,26 +84,22 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 9px 18px;
+  padding: 10px 20px;
   background: var(--accent-color);
-  color: #fff;
-  font-weight: 500;
-  font-size: 13px;
-  letter-spacing: 0.01em;
+  color: var(--bg-secondary);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   border: none;
   cursor: pointer;
-  transition: all 0.12s ease;
+  transition: background 0.15s ease;
 }
 
 .analytics-btn:hover {
   background: var(--accent-hover);
-  transform: translateY(-1px);
-}
-
-.analytics-btn:active {
-  transform: translateY(0);
 }
 
 .analytics-btn svg {
-  opacity: 0.85;
+  opacity: 0.8;
 }

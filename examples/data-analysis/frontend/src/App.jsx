@@ -18,7 +18,8 @@ function App() {
   const [activeView, setActiveView] = useState('inbox'); // 'inbox' or 'analytics'
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
-    return saved === 'true';
+    // Default to dark mode if no preference saved
+    return saved === null ? true : saved === 'true';
   });
   const [disabledButtons, setDisabledButtons] = useState(new Set());
 

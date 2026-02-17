@@ -6,7 +6,7 @@
 
 .main-content {
   flex: 1;
-  margin-left: 60px;
+  margin-left: 64px;
   display: flex;
   flex-direction: column;
   height: 100vh;

@@ -4,53 +4,56 @@
   justify-content: center;
   flex: 1;
   margin: 32px;
-  border: 1px dashed var(--border-color);
   background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
 }
 
 .empty-state-content {
   text-align: center;
-  padding: 48px 40px;
-  max-width: 380px;
+  padding: 60px 48px;
+  max-width: 420px;
 }
 
 .empty-icon {
   color: var(--text-muted);
-  margin-bottom: 20px;
-  opacity: 0.5;
+  margin-bottom: 24px;
+  opacity: 0.4;
 }
 
 .empty-title {
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 400;
+  font-size: 22px;
+  font-weight: 700;
   color: var(--text-primary);
-  margin: 0 0 6px 0;
+  margin: 0 0 10px 0;
+  font-family: var(--font-display);
   letter-spacing: -0.02em;
 }
 
 .empty-subtitle {
   font-size: 14px;
   color: var(--text-tertiary);
-  margin: 0 0 28px 0;
-  line-height: 1.5;
+  margin: 0 0 32px 0;
+  line-height: 1.6;
+  font-weight: 400;
 }
 
 .empty-actions {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   justify-content: center;
 }
 
 .empty-btn {
-  padding: 10px 18px;
-  font-size: 13px;
-  font-weight: 500;
+  padding: 12px 24px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
   border: 1px solid var(--border-color);
   background: var(--bg-secondary);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.12s ease;
+  transition: all 0.15s ease;
 }
 
 .empty-btn:hover {
@@ -61,7 +64,7 @@
 .empty-btn.primary {
   background: var(--accent-color);
   border-color: var(--accent-color);
-  color: #fff;
+  color: var(--bg-secondary);
 }
 
 .empty-btn.primary:hover {
@@ -72,20 +75,20 @@
 .empty-error {
   color: var(--error-color);
   font-size: 13px;
-  margin: 20px 0 0 0;
+  margin: 24px 0 0 0;
 }
 
 .schema-note {
   font-size: 12px;
   color: var(--text-muted);
-  margin: 28px 0 0 0;
+  margin: 32px 0 0 0;
   line-height: 1.6;
 }
 
 .schema-note code {
   font-family: var(--font-mono);
   background: var(--bg-tertiary);
-  padding: 2px 5px;
+  padding: 2px 6px;
   font-size: 11px;
   color: var(--text-secondary);
 }

@@ -8,44 +8,46 @@
 
 .analytics-placeholder {
   text-align: center;
-  padding: 56px 48px;
+  padding: 64px 56px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  max-width: 400px;
+  max-width: 440px;
 }
 
 .analytics-icon {
   color: var(--text-muted);
-  margin-bottom: 20px;
-  opacity: 0.4;
+  margin-bottom: 24px;
+  opacity: 0.35;
 }
 
 .analytics-placeholder h2 {
-  font-family: var(--font-display);
   font-size: 22px;
-  font-weight: 400;
+  font-weight: 700;
   color: var(--text-primary);
-  margin: 0 0 8px 0;
+  margin: 0 0 10px 0;
+  font-family: var(--font-display);
   letter-spacing: -0.02em;
 }
 
 .analytics-placeholder p {
   font-size: 14px;
   color: var(--text-tertiary);
-  margin: 0 0 32px 0;
+  margin: 0 0 36px 0;
   line-height: 1.5;
 }
 
 .send-event-btn {
-  padding: 10px 20px;
-  font-size: 13px;
-  font-weight: 500;
+  padding: 12px 24px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
   background: var(--accent-color);
   border: none;
-  color: #fff;
+  color: var(--bg-secondary);
   cursor: pointer;
-  transition: all 0.12s ease;
-  margin-bottom: 10px;
+  transition: background 0.15s ease;
+  margin-bottom: 12px;
 }
 
 .send-event-btn:hover {
@@ -53,14 +55,16 @@
 }
 
 .back-btn {
-  padding: 10px 20px;
-  font-size: 13px;
-  font-weight: 500;
+  padding: 12px 24px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.12s ease;
+  transition: all 0.15s ease;
 }
 
 .back-btn:hover {

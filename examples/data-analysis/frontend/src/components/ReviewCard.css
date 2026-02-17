@@ -1,93 +1,72 @@
 .review-card {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  padding: 18px 20px;
+  padding: 20px 24px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  height: 170px;
+  height: 180px;
   overflow: hidden;
-  position: relative;
-}
-
-.review-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 3px;
-  height: 100%;
-  background: var(--accent-color);
-  opacity: 0;
-  transition: opacity 0.15s ease;
 }
 
 .review-card:hover {
   border-color: var(--text-muted);
-  box-shadow: var(--shadow-md);
-}
-
-.review-card:hover::before {
-  opacity: 1;
 }
 
 .review-card.expanded {
   height: auto !important;
-  min-height: 170px;
-  border-color: var(--accent-color);
+  min-height: 180px;
+  border-color: var(--text-primary);
+  box-shadow: var(--shadow-md);
   overflow: visible;
-}
-
-.review-card.expanded::before {
-  opacity: 1;
 }
 
 .review-card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   flex-shrink: 0;
 }
 
 .reviewer-info {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 14px;
 }
 
 .reviewer-avatar {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   background: var(--bg-tertiary);
   color: var(--text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   flex-shrink: 0;
-  letter-spacing: -0.02em;
 }
 
 .reviewer-details {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
 }
 
 .reviewer-name {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
   letter-spacing: -0.01em;
 }
 
 .review-date {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-muted);
   font-weight: 400;
+  letter-spacing: 0.02em;
 }
 
 .rating {
@@ -98,20 +77,19 @@
 .rating-badge {
   display: inline-flex;
   align-items: baseline;
-  padding: 3px 8px;
-  background: var(--accent-bg);
-  color: var(--accent-color);
-  font-size: 14px;
+  padding: 4px 10px;
+  background: var(--highlight);
+  color: #fffffe;
+  font-size: 15px;
   font-weight: 700;
   font-family: var(--font-mono);
-  letter-spacing: -0.03em;
 }
 
 .rating-max {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
-  opacity: 0.6;
-  margin-left: 1px;
+  color: rgba(255, 255, 254, 0.6);
+  margin-left: 2px;
 }
 
 .rating-badge.no-data {
@@ -142,7 +120,8 @@
   font-size: 14px;
   color: var(--text-secondary);
   margin: 0;
-  line-height: 1.6;
+  line-height: 1.7;
+  font-weight: 400;
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 3;

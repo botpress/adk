@@ -33,11 +33,8 @@ function AnalyticsView({ reviews, onBackToInbox }) {
         id: conversationRef.current.id
       })
 
-      serverStream.on("message_created", (event) => {
-      })
-
       serverStream.on("event_created", (event) => {
-
+        console.log(event);
       });
     }
     init

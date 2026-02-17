@@ -5,37 +5,37 @@
 }
 
 :root {
-  /* Light theme - slightly warm paper tone */
-  --bg-primary: #f6f5f1;
+  /* Light theme - consulting with warm accents */
+  --bg-primary: #f8f7f4;
   --bg-secondary: #fffffe;
-  --bg-tertiary: #eceae4;
-  --bg-hover: #e8e6e0;
-  --border-color: #d8d5cd;
-  --border-color-light: #eceae4;
-  --text-primary: #2c2c2c;
-  --text-secondary: #4a4a4a;
-  --text-tertiary: #787878;
-  --text-muted: #a0a0a0;
-  --accent-color: #722F37;
-  --accent-hover: #5A252C;
-  --accent-bg: #f5e6e8;
-  --accent-subtle: #8b4049;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 3px 12px rgba(0, 0, 0, 0.06);
-  --error-color: #b91c1c;
-  --error-bg: #fef2f2;
+  --bg-tertiary: #f3f2ef;
+  --bg-hover: #eceae6;
+  --border-color: #e0ddd8;
+  --border-color-light: #eeebe6;
+  --text-primary: #1a1a1a;
+  --text-secondary: #444444;
+  --text-tertiary: #717171;
+  --text-muted: #999999;
+  --accent-color: #1a1a1a;
+  --accent-hover: #333333;
+  --accent-bg: #f3f2ef;
+  --accent-subtle: #555555;
+  --highlight: #722F37;
+  --highlight-hover: #8a3a44;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --error-color: #c41e3a;
+  --error-bg: #fff5f5;
   --sidebar-bg: #fffffe;
   --card-bg: #fffffe;
-  --shine-border: rgba(255, 255, 255, 0.6);
-  --shine-inset: rgba(255, 255, 255, 0.4);
 
   /* Typography */
   --font-display: 'Georgia', 'Times New Roman', serif;
-  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-mono: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  --font-mono: 'SF Mono', 'Monaco', monospace;
 
   font-family: var(--font-body);
-  line-height: 1.55;
+  line-height: 1.5;
   font-weight: 400;
   color: var(--text-primary);
   background-color: var(--bg-primary);
@@ -43,33 +43,32 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  letter-spacing: -0.01em;
 }
 
-/* Dark theme */
+/* Dark theme - consulting dark with warm accents */
 .dark {
-  --bg-primary: #161616;
-  --bg-secondary: #1e1e1e;
-  --bg-tertiary: #282828;
-  --bg-hover: #333333;
-  --border-color: #383838;
-  --border-color-light: #282828;
-  --text-primary: #ececec;
-  --text-secondary: #c8c8c8;
-  --text-tertiary: #909090;
-  --text-muted: #606060;
-  --accent-color: #c25d68;
-  --accent-hover: #d4737d;
-  --accent-bg: #2d1f21;
-  --accent-subtle: #a84854;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 3px 12px rgba(0, 0, 0, 0.25);
-  --error-color: #f87171;
-  --error-bg: #450a0a;
-  --sidebar-bg: #1e1e1e;
-  --card-bg: #1e1e1e;
-  --shine-border: rgba(255, 255, 255, 0.06);
-  --shine-inset: rgba(255, 255, 255, 0.03);
+  --bg-primary: #121110;
+  --bg-secondary: #1a1918;
+  --bg-tertiary: #242220;
+  --bg-hover: #2c2a28;
+  --border-color: #332f2c;
+  --border-color-light: #282624;
+  --text-primary: #f5f4f2;
+  --text-secondary: #cccac7;
+  --text-tertiary: #888683;
+  --text-muted: #5a5856;
+  --accent-color: #f5f4f2;
+  --accent-hover: #ffffff;
+  --accent-bg: #282624;
+  --accent-subtle: #aaa8a5;
+  --highlight: #c4707a;
+  --highlight-hover: #d4858e;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --error-color: #ff6b6b;
+  --error-bg: #2a1a1a;
+  --sidebar-bg: #1a1918;
+  --card-bg: #1a1918;
 }
 
 body {
@@ -84,13 +83,13 @@ body {
 }
 
 a {
-  color: var(--accent-color);
+  color: var(--highlight);
   text-decoration: none;
-  transition: color 0.1s ease;
+  transition: color 0.15s ease;
 }
 
 a:hover {
-  color: var(--accent-hover);
+  color: var(--highlight-hover);
   text-decoration: underline;
 }
 
@@ -99,12 +98,12 @@ button {
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--bg-primary);
 }
 
 ::-webkit-scrollbar-thumb {
@@ -126,16 +125,15 @@ button {
   left: 100%;
   top: 50%;
   transform: translateY(-50%);
-  margin-left: 10px;
-  padding: 5px 9px;
+  margin-left: 12px;
+  padding: 8px 12px;
   background: var(--text-primary);
   color: var(--bg-primary);
-  font-size: 11px;
-  font-weight: 500;
+  font-size: 12px;
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.12s ease;
+  transition: opacity 0.15s ease;
   z-index: 100;
 }
 
