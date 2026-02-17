@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import './PolarizingTopicsSection.css';
 
 // Mock data - will be populated by API later
@@ -41,7 +42,29 @@ const MOCK_POLARIZING_TOPICS = [
 ];
 
 function PolarizingTopicsSection({ topics: topicsProp }) {
+  const [isLoading, setIsLoading] = useState(true);
   const topics = topicsProp ?? MOCK_POLARIZING_TOPICS;
+
+  if (isLoading) {
+    return (
+      <div className="polarizing-section">
+        <div className="section-header">
+          <h2 className="section-title">Polarizing Topics</h2>
+          <p className="section-description">Topics with mixed sentiment — opportunities to understand diverse guest preferences</p>
+        </div>
+        <div className="loading-state">
+          <div className="loading-content">
+            <div className="loading-spinner" />
+            <p className="loading-text">Identifying polarizing topics...</p>
+            <button className="simulate-btn" onClick={() => setIsLoading(false)}>
+              Simulate Complete
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="polarizing-section">
       <div className="section-header">

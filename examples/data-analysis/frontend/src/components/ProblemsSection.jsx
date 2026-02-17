@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import './ProblemsSection.css';
 
 // Mock data - will be populated by API later
@@ -55,13 +56,35 @@ const MOCK_PROBLEMS = [
 ];
 
 function ProblemsSection({ problems: problemsProp }) {
+  const [isLoading, setIsLoading] = useState(true);
   const problems = problemsProp ?? MOCK_PROBLEMS;
+
   const getSeverityColor = (score) => {
     if (score >= 80) return 'severity-critical';
     if (score >= 60) return 'severity-high';
     if (score >= 40) return 'severity-medium';
     return 'severity-low';
   };
+
+  if (isLoading) {
+    return (
+      <div className="problems-section">
+        <div className="section-header">
+          <h2 className="section-title">Business-Critical Problems</h2>
+          <p className="section-description">Issues causing the most harm to guest satisfaction, ranked by severity</p>
+        </div>
+        <div className="loading-state">
+          <div className="loading-content">
+            <div className="loading-spinner" />
+            <p className="loading-text">Analyzing reviews for critical issues...</p>
+            <button className="simulate-btn" onClick={() => setIsLoading(false)}>
+              Simulate Complete
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="problems-section">

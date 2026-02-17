@@ -118,3 +118,54 @@
   font-style: italic;
   line-height: 1.5;
 }
+
+/* Loading State */
+.problems-section .loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+}
+
+.problems-section .loading-content {
+  text-align: center;
+  padding: 48px;
+}
+
+.problems-section .loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--highlight);
+  border-radius: 50%;
+  margin: 0 auto 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.problems-section .loading-text {
+  font-size: 14px;
+  color: var(--text-tertiary);
+  margin: 0 0 24px 0;
+}
+
+.problems-section .simulate-btn {
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: none;
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.problems-section .simulate-btn:hover {
+  color: var(--text-secondary);
+  border-color: var(--text-muted);
+}

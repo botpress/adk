@@ -4,6 +4,7 @@ import { Client } from '@botpress/chat';
 import ProblemsSection from './ProblemsSection';
 import PolarizingTopicsSection from './PolarizingTopicsSection';
 import DepartmentScoresSection from './DepartmentScoresSection';
+import DepartmentsPanel from './DepartmentsPanel';
 
 function AnalyticsView({ reviews, onBackToInbox }) {
   const [activeSection, setActiveSection] = useState('problems');
@@ -52,6 +53,8 @@ function AnalyticsView({ reviews, onBackToInbox }) {
     init();
   }, []);
 
+  const [departmentsLoading, setDepartmentsLoading] = useState(true);
+
   const sectionCounts = {
     problems: problems?.length ?? 5,
     balance: polarizingTopics?.length ?? 4,
@@ -99,7 +102,6 @@ function AnalyticsView({ reviews, onBackToInbox }) {
           className={`nav-tab ${activeSection === 'problems' ? 'active' : ''}`}
           onClick={() => setActiveSection('problems')}
         >
-          <span className="nav-tab-icon">!</span>
           Problems
           <span className="nav-tab-count">{sectionCounts.problems}</span>
         </button>
@@ -107,7 +109,6 @@ function AnalyticsView({ reviews, onBackToInbox }) {
           className={`nav-tab ${activeSection === 'balance' ? 'active' : ''}`}
           onClick={() => setActiveSection('balance')}
         >
-          <span className="nav-tab-icon">⚖</span>
           Polarizing Topics
           <span className="nav-tab-count">{sectionCounts.balance}</span>
         </button>
@@ -115,21 +116,28 @@ function AnalyticsView({ reviews, onBackToInbox }) {
           className={`nav-tab ${activeSection === 'departments' ? 'active' : ''}`}
           onClick={() => setActiveSection('departments')}
         >
-          <span className="nav-tab-icon">◫</span>
           Departments
           <span className="nav-tab-count">{sectionCounts.departments}</span>
         </button>
       </div>
 
-      <div className="analytics-content">
-        {activeSection === 'problems' && (
-          <ProblemsSection problems={problems} />
-        )}
-        {activeSection === 'balance' && (
-          <PolarizingTopicsSection topics={polarizingTopics} />
-        )}
+      <div className="analytics-body">
+        <div className="analytics-content">
+          {activeSection === 'problems' && (
+            <ProblemsSection problems={problems} />
+          )}
+          {activeSection === 'balance' && (
+            <PolarizingTopicsSection topics={polarizingTopics} />
+          )}
+          {activeSection === 'departments' && (
+            <DepartmentScoresSection departments={departmentScores} />
+          )}
+        </div>
         {activeSection === 'departments' && (
-          <DepartmentScoresSection departments={departmentScores} />
+          <DepartmentsPanel
+            isLoading={departmentsLoading}
+            onSimulateComplete={() => setDepartmentsLoading(false)}
+          />
         )}
       </div>
     </div>

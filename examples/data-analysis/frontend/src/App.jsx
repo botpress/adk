@@ -135,15 +135,17 @@ function App() {
         onDisableButton={handleDisableButton}
       />
       <div className="main-content">
-        <Header
-          sortBy={sortBy}
-          onSortChange={handleSortChange}
-          dataSourceName={dataSourceName}
-          onChangeDataSource={handleChangeDataSource}
-          activeView={activeView}
-          onGoToAnalytics={() => setActiveView('analytics')}
-          hasReviews={!!reviews}
-        />
+        {activeView !== 'analytics' && (
+          <Header
+            sortBy={sortBy}
+            onSortChange={handleSortChange}
+            dataSourceName={dataSourceName}
+            onChangeDataSource={handleChangeDataSource}
+            activeView={activeView}
+            onGoToAnalytics={() => setActiveView('analytics')}
+            hasReviews={!!reviews}
+          />
+        )}
         <div className="content-area">
           {renderContent()}
         </div>

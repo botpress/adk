@@ -119,11 +119,6 @@
   border-bottom-color: var(--highlight);
 }
 
-.nav-tab-icon {
-  font-size: 14px;
-  opacity: 0.7;
-}
-
 .nav-tab-count {
   padding: 2px 8px;
   font-size: 11px;
@@ -136,6 +131,13 @@
 .nav-tab.active .nav-tab-count {
   background: var(--highlight);
   color: #fffffe;
+}
+
+/* Body - contains content and optional side panel */
+.analytics-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
 }
 
 /* Content Area */

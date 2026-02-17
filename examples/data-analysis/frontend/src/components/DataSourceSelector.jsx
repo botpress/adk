@@ -111,7 +111,9 @@ function DataSourceSelector({ onDataLoaded, onUseMockData, error, setError }) {
         {error && <p className="empty-error">{error}</p>}
 
         <p className="schema-note">
-          Required: <code>content</code> (review text). Optional: <code>rating</code> (1-5), <code>date</code>, <code>guestName</code>
+          Required: <code>content</code> (review text)
+          <br />
+          Optional: <code>rating</code> (1-5), <code>date</code>, <code>guestName</code>
         </p>
       </div>
     </div>
