@@ -9,17 +9,19 @@ function DataSourceSelector({ onDataLoaded, onUseMockData, error, setError }) {
     if (lines.length < 2) throw new Error('CSV needs header + data rows');
 
     const headers = lines[0].split(',').map(h => h.trim());
-    const required = ['rating', 'content', 'date', 'guestName'];
-    for (const field of required) {
-      if (!headers.includes(field)) throw new Error(`Missing: ${field}`);
-    }
+    if (!headers.includes('content')) throw new Error('Missing required field: content');
 
     const reviews = [];
     for (let i = 1; i < lines.length; i++) {
       const values = parseCSVLine(lines[i]);
       const review = {};
       headers.forEach((h, idx) => {
-        review[h] = h === 'rating' ? parseInt(values[idx], 10) : values[idx];
+        const val = values[idx];
+        if (h === 'rating' && val) {
+          review[h] = parseInt(val, 10) || null;
+        } else {
+          review[h] = val || null;
+        }
       });
       reviews.push(review);
     }
@@ -41,9 +43,8 @@ function DataSourceSelector({ onDataLoaded, onUseMockData, error, setError }) {
   const parseJSON = (text) => {
     const data = JSON.parse(text);
     if (!Array.isArray(data)) throw new Error('JSON must be an array');
-    const required = ['rating', 'content', 'date', 'guestName'];
     data.forEach((r, i) => {
-      for (const f of required) if (!(f in r)) throw new Error(`Review ${i + 1} missing: ${f}`);
+      if (!('content' in r)) throw new Error(`Review ${i + 1} missing required field: content`);
     });
     return data;
   };
@@ -110,7 +111,7 @@ function DataSourceSelector({ onDataLoaded, onUseMockData, error, setError }) {
         {error && <p className="empty-error">{error}</p>}
 
         <p className="schema-note">
-          Expected fields: <code>rating</code> (number 1-5), <code>content</code> (review text), <code>date</code> (e.g. "Jan 15, 2025"), <code>guestName</code> (reviewer)
+          Required: <code>content</code> (review text). Optional: <code>rating</code> (1-5), <code>date</code>, <code>guestName</code>
         </p>
       </div>
     </div>

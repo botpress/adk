@@ -9,14 +9,16 @@ function AnalyticsView({ reviews, onBackToInbox }) {
   const sendEvent = async () => {
     await clientRef.current.createEvent({
       conversationId: conversationRef.current.id,
-      type: 'event1',
-      payload: {}
+      payload: {
+        type: 'harmfulTrigger',
+        reviews
+      }
     });
   };
 
   // auth client, create convo, setup listeners
   useEffect(() => {
-    (async () => {
+    const init = async () => {
 
       // auth client
       clientRef.current = await Client.connect({
@@ -37,8 +39,8 @@ function AnalyticsView({ reviews, onBackToInbox }) {
       serverStream.on("event_created", (event) => {
 
       });
-
-    })();
+    }
+    init
   }, []);
 
   return (

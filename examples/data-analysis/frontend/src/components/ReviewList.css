@@ -9,11 +9,11 @@
 .review-list-content {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 24px;
+  padding: 24px 28px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   grid-auto-rows: min-content;
-  gap: 16px;
+  gap: 18px;
   align-content: start;
 }
 
@@ -36,7 +36,7 @@
 }
 
 .review-list-footer {
-  padding: 12px 24px;
+  padding: 14px 28px;
   border-top: 1px solid var(--border-color);
   background: var(--bg-secondary);
   display: flex;
@@ -45,30 +45,33 @@
 }
 
 .built-with {
-  font-size: 12px;
-  color: var(--text-tertiary);
+  font-size: 11px;
+  color: var(--text-muted);
   text-decoration: none;
-  transition: color 0.15s ease;
+  letter-spacing: 0.02em;
+  transition: color 0.12s ease;
 }
 
 .built-with:hover {
-  color: var(--accent-color);
+  color: var(--text-tertiary);
+  text-decoration: none;
 }
 
 .pagination {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .page-info {
-  font-size: 13px;
-  color: var(--text-secondary);
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
 }
 
 .pagination-buttons {
   display: flex;
-  gap: 4px;
+  gap: 6px;
 }
 
 .page-btn {
@@ -76,21 +79,20 @@
   height: 28px;
   border: 1px solid var(--border-color);
   background: var(--bg-secondary);
-  border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-secondary);
-  transition: all 0.2s ease;
+  transition: all 0.12s ease;
 }
 
 .page-btn:hover:not(:disabled) {
-  background: var(--bg-hover);
   border-color: var(--text-muted);
+  color: var(--text-primary);
 }
 
 .page-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.35;
   cursor: not-allowed;
 }

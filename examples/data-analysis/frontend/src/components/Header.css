@@ -2,7 +2,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
+  padding: 20px 28px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
 }
@@ -10,79 +10,100 @@
 .header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
 }
 
 .header-title {
-  font-size: 20px;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 400;
   color: var(--text-primary);
   margin: 0;
+  letter-spacing: -0.02em;
 }
 
 .data-source-badge {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  background: var(--accent-bg);
-  border-radius: 16px;
-  font-size: 13px;
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid var(--accent-color);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   color: var(--accent-color);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .data-source-badge:hover {
-  filter: brightness(0.95);
+  background: var(--accent-bg);
+}
+
+.data-source-badge svg {
+  opacity: 0.7;
 }
 
 .data-source-badge .change-icon {
   opacity: 0;
   margin-left: 2px;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.15s ease;
 }
 
 .data-source-badge:hover .change-icon {
-  opacity: 1;
+  opacity: 0.7;
 }
 
 .sort-dropdown {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .sort-label {
-  font-size: 13px;
-  color: var(--text-tertiary);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .sort-select {
-  padding: 8px 12px;
+  padding: 6px 8px;
   border: none;
   background: transparent;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-secondary);
   cursor: pointer;
   outline: none;
+  font-weight: 500;
 }
 
 .analytics-btn {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
+  padding: 9px 18px;
   background: var(--accent-color);
   color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
   font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  border: none;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: all 0.12s ease;
 }
 
 .analytics-btn:hover {
   background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.analytics-btn:active {
+  transform: translateY(0);
+}
+
+.analytics-btn svg {
+  opacity: 0.85;
 }

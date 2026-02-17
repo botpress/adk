@@ -25,18 +25,7 @@ function Sidebar({ activeView, onViewChange, darkMode, onToggleDarkMode, disable
     <aside className="sidebar">
       <div className="sidebar-top">
         <button className="logo-btn" onClick={() => onViewChange('inbox')} title="Home">
-          <svg viewBox="0 0 32 32" width="32" height="32">
-            <defs>
-              <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#3B82F6" />
-                <stop offset="100%" stopColor="#8B5CF6" />
-              </linearGradient>
-            </defs>
-            <rect x="2" y="2" width="28" height="28" rx="8" fill="url(#logoGradient)" />
-            <path d="M9 12h14M9 16h10M9 20h12" stroke="white" strokeWidth="2" strokeLinecap="round" />
-            <circle cx="22" cy="22" r="5" fill="white" />
-            <path d="M20.5 22l1 1 2-2" stroke="url(#logoGradient)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-          </svg>
+          <div className="logo-mark">R</div>
         </button>
 
         <nav className="sidebar-nav">
@@ -46,7 +35,7 @@ function Sidebar({ activeView, onViewChange, darkMode, onToggleDarkMode, disable
             onClick={() => onViewChange('inbox')}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <rect x="3" y="3" width="18" height="18" />
               <path d="M3 9h18" />
             </svg>
           </button>
@@ -67,7 +56,7 @@ function Sidebar({ activeView, onViewChange, darkMode, onToggleDarkMode, disable
             'calendar',
             'Calendar',
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <rect x="3" y="4" width="18" height="18" />
               <path d="M16 2v4" />
               <path d="M8 2v4" />
               <path d="M3 10h18" />

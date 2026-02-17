@@ -3,55 +3,59 @@
   align-items: center;
   justify-content: center;
   flex: 1;
-  margin: 24px;
-  border: 2px dashed var(--border-color);
-  border-radius: 12px;
-  background: var(--bg-tertiary);
+  margin: 32px;
+  border: 1px dashed var(--border-color);
+  background: var(--bg-secondary);
 }
 
 .empty-state-content {
   text-align: center;
-  padding: 40px;
+  padding: 48px 40px;
+  max-width: 380px;
 }
 
 .empty-icon {
   color: var(--text-muted);
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  opacity: 0.5;
 }
 
 .empty-title {
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  margin: 0 0 4px 0;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--text-primary);
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
 }
 
 .empty-subtitle {
   font-size: 14px;
   color: var(--text-tertiary);
-  margin: 0 0 20px 0;
+  margin: 0 0 28px 0;
+  line-height: 1.5;
 }
 
 .empty-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   justify-content: center;
 }
 
 .empty-btn {
-  padding: 8px 16px;
-  font-size: 14px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 500;
   border: 1px solid var(--border-color);
   background: var(--bg-secondary);
-  border-radius: 6px;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.12s ease;
 }
 
 .empty-btn:hover {
-  background: var(--bg-hover);
   border-color: var(--text-muted);
+  color: var(--text-primary);
 }
 
 .empty-btn.primary {
@@ -62,23 +66,26 @@
 
 .empty-btn.primary:hover {
   background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 .empty-error {
   color: var(--error-color);
   font-size: 13px;
-  margin: 16px 0 0 0;
+  margin: 20px 0 0 0;
 }
 
 .schema-note {
   font-size: 12px;
   color: var(--text-muted);
-  margin: 20px 0 0 0;
+  margin: 28px 0 0 0;
+  line-height: 1.6;
 }
 
 .schema-note code {
-  background: var(--bg-hover);
-  padding: 1px 4px;
-  border-radius: 3px;
+  font-family: var(--font-mono);
+  background: var(--bg-tertiary);
+  padding: 2px 5px;
   font-size: 11px;
+  color: var(--text-secondary);
 }

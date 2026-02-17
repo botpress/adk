@@ -1,11 +1,11 @@
 .sidebar {
-  width: 56px;
+  width: 60px;
   background: var(--sidebar-bg);
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 16px 8px;
+  padding: 20px 10px;
   height: 100vh;
   position: fixed;
   left: 0;
@@ -16,12 +16,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
+  gap: 28px;
 }
 
 .logo-btn {
-  width: 36px;
-  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -29,22 +27,35 @@
   border: none;
   padding: 0;
   cursor: pointer;
-  border-radius: 8px;
-  transition: transform 0.15s ease, opacity 0.15s ease;
+  transition: transform 0.12s ease;
 }
 
 .logo-btn:hover {
-  transform: scale(1.05);
+  transform: scale(1.04);
 }
 
 .logo-btn:active {
-  transform: scale(0.95);
+  transform: scale(0.98);
+}
+
+.logo-mark {
+  width: 38px;
+  height: 38px;
+  background: var(--accent-color);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 400;
+  font-family: var(--font-display);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: -0.02em;
 }
 
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .nav-item {
@@ -52,27 +63,26 @@
   height: 40px;
   border: none;
   background: transparent;
-  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-tertiary);
-  transition: all 0.2s ease;
+  color: var(--text-muted);
+  transition: color 0.12s ease, background 0.12s ease;
 }
 
 .nav-item:hover:not(:disabled) {
-  background: var(--bg-hover);
-  color: var(--text-secondary);
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
 }
 
 .nav-item.active {
-  background: var(--accent-bg);
   color: var(--accent-color);
+  background: var(--accent-bg);
 }
 
 .nav-item.disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
@@ -80,5 +90,5 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
 }
