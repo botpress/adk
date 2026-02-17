@@ -1,0 +1,143 @@
+.departments-section {
+  max-width: 1200px;
+}
+
+.departments-section .section-header {
+  margin-bottom: 24px;
+}
+
+.departments-section .section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 6px 0;
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+.departments-section .section-description {
+  font-size: 14px;
+  color: var(--text-tertiary);
+  margin: 0;
+}
+
+.departments-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 1100px) {
+  .departments-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .departments-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.department-card {
+  padding: 20px 24px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  transition: border-color 0.15s ease;
+}
+
+.department-card:hover {
+  border-color: var(--text-muted);
+}
+
+.department-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.department-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.trend-indicator {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.trend-up {
+  color: #3d8c5c;
+}
+
+.trend-down {
+  color: #722F37;
+}
+
+.trend-stable {
+  color: var(--text-muted);
+}
+
+.department-score-container {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.department-score {
+  font-size: 32px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  line-height: 1;
+}
+
+.score-max {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-left: 2px;
+}
+
+.score-good {
+  color: #3d8c5c;
+}
+
+.score-medium {
+  color: var(--text-secondary);
+}
+
+.score-poor {
+  color: #722F37;
+}
+
+.department-meta {
+  margin-bottom: 12px;
+}
+
+.department-meta .review-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.department-issue {
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.issue-label {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  margin-right: 6px;
+}
+
+.issue-text {
+  font-size: 13px;
+  color: var(--text-tertiary);
+}

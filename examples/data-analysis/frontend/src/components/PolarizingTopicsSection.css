@@ -1,0 +1,144 @@
+.polarizing-section {
+  max-width: 1200px;
+}
+
+.polarizing-section .section-header {
+  margin-bottom: 24px;
+}
+
+.polarizing-section .section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 6px 0;
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+.polarizing-section .section-description {
+  font-size: 14px;
+  color: var(--text-tertiary);
+  margin: 0;
+}
+
+.polarizing-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .polarizing-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+.polarizing-card {
+  padding: 20px 24px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  transition: border-color 0.15s ease;
+}
+
+.polarizing-card:hover {
+  border-color: var(--text-muted);
+}
+
+.polarizing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.polarizing-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.imbalance-badge {
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+
+.sentiment-bar {
+  display: flex;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.sentiment-positive {
+  background: #3d8c5c;
+  transition: width 0.3s ease;
+}
+
+.sentiment-negative {
+  background: #722F37;
+  transition: width 0.3s ease;
+}
+
+.sentiment-counts {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.positive-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: #3d8c5c;
+  font-family: var(--font-mono);
+}
+
+.negative-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: #722F37;
+  font-family: var(--font-mono);
+}
+
+.polarizing-samples {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sample {
+  padding: 12px;
+  background: var(--bg-tertiary);
+}
+
+.sample.positive {
+  border-left: 3px solid #3d8c5c;
+}
+
+.sample.negative {
+  border-left: 3px solid #722F37;
+}
+
+.sample-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.sample p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+  font-style: italic;
+  line-height: 1.5;
+}
