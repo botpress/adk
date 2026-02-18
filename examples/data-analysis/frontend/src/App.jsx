@@ -65,7 +65,7 @@ function App() {
           }
           if (type === 'polarityResponse') {
             console.log('polarity response event received', event);
-            // setAnalyticsData(prev => ({ ...prev, polarityTopics: data }));
+            setAnalyticsData(prev => ({ ...prev, polarityTopics: data }));
           }
           if (type === 'departmentResponse') {
             console.log('departments response event received', event);

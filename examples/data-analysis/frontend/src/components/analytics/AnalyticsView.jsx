@@ -12,8 +12,8 @@ function AnalyticsView({ reviews, analyticsData, onBackToInbox, onRegenerateDepa
 
   const sectionCounts = {
     topics: topics?.length ?? '–',
-    balance: polarityTopics?.length ?? -1,
-    departments: departmentScores?.length ?? -1
+    balance: polarityTopics?.length ?? '–',
+    departments: departmentScores?.length ?? '–'
   };
 
   const hasReviews = reviews && reviews.length > 0;

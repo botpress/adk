@@ -97,11 +97,17 @@ await actions.chat.sendEvent({
     data: [
       {
         topic: "Modern minimalist decor",
-        positiveCount: 34,
-        negativeCount: 29,
+        positiveScore: 34,
+        negativeScore: 29,
         polarityScore: 85,
-        positiveSample: "Loved the aesthetic",
-        negativeSample: "Felt cold and sterile"
+        positiveReviews: [
+          "Loved the aesthetic",
+          "Clean and modern"
+        ],
+        negativeReviews: [
+          "Felt cold and sterile",
+          "Too minimalist for my taste"
+        ]
       }
     ]
   }
@@ -115,12 +121,12 @@ await actions.chat.sendEvent({
 // PolaritySection receives:
 [
   {
-    topic: string,         // Topic name
-    positiveCount: number, // Positive mentions
-    negativeCount: number, // Negative mentions
-    polarityScore: number, // 0-100% split
-    positiveSample: string,// Example positive quote
-    negativeSample: string // Example negative quote
+    topic: string,            // Topic name
+    positiveScore: number,    // Positive sentiment score
+    negativeScore: number,    // Negative sentiment score
+    polarityScore: number,    // 0-100% indicating how split opinions are
+    positiveReviews: string[],// Positive review evidence
+    negativeReviews: string[] // Negative review evidence
   }
 ]
 ```

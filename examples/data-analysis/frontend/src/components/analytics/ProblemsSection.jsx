@@ -142,11 +142,11 @@ function ProblemsSection({ topics, isLoading }) {
                     )}
                   </div>
                 </div>
-                {isExpanded && hasReviews && (
+                {hasReviews && (
                   <div className="problem-evidence">
                     <div className="evidence-label">Evidence from reviews</div>
                     <div className="evidence-list">
-                      {item.reviews.map((review, reviewIndex) => {
+                      {item.reviews.slice(0, isExpanded ? undefined : 1).map((review, reviewIndex) => {
                         // Handle both string reviews and {atomic_feedback: string} objects
                         const reviewText = typeof review === 'string'
                           ? review
@@ -158,6 +158,11 @@ function ProblemsSection({ topics, isLoading }) {
                         );
                       })}
                     </div>
+                    {!isExpanded && item.reviews.length > 1 && (
+                      <button className="view-more-btn" onClick={() => toggleExpand(index)}>
+                        View {item.reviews.length - 1} more reviews
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
