@@ -146,3 +146,44 @@
   overflow-y: auto;
   padding: 28px 32px;
 }
+
+/* Empty State */
+.analytics-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px;
+  color: var(--text-tertiary);
+}
+
+.analytics-empty svg {
+  margin-bottom: 24px;
+  opacity: 0.5;
+}
+
+.analytics-empty h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+  font-family: var(--font-display);
+}
+
+.analytics-empty p {
+  font-size: 14px;
+  color: var(--text-tertiary);
+  margin: 0 0 24px 0;
+}
+
+.analytics-empty .back-btn {
+  background: var(--highlight);
+  border-color: var(--highlight);
+  color: #fffffe;
+}
+
+.analytics-empty .back-btn:hover {
+  opacity: 0.9;
+}

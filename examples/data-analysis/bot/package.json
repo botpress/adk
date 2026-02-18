@@ -9,7 +9,10 @@
     "deploy": "adk deploy"
   },
   "dependencies": {
-    "@botpress/runtime": "^1.13.17"
+    "@botpress/client": "^1.35.0",
+    "@botpress/runtime": "^1.13.17",
+    "@botpress/zai": "^2.5.17",
+    "@bpinternal/zui": "^1.3.3"
   },
   "devDependencies": {
     "typescript": "^5.9.3"

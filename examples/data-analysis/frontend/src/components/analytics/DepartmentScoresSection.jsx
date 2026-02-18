@@ -4,7 +4,6 @@ import '../../styles/DepartmentScoresSection.css';
 // Mock data - will be populated by API later
 const MOCK_DEPARTMENT_SCORES = [
   {
-    id: 1,
     department: 'Front Desk',
     score: 3.2,
     reviewCount: 156,
@@ -12,7 +11,6 @@ const MOCK_DEPARTMENT_SCORES = [
     topIssue: 'Long wait times'
   },
   {
-    id: 2,
     department: 'Housekeeping',
     score: 4.1,
     reviewCount: 203,
@@ -20,7 +18,6 @@ const MOCK_DEPARTMENT_SCORES = [
     topIssue: 'Inconsistent cleaning quality'
   },
   {
-    id: 3,
     department: 'Room Service',
     score: 2.8,
     reviewCount: 89,
@@ -28,7 +25,6 @@ const MOCK_DEPARTMENT_SCORES = [
     topIssue: 'Slow delivery times'
   },
   {
-    id: 4,
     department: 'Concierge',
     score: 4.5,
     reviewCount: 67,
@@ -36,7 +32,6 @@ const MOCK_DEPARTMENT_SCORES = [
     topIssue: 'Limited local knowledge'
   },
   {
-    id: 5,
     department: 'Restaurant',
     score: 3.8,
     reviewCount: 134,
@@ -44,7 +39,6 @@ const MOCK_DEPARTMENT_SCORES = [
     topIssue: 'Menu variety'
   },
   {
-    id: 6,
     department: 'Spa & Wellness',
     score: 4.3,
     reviewCount: 45,
@@ -97,8 +91,8 @@ function DepartmentScoresSection({ departments: departmentsProp, isLoading: isLo
         <p className="section-description">Performance scores by department for targeted improvement efforts</p>
       </div>
       <div className="departments-grid">
-        {departments.map((dept) => (
-          <div key={dept.id} className="department-card">
+        {departments.map((dept, index) => (
+          <div key={index} className="department-card">
             <div className="department-header">
               <h3 className="department-name">{dept.department}</h3>
               <span className={`trend-indicator trend-${dept.trend}`}>

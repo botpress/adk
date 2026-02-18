@@ -26,7 +26,7 @@ function App() {
 
   // Analytics state - prefetched when reviews load
   const [analyticsData, setAnalyticsData] = useState({
-    problems: null,
+    topics: null,
     polarityTopics: null,
     departmentScores: null,
     isLoading: false
@@ -59,9 +59,9 @@ function App() {
         serverStream.on("event_created", (event) => {
           const { type, data } = event.payload || {};
 
-          if (type === 'problemsResponse') {
-            console.log('problems response event received', event);
-            // setAnalyticsData(prev => ({ ...prev, problems: data }));
+          if (type === 'topicsResponse') {
+            console.log('topics response event received', event);
+            setAnalyticsData(prev => ({ ...prev, topics: data }));
           }
           if (type === 'polarityResponse') {
             console.log('polarity response event received', event);
@@ -96,7 +96,7 @@ function App() {
     });
   }, []);
 
-  // Trigger all analytics when reviews change (problems, polarity, departments)
+  // Trigger all analytics when reviews change (topics, polarity, departments)
   const triggerFullAnalysis = useCallback(async (reviewsToAnalyze) => {
     await waitForClient();
 
@@ -111,7 +111,7 @@ function App() {
       await Promise.all([
         clientRef.current.createEvent({
           conversationId,
-          payload: { type: 'problemsTrigger', ...payload }
+          payload: { type: 'topicsTrigger', ...payload }
         }),
         clientRef.current.createEvent({
           conversationId,
@@ -233,7 +233,7 @@ function App() {
     setPage(1);
     // Reset analytics data
     setAnalyticsData({
-      problems: null,
+      topics: null,
       polarityTopics: null,
       departmentScores: null,
       isLoading: false

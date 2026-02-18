@@ -4,7 +4,6 @@ import '../../styles/PolaritySection.css';
 // Mock data - will be populated by API later
 const MOCK_POLARITY_TOPICS = [
   {
-    id: 1,
     topic: 'Modern minimalist decor',
     positiveCount: 34,
     negativeCount: 29,
@@ -13,7 +12,6 @@ const MOCK_POLARITY_TOPICS = [
     negativeSample: 'Room felt cold and sterile'
   },
   {
-    id: 2,
     topic: 'Rooftop bar atmosphere',
     positiveCount: 52,
     negativeCount: 41,
@@ -22,7 +20,6 @@ const MOCK_POLARITY_TOPICS = [
     negativeSample: 'Way too crowded and loud'
   },
   {
-    id: 3,
     topic: 'Breakfast buffet variety',
     positiveCount: 28,
     negativeCount: 31,
@@ -31,7 +28,6 @@ const MOCK_POLARITY_TOPICS = [
     negativeSample: 'Not enough healthy options'
   },
   {
-    id: 4,
     topic: 'Location near nightlife',
     positiveCount: 45,
     negativeCount: 22,
@@ -73,8 +69,8 @@ function PolaritySection({ topics: topicsProp, isLoading: isLoadingProp }) {
         <p className="section-description">Topics with mixed sentiment — opportunities to understand diverse guest preferences</p>
       </div>
       <div className="polarity-list">
-        {topics.map((topic) => (
-          <div key={topic.id} className="polarity-card">
+        {topics.map((topic, index) => (
+          <div key={index} className="polarity-card">
             <div className="polarity-header">
               <h3 className="polarity-title">{topic.topic}</h3>
               <div className="polarity-badge">

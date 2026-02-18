@@ -8,13 +8,15 @@ import DepartmentsPanel from './DepartmentsPanel';
 function AnalyticsView({ reviews, analyticsData, onBackToInbox, onRegenerateDepartments }) {
   const [activeSection, setActiveSection] = useState('problems');
 
-  const { problems, polarityTopics, departmentScores, isLoading } = analyticsData;
+  const { topics, polarityTopics, departmentScores, isLoading } = analyticsData;
 
   const sectionCounts = {
-    problems: problems?.length ?? 5,
+    topics: topics?.length ?? 5,
     balance: polarityTopics?.length ?? 4,
     departments: departmentScores?.length ?? 6
   };
+
+  const hasReviews = reviews && reviews.length > 0;
 
   return (
     <div className="analytics-view">
@@ -36,7 +38,7 @@ function AnalyticsView({ reviews, analyticsData, onBackToInbox, onRegenerateDepa
           onClick={() => setActiveSection('problems')}
         >
           Problems
-          <span className="nav-tab-count">{sectionCounts.problems}</span>
+          <span className="nav-tab-count">{sectionCounts.topics}</span>
         </button>
         <button
           className={`nav-tab ${activeSection === 'balance' ? 'active' : ''}`}
@@ -55,22 +57,39 @@ function AnalyticsView({ reviews, analyticsData, onBackToInbox, onRegenerateDepa
       </div>
 
       <div className="analytics-body">
-        <div className="analytics-content">
-          {activeSection === 'problems' && (
-            <ProblemsSection problems={problems} isLoading={isLoading} />
-          )}
-          {activeSection === 'balance' && (
-            <PolaritySection topics={polarityTopics} isLoading={isLoading} />
-          )}
-          {activeSection === 'departments' && (
-            <DepartmentScoresSection departments={departmentScores} isLoading={isLoading} />
-          )}
-        </div>
-        {activeSection === 'departments' && (
-          <DepartmentsPanel
-            isLoading={isLoading}
-            onRegenerateDepartments={onRegenerateDepartments}
-          />
+        {hasReviews ? (
+          <>
+            <div className="analytics-content">
+              {activeSection === 'problems' && (
+                <ProblemsSection topics={topics} isLoading={isLoading} />
+              )}
+              {activeSection === 'balance' && (
+                <PolaritySection topics={polarityTopics} isLoading={isLoading} />
+              )}
+              {activeSection === 'departments' && (
+                <DepartmentScoresSection departments={departmentScores} isLoading={isLoading} />
+              )}
+            </div>
+            {activeSection === 'departments' && (
+              <DepartmentsPanel
+                isLoading={isLoading}
+                onRegenerateDepartments={onRegenerateDepartments}
+              />
+            )}
+          </>
+        ) : (
+          <div className="analytics-empty">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M18 20V10" />
+              <path d="M12 20V4" />
+              <path d="M6 20v-6" />
+            </svg>
+            <h2>No Reviews Loaded</h2>
+            <p>Load reviews first to generate analytics insights.</p>
+            <button className="back-btn" onClick={onBackToInbox}>
+              Load Reviews
+            </button>
+          </div>
         )}
       </div>
     </div>
