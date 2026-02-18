@@ -16,7 +16,7 @@ export default new Trigger({
     })
 
     if (eventType === "topicsTrigger") {
-      logger.info("topics trigger triggered")
+      logger.info(`handling topics trigger for ${reviewsContent.length} reviews`)
 
       // split reviews into atomic topcis
       const atomicTopics = await Promise.all(
@@ -60,9 +60,6 @@ export default new Trigger({
         }
       })
 
-      // rate the topics
-      // const ratedTopics = await adk.zai.rate(stringifiedTopics, "Rate these topics by how harmful they are to the hotel business.")
-
       await actions.chat.sendEvent({
         conversationId: conversation.id,
         payload:{
@@ -70,6 +67,7 @@ export default new Trigger({
           data: parsedSortedTopics
         }
       })
+      return
 
     }else if(eventType === "polarityTrigger"){
       logger.info("polarity trigger triggered")

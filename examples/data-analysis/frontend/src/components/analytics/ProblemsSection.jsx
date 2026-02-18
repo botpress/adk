@@ -77,9 +77,11 @@ const MOCK_TOPICS = [
 
 function ProblemsSection({ topics, isLoading }) {
   const [expandedIndex, setExpandedIndex] = useState(null);
+  const [sortAscending, setSortAscending] = useState(false); // false = highest first
 
   // Use mock data only if no real data provided
-  const displayTopics = topics ?? MOCK_TOPICS;
+  const rawTopics = topics ?? MOCK_TOPICS;
+  const displayTopics = sortAscending ? [...rawTopics].reverse() : rawTopics;
   // Show loading only if explicitly loading AND no data yet
   const showLoading = isLoading && !topics;
 
@@ -113,6 +115,11 @@ function ProblemsSection({ topics, isLoading }) {
         <h2 className="section-title">Business-Critical Topics</h2>
         <p className="section-description">Issues identified from reviews, ranked by business impact</p>
       </div>
+      <button className="sort-indicator" onClick={() => setSortAscending(!sortAscending)}>
+        <span className="sort-label">Sorted by</span>
+        <span className="sort-value">{sortAscending ? 'Lowest Impact' : 'Highest Impact'}</span>
+        <span className="sort-arrow">{sortAscending ? '↑' : '↓'}</span>
+      </button>
       <div className="problems-list">
         {displayTopics.map((item, index) => {
           const isExpanded = expandedIndex === index;
