@@ -18,16 +18,27 @@ export default new Trigger({
     if (eventType === "topicsTrigger") {
       logger.info("topics trigger triggered")
 
-      // // split reviews into atomic topcis
-      // const atomicTopics = await Promise.all(
-      //   reviewsContent.map(review => adk.zai.extract(review, z.array(z.object({
-      //     atomic_feedback: z.string()
-      //   }))))
-      // )
+      // split reviews into atomic topcis
+      const atomicTopics = await Promise.all(
+        reviewsContent.map(review => adk.zai.extract(review, z.array(z.object({
+          atomic_feedback: z.string()
+        }))))
+      )
+      
+      // collect atomic topics into a list
+      const atomicTopicList: string[] = [];
+      atomicTopics.forEach((topic: {atomic_feedback: string}[]) => {
+        for(const entry of topic){
+          atomicTopicList.push(entry.atomic_feedback);
+        }
+      })
 
-      // group topics together
-      const groupedTopics = await adk.zai.group(reviewsContent, {
-        instructions: "Group these reviews by similar topics"
+      // only keep the bad topics
+      const badAtomicTopics = await adk.zai.filter(atomicTopicList, "is a customer issue for a hotel")
+      
+      // group bad topics together
+      const groupedTopics = await adk.zai.group(badAtomicTopics, {
+        instructions: "Group by type of customer issues"
       })
 
       // stringify topics because sort takes string[]
@@ -40,18 +51,17 @@ export default new Trigger({
       });
 
       // sort the topics
-      // const sortedTopics = await adk.zai.sort(stringifiedTopics, "Sort these reviews by ")
-      // const parsedSortedTopics = sortedTopics.map(topic => {
-      //   const json = JSON.parse(topic);
-      //   return {
-      //     topic: json["topic"],
-      //     number_of_mentions: json["number_of_mentions"],
-      //     reviews: json['related_reviews']
-      //   }
-      // })
+      const sortedTopics = await adk.zai.sort(stringifiedTopics, "Sort these reviews by how much they hurt the business")
+      const parsedSortedTopics = sortedTopics.map(topic => {
+        const json = JSON.parse(topic);
+        return {
+          topic: json["topic"],
+          reviews: json['related_reviews']
+        }
+      })
 
       // rate the topics
-      const ratedTopics = await adk.zai.rate(stringifiedTopics, "Rate these topics by how harmful they are to the hotel business.")
+      // const ratedTopics = await adk.zai.rate(stringifiedTopics, "Rate these topics by how harmful they are to the hotel business.")
 
       await actions.chat.sendEvent({
         conversationId: conversation.id,
@@ -81,6 +91,8 @@ export default new Trigger({
         }
       })
 
+    }else{
+      return;
     }
   },
 });

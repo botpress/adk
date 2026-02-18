@@ -7,6 +7,15 @@
 - **Payload:** `{ type: 'topicsTrigger', reviews }`
 - **Affects:** `analyticsData.topics`
 
+**Pipeline:**
+
+| Step | Method | Description | Example |
+|------|--------|-------------|---------|
+| 1. Extract | `zai.extract()` | Split each review into atomic feedback points | `"Great location but noisy AC"` → `["Great location", "Noisy AC"]` |
+| 2. Filter | `zai.filter()` | Keep only customer issues | `["Great location", "Noisy AC"]` → `["Noisy AC"]` |
+| 3. Group | `zai.group()` | Cluster similar complaints together | `["Noisy AC", "AC broken"]` → `{ "HVAC Issues": [...] }` |
+| 4. Sort | `zai.sort()` | Rank by business impact (severity, frequency, sentiment) | Most harmful topics first |
+
 ### `polarityTrigger`
 - **Triggered by:** Reviews loaded (file upload or demo data)
 - **Payload:** `{ type: 'polarityTrigger', reviews }`

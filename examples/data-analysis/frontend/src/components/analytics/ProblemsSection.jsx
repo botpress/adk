@@ -87,11 +87,8 @@ function ProblemsSection({ topics, isLoading }) {
     setExpandedIndex(expandedIndex === index ? null : index);
   };
 
-  // Get mention count from reviews array length, fallback to number_of_mentions
-  const getMentionCount = (item) => {
-    if (item.reviews?.length) return item.reviews.length;
-    return item.number_of_mentions ?? 0;
-  };
+  // Get mention count from reviews array length
+  const getMentionCount = (item) => item.reviews?.length ?? 0;
 
   if (showLoading) {
     return (
@@ -142,11 +139,17 @@ function ProblemsSection({ topics, isLoading }) {
                   <div className="problem-evidence">
                     <div className="evidence-label">Evidence from reviews</div>
                     <div className="evidence-list">
-                      {item.reviews.map((review, reviewIndex) => (
-                        <blockquote key={reviewIndex} className="evidence-quote">
-                          {review}
-                        </blockquote>
-                      ))}
+                      {item.reviews.map((review, reviewIndex) => {
+                        // Handle both string reviews and {atomic_feedback: string} objects
+                        const reviewText = typeof review === 'string'
+                          ? review
+                          : review.atomic_feedback ?? JSON.stringify(review);
+                        return (
+                          <blockquote key={reviewIndex} className="evidence-quote">
+                            {reviewText}
+                          </blockquote>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
