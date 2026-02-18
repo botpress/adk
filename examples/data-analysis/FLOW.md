@@ -40,8 +40,11 @@ await actions.chat.sendEvent({
     type: 'topicsResponse',
     data: [
       {
-        topic: "Slow room service response time",
-        number_of_mentions: 47
+        topic: "Slow room service",
+        reviews: [
+          "Waited an hour for breakfast",
+          "Room service took forever"
+        ]
       }
     ]
   }
@@ -55,8 +58,8 @@ await actions.chat.sendEvent({
 // ProblemsSection receives:
 [
   {
-    topic: string,            // Topic description
-    number_of_mentions: number // Number of mentions
+    topic: string,      // Topic description
+    reviews: string[]   // Evidence (mention count = reviews.length)
   }
 ]
 ```

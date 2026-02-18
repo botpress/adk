@@ -18,36 +18,40 @@ export default new Trigger({
     if (eventType === "topicsTrigger") {
       logger.info("topics trigger triggered")
 
-      // split reviews into atomic topcis
-      const atomicTopics = await Promise.all(
-        reviewsContent.map(review => adk.zai.extract(review, z.array(z.object({
-          atomic_feedback: z.string()
-        }))))
-      )
+      // // split reviews into atomic topcis
+      // const atomicTopics = await Promise.all(
+      //   reviewsContent.map(review => adk.zai.extract(review, z.array(z.object({
+      //     atomic_feedback: z.string()
+      //   }))))
+      // )
 
       // group topics together
-      const groupedTopics = await adk.zai.group(atomicTopics, {
-        instructions: "Group these reviews by specific topics. If two reviews are talking about the same specific thing, group them together"
+      const groupedTopics = await adk.zai.group(reviewsContent, {
+        instructions: "Group these reviews by similar topics"
       })
 
       // stringify topics because sort takes string[]
       const stringifiedTopics = Object.entries(groupedTopics).map(([specificTopic, reviews]) => {
         return JSON.stringify({
           topic: specificTopic,
-          reviews: reviews,
+          related_reviews: reviews,
           number_of_mentions: reviews.length
         })
       });
 
       // sort the topics
-      const sortedTopics = await adk.zai.sort(stringifiedTopics, "by negative business impact based on severity, sentiment, and frequency")
-      const parsedSortedTopics = sortedTopics.map(topic => {
-        const json = JSON.parse(topic);
-        return {
-          topic: json["topic"],
-          number_of_mentions: json["number_of_mentions"]
-        }
-      })
+      // const sortedTopics = await adk.zai.sort(stringifiedTopics, "Sort these reviews by ")
+      // const parsedSortedTopics = sortedTopics.map(topic => {
+      //   const json = JSON.parse(topic);
+      //   return {
+      //     topic: json["topic"],
+      //     number_of_mentions: json["number_of_mentions"],
+      //     reviews: json['related_reviews']
+      //   }
+      // })
+
+      // rate the topics
+      const ratedTopics = await adk.zai.rate(stringifiedTopics, "Rate these topics by how harmful they are to the hotel business.")
 
       await actions.chat.sendEvent({
         conversationId: conversation.id,
