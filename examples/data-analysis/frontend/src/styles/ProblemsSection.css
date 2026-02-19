@@ -72,6 +72,10 @@
   transition: border-color 0.15s ease;
 }
 
+.problem-card.clickable {
+  cursor: pointer;
+}
+
 .problem-card:hover {
   border-color: var(--text-muted);
 }
@@ -101,9 +105,6 @@
   gap: 16px;
 }
 
-.problem-header.clickable {
-  cursor: pointer;
-}
 
 .problem-title {
   font-size: 15px;
@@ -126,28 +127,10 @@
   color: var(--text-muted);
 }
 
-.expand-icon {
-  font-size: 18px;
-  font-weight: 400;
-  color: var(--text-muted);
-  width: 20px;
-  text-align: center;
-  user-select: none;
-}
-
 .problem-evidence {
   margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid var(--border-color);
-}
-
-.evidence-label {
-  font-size: 11px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-  margin-bottom: 12px;
 }
 
 .evidence-list {
@@ -167,22 +150,14 @@
   line-height: 1.5;
 }
 
-.view-more-btn {
+.expand-hint {
   margin-top: 12px;
-  padding: 8px 16px;
-  font-size: 12px;
-  font-weight: 500;
+  padding: 8px 0;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--highlight);
-  background: none;
-  border: 1px solid var(--border-color);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  width: 100%;
-}
-
-.view-more-btn:hover {
-  border-color: var(--highlight);
-  background: var(--bg-tertiary);
+  text-align: center;
+  border-top: 1px dashed var(--border-color);
 }
 
 /* Loading State */

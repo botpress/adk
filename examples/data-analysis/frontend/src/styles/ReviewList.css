@@ -58,44 +58,10 @@
   text-decoration: none;
 }
 
-.pagination {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.page-info {
+.review-count {
   font-size: 11px;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
-  font-weight: 400;
+  font-weight: 500;
   letter-spacing: 0.02em;
-}
-
-.pagination-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-.page-btn {
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary);
-  transition: all 0.15s ease;
-}
-
-.page-btn:hover:not(:disabled) {
-  border-color: var(--text-muted);
-  color: var(--text-primary);
-}
-
-.page-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
 }

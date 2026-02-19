@@ -83,6 +83,11 @@
   gap: 10px;
 }
 
+.department-boxes.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
 .department-plate {
   position: relative;
   display: flex;

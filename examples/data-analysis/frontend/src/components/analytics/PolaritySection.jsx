@@ -67,24 +67,28 @@ const MOCK_POLARITY_TOPICS = [
 ];
 
 function PolaritySection({ topics, isLoading }) {
-  const [expandedIndex, setExpandedIndex] = useState(null);
-  const [sortByBalanced, setSortByBalanced] = useState(false); // false = most polarized first
+  const [expandedKey, setExpandedKey] = useState(null);
+  const [sortByMostBalanced, setSortByMostBalanced] = useState(false);
 
   // Use mock data only if no real data provided
   const rawTopics = topics ?? MOCK_POLARITY_TOPICS;
 
-  // Sort by polarity (distance from 50%)
-  const displayTopics = [...rawTopics].sort((a, b) => {
+  // Sort by distance from 50%
+  const sortByBalance = (a, b) => {
     const aDistance = Math.abs((a.polarityScore ?? 0.5) - 0.5);
     const bDistance = Math.abs((b.polarityScore ?? 0.5) - 0.5);
-    return sortByBalanced ? aDistance - bDistance : bDistance - aDistance;
-  });
+    return sortByMostBalanced ? aDistance - bDistance : bDistance - aDistance;
+  };
+
+  // Split into good (>= 50%) and bad (< 50%), then sort
+  const goodTopics = rawTopics.filter(t => (t.polarityScore ?? 0.5) >= 0.5).sort(sortByBalance);
+  const badTopics = rawTopics.filter(t => (t.polarityScore ?? 0.5) < 0.5).sort(sortByBalance);
 
   // Show loading only if explicitly loading AND no data yet
   const showLoading = isLoading && !topics;
 
-  const toggleExpand = (index) => {
-    setExpandedIndex(expandedIndex === index ? null : index);
+  const toggleExpand = (key) => {
+    setExpandedKey(expandedKey === key ? null : key);
   };
 
   // Format polarity score as percentage
@@ -124,93 +128,94 @@ function PolaritySection({ topics, isLoading }) {
     );
   }
 
+  const renderCard = (item, index) => {
+    const key = `${item.topic}-${index}`;
+    const isExpanded = expandedKey === key;
+    const hasReviews = item.positiveReviews?.length > 0 || item.negativeReviews?.length > 0;
+    const barWidths = getBarWidths(item);
+    const moreCount = Math.max(0, (item.positiveReviews?.length ?? 0) - 1) + Math.max(0, (item.negativeReviews?.length ?? 0) - 1);
+
+    return (
+      <div
+        key={key}
+        className={`polarity-card ${isExpanded ? 'expanded' : ''} ${hasReviews ? 'clickable' : ''}`}
+        onClick={() => hasReviews && toggleExpand(key)}
+      >
+        <div className="polarity-header">
+          <h3 className="polarity-title">{item.topic}</h3>
+          <div className="polarity-badge">
+            {formatPolarity(item.polarityScore)} positive
+          </div>
+        </div>
+        <div className="sentiment-bar">
+          <div className="sentiment-positive" style={{ width: `${barWidths.positive}%` }} />
+          <div className="sentiment-negative" style={{ width: `${barWidths.negative}%` }} />
+        </div>
+        <div className="sentiment-counts">
+          <span className="positive-count">+{item.positiveScore ?? 0}</span>
+          <span className="negative-count">−{item.negativeScore ?? 0}</span>
+        </div>
+        {hasReviews && (
+          <div className="polarity-evidence">
+            <div className="evidence-columns">
+              <div className="evidence-column positive">
+                <div className="evidence-label">Positive</div>
+                <div className="evidence-list">
+                  {(item.positiveReviews ?? []).slice(0, isExpanded ? undefined : 1).map((review, i) => {
+                    const text = typeof review === 'string' ? review : review.atomic_feedback ?? JSON.stringify(review);
+                    return <blockquote key={i} className="evidence-quote positive">{text}</blockquote>;
+                  })}
+                </div>
+              </div>
+              <div className="evidence-column negative">
+                <div className="evidence-label">Negative</div>
+                <div className="evidence-list">
+                  {(item.negativeReviews ?? []).slice(0, isExpanded ? undefined : 1).map((review, i) => {
+                    const text = typeof review === 'string' ? review : review.atomic_feedback ?? JSON.stringify(review);
+                    return <blockquote key={i} className="evidence-quote negative">{text}</blockquote>;
+                  })}
+                </div>
+              </div>
+            </div>
+            {!isExpanded && moreCount > 0 && (
+              <div className="expand-hint">+{moreCount} more reviews</div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="polarity-section">
       <div className="section-header">
-        <h2 className="section-title">Polarizing Topics</h2>
-        <p className="section-description">Topics with mixed sentiment — opportunities to understand diverse guest preferences</p>
+        <h2 className="section-title">Sentiment by Aspect</h2>
+        <p className="section-description">Topics grouped by overall sentiment — identify strengths and areas for improvement</p>
       </div>
-      <button className="sort-indicator" onClick={() => setSortByBalanced(!sortByBalanced)}>
+      <button className="sort-indicator" onClick={() => setSortByMostBalanced(!sortByMostBalanced)}>
         <span className="sort-label">Sorted by</span>
-        <span className="sort-value">{sortByBalanced ? 'Most Balanced' : 'Most Polarized'}</span>
-        <span className="sort-arrow">{sortByBalanced ? '↑' : '↓'}</span>
+        <span className="sort-value">{sortByMostBalanced ? 'Most Balanced' : 'Least Balanced'}</span>
+        <span className="sort-arrow">{sortByMostBalanced ? '↑' : '↓'}</span>
       </button>
-      <div className="polarity-list">
-        {displayTopics.map((item, index) => {
-          const isExpanded = expandedIndex === index;
-          const hasReviews = item.positiveReviews?.length > 0 || item.negativeReviews?.length > 0;
-          const barWidths = getBarWidths(item);
-
-          return (
-            <div key={index} className={`polarity-card ${isExpanded ? 'expanded' : ''}`}>
-              <div
-                className={`polarity-header ${hasReviews ? 'clickable' : ''}`}
-                onClick={() => hasReviews && toggleExpand(index)}
-              >
-                <h3 className="polarity-title">{item.topic}</h3>
-                <div className="polarity-header-right">
-                  <div className="polarity-badge">
-                    {formatPolarity(item.polarityScore)} split
-                  </div>
-                  {hasReviews && (
-                    <span className="expand-icon">{isExpanded ? '−' : '+'}</span>
-                  )}
-                </div>
-              </div>
-              <div className="sentiment-bar">
-                <div
-                  className="sentiment-positive"
-                  style={{ width: `${barWidths.positive}%` }}
-                />
-                <div
-                  className="sentiment-negative"
-                  style={{ width: `${barWidths.negative}%` }}
-                />
-              </div>
-              <div className="sentiment-counts">
-                <span className="positive-count">+{item.positiveScore ?? 0}</span>
-                <span className="negative-count">−{item.negativeScore ?? 0}</span>
-              </div>
-              {hasReviews && (
-                <div className="polarity-evidence">
-                  <div className="evidence-columns">
-                    <div className="evidence-column positive">
-                      <div className="evidence-label">Positive feedback</div>
-                      <div className="evidence-list">
-                        {(item.positiveReviews ?? []).slice(0, isExpanded ? undefined : 1).map((review, i) => {
-                          const text = typeof review === 'string' ? review : review.atomic_feedback ?? JSON.stringify(review);
-                          return (
-                            <blockquote key={i} className="evidence-quote positive">
-                              {text}
-                            </blockquote>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    <div className="evidence-column negative">
-                      <div className="evidence-label">Negative feedback</div>
-                      <div className="evidence-list">
-                        {(item.negativeReviews ?? []).slice(0, isExpanded ? undefined : 1).map((review, i) => {
-                          const text = typeof review === 'string' ? review : review.atomic_feedback ?? JSON.stringify(review);
-                          return (
-                            <blockquote key={i} className="evidence-quote negative">
-                              {text}
-                            </blockquote>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                  {!isExpanded && ((item.positiveReviews?.length > 1) || (item.negativeReviews?.length > 1)) && (
-                    <button className="view-more-btn" onClick={() => toggleExpand(index)}>
-                      View {((item.positiveReviews?.length ?? 0) - 1) + ((item.negativeReviews?.length ?? 0) - 1)} more reviews
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
+      <div className="polarity-columns">
+        <div className="polarity-column bad">
+          <div className="column-header bad">
+            <span className="column-title">Needs Improvement</span>
+            <span className="column-count">{badTopics.length}</span>
+          </div>
+          <div className="polarity-list">
+            {badTopics.map((item, index) => renderCard(item, index))}
+          </div>
+        </div>
+        <div className="polarity-column good">
+          <div className="column-header good">
+            <span className="column-title">Performing Well</span>
+            <span className="column-count">{goodTopics.length}</span>
+          </div>
+          <div className="polarity-list">
+            {goodTopics.map((item, index) => renderCard(item, index))}
+          </div>
+        </div>
       </div>
     </div>
   );

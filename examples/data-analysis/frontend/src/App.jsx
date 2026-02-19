@@ -8,14 +8,12 @@ import DataSourceSelector from './components/reviews/DataSourceSelector';
 import { mockReviews } from './data/mockData';
 import './styles/App.css';
 
-const PAGE_SIZE = 50;
 
 function App() {
   const [reviews, setReviews] = useState(null);
   const [dataSourceName, setDataSourceName] = useState(null);
   const [sortBy, setSortBy] = useState('most-recent');
   const [error, setError] = useState(null);
-  const [page, setPage] = useState(1);
   const [activeView, setActiveView] = useState('inbox'); // 'inbox' or 'analytics'
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
@@ -67,9 +65,9 @@ function App() {
             console.log('polarity response event received', event);
             setAnalyticsData(prev => ({ ...prev, polarityTopics: data }));
           }
-          if (type === 'departmentResponse') {
+          if (type === 'departmentsResponse') {
             console.log('departments response event received', event);
-            // setAnalyticsData(prev => ({ ...prev, departmentScores: data }));
+            setAnalyticsData(prev => ({ ...prev, departmentScores: data }));
           }
         });
 
@@ -104,26 +102,15 @@ function App() {
     setAnalyticsData(prev => ({ ...prev, isLoading: true }));
 
     try {
-      const payload = { reviews: reviewsToAnalyze };
       const conversationId = conversationRef.current.id;
 
-      // Send all 3 trigger events in parallel
-      await Promise.all([
-        clientRef.current.createEvent({
-          conversationId,
-          payload: { type: 'topicsTrigger', ...payload }
-        }),
-        clientRef.current.createEvent({
-          conversationId,
-          payload: { type: 'polarityTrigger', ...payload }
-        }),
-        clientRef.current.createEvent({
-          conversationId,
-          payload: { type: 'departmentTrigger', ...payload }
-        })
-      ]);
+      // Send single combined trigger event
+      await clientRef.current.createEvent({
+        conversationId,
+        payload: { type: 'fullAnalysisTrigger', reviews: reviewsToAnalyze }
+      });
 
-      console.log('Full analysis events sent');
+      console.log('Full analysis event sent');
     } catch (err) {
       console.error('Failed to trigger full analysis:', err);
       setAnalyticsData(prev => ({ ...prev, isLoading: false }));
@@ -140,6 +127,7 @@ function App() {
     await waitForClient();
 
     console.log('Triggering department analysis with departments:', departments);
+    setAnalyticsData(prev => ({ ...prev, departmentScores: null, isLoading: true }));
 
     try {
       const conversationId = conversationRef.current.id;
@@ -156,6 +144,7 @@ function App() {
       console.log('Department analysis event sent');
     } catch (err) {
       console.error('Failed to trigger department analysis:', err);
+      setAnalyticsData(prev => ({ ...prev, isLoading: false }));
     }
   }, [reviews, waitForClient]);
 
@@ -189,29 +178,12 @@ function App() {
     }
   }, [reviews, sortBy]);
 
-  const totalPages = Math.ceil((reviews?.length || 0) / PAGE_SIZE);
-
-  const paginatedReviews = useMemo(() => {
-    const start = (page - 1) * PAGE_SIZE;
-    return sortedReviews.slice(start, start + PAGE_SIZE);
-  }, [sortedReviews, page]);
-
-  const stats = useMemo(() => {
-    if (!reviews) return { displayedRange: '0', totalReviews: 0 };
-    const start = (page - 1) * PAGE_SIZE + 1;
-    const end = Math.min(page * PAGE_SIZE, reviews.length);
-    return {
-      displayedRange: `${start}-${end}`,
-      totalReviews: reviews.length
-    };
-  }, [reviews, page]);
 
   const handleDataLoaded = (loadedReviews, fileName) => {
     setReviews(loadedReviews);
     setDataSourceName(fileName);
     setError(null);
-    setPage(1);
-    // Trigger full analysis in background
+        // Trigger full analysis in background
     triggerFullAnalysis(loadedReviews);
   };
 
@@ -220,8 +192,7 @@ function App() {
     setReviews(mockData);
     setDataSourceName('Demo Reviews');
     setError(null);
-    setPage(1);
-    // Trigger full analysis in background
+        // Trigger full analysis in background
     triggerFullAnalysis(mockData);
   };
 
@@ -230,8 +201,7 @@ function App() {
     setDataSourceName(null);
     setSortBy('most-recent');
     setError(null);
-    setPage(1);
-    // Reset analytics data
+        // Reset analytics data
     setAnalyticsData({
       topics: null,
       polarityTopics: null,
@@ -242,8 +212,7 @@ function App() {
 
   const handleSortChange = (newSort) => {
     setSortBy(newSort);
-    setPage(1);
-  };
+      };
 
   const renderContent = () => {
     if (activeView === 'analytics') {
@@ -269,13 +238,7 @@ function App() {
     }
 
     return (
-      <ReviewList
-        reviews={paginatedReviews}
-        stats={stats}
-        page={page}
-        totalPages={totalPages}
-        onPageChange={setPage}
-      />
+      <ReviewList reviews={sortedReviews} />
     );
   };
 

@@ -9,7 +9,9 @@ export default defineConfig({
   },
 
   user: {
-    state: z.object({}),
+    state: z.object({
+      atomicReviews: z.array(z.string()).default([])
+    }),
   },
 
   dependencies: {

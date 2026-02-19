@@ -131,12 +131,11 @@ button {
   color: var(--bg-primary);
   font-size: 12px;
   white-space: nowrap;
-  opacity: 0;
+  visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.15s ease;
   z-index: 100;
 }
 
 .disabled-tooltip:hover::after {
-  opacity: 1;
+  visibility: visible;
 }

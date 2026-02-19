@@ -169,9 +169,10 @@ await actions.chat.sendEvent({
       {
         department: "Front Desk",
         score: 3.2,
-        reviewCount: 156,
-        trend: "down",
-        topIssue: "Long wait times"
+        reviews: [
+          "Check-in took forever",
+          "Staff was friendly"
+        ]
       }
     ]
   }
@@ -187,9 +188,7 @@ await actions.chat.sendEvent({
   {
     department: string,  // Department name
     score: number,       // Score out of 5
-    reviewCount: number, // Reviews for this dept
-    trend: string,       // "up" | "down" | "stable"
-    topIssue: string     // Main complaint
+    reviews: string[]    // Relevant reviews (count = reviews.length)
   }
 ]
 ```
@@ -197,3 +196,44 @@ await actions.chat.sendEvent({
 </td>
 </tr>
 </table>
+
+---
+
+## Hotel Theme Implementation Details
+
+The bot uses hotel-specific initial groups and instructions. To adapt for other domains, modify these:
+
+### Polarity Groupings
+```javascript
+initialGroups: [
+  { id: "cleanliness", label: "Cleanliness" },
+  { id: "location", label: "Location" },
+  { id: "staff", label: "Staff & Service" },
+  { id: "food", label: "Food & Dining" },
+  { id: "amenities", label: "Amenities (Pool, Gym, Spa)" },
+  { id: "value", label: "Value for Money" },
+  { id: "noise", label: "Noise & Quietness" },
+  { id: "checkin", label: "Check-in & Check-out" },
+  { id: "room", label: "Room Comfort & Size" }
+]
+```
+
+### Department Groupings
+```javascript
+initialGroups: [
+  { id: "frontdesk", label: "Front Desk" },
+  { id: "housekeeping", label: "Housekeeping" },
+  { id: "restaurant", label: "Restaurant" },
+  { id: "events", label: "Events" },
+  { id: "maintenance", label: "Maintenance and Facilities" },
+  { id: "recreation", label: "Recreation" },
+  { id: "parking", label: "Parking" }
+]
+```
+
+### Grouping Instructions
+| Trigger | Instruction |
+|---------|-------------|
+| Topics | `"Group by type of customer issues"` |
+| Polarity | `"Group by hotel aspect. Assign each review to the most relevant group."` |
+| Departments | `"Group reviews by the department responsible for handling the issue or feedback mentioned"` |

@@ -47,14 +47,19 @@
   transition: border-color 0.15s ease;
 }
 
+.department-card.clickable {
+  cursor: pointer;
+}
+
 .department-card:hover {
   border-color: var(--text-muted);
 }
 
+.department-card.expanded {
+  border-color: var(--highlight);
+}
+
 .department-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 12px;
 }
 
@@ -65,22 +70,6 @@
   margin: 0;
 }
 
-.trend-indicator {
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.trend-up {
-  color: #3d8c5c;
-}
-
-.trend-down {
-  color: #722F37;
-}
-
-.trend-stable {
-  color: var(--text-muted);
-}
 
 .department-score-container {
   display: flex;
@@ -124,23 +113,37 @@
   letter-spacing: 0.02em;
 }
 
-.department-issue {
+.department-evidence {
+  margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid var(--border-color);
 }
 
-.issue-label {
-  font-size: 11px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--text-muted);
-  margin-right: 6px;
+.departments-section .evidence-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.issue-text {
+.departments-section .evidence-quote {
+  padding: 12px;
+  margin: 0;
+  background: var(--bg-tertiary);
+  border-left: 3px solid var(--highlight);
   font-size: 13px;
-  color: var(--text-tertiary);
+  font-style: italic;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.departments-section .expand-hint {
+  margin-top: 12px;
+  padding: 8px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--highlight);
+  text-align: center;
+  border-top: 1px dashed var(--border-color);
 }
 
 /* Loading State */
@@ -175,21 +178,5 @@
 .departments-section .loading-text {
   font-size: 14px;
   color: var(--text-tertiary);
-  margin: 0 0 24px 0;
-}
-
-.departments-section .simulate-btn {
-  padding: 8px 16px;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-muted);
-  background: none;
-  border: 1px solid var(--border-color);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.departments-section .simulate-btn:hover {
-  color: var(--text-secondary);
-  border-color: var(--text-muted);
+  margin: 0;
 }

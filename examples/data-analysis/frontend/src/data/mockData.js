@@ -1,5 +1,11 @@
 export const mockReviews = [
   {
+    "rating": 5,
+    "content": "Absolutely phenomenal stay! The attention to detail here is unmatched. From the moment I walked in, the staff greeted me by name and escorted me to my room. The bed was incredibly comfortable, the view was stunning, and the complimentary breakfast exceeded all expectations. The rooftop bar became my favorite spot in the city. Already planning my next visit!",
+    "date": "Jan 9, 2024",
+    "guestName": "Jimmy Xu"
+  },
+  {
     "rating": 4,
     "content": "The facility as well as the staff were way above our expectations. The location of this hotel is strategically located at the center of places you can visit, and if not, public transportation was a few steps away. The only downside: We wanted to visit the pool with our kids, but we were not allowed to as kids aren't welcome there - which was a bummer.",
     "date": "Jan 8, 2024",
@@ -358,11 +364,238 @@ export const mockReviews = [
     "content": "Stayed for 2 weeks on a work assignment. Staff made me feel like family. Even remembered my coffee order!",
     "date": "Dec 19, 2023",
     "guestName": "Benjamin"
+  },
+  {
+    "rating": 1,
+    "content": "Worst hotel experience ever. Cockroaches in the bathroom, stained sheets, and a broken window that wouldn't close. Management didn't care at all.",
+    "date": "Dec 18, 2023",
+    "guestName": "Angela"
+  },
+  {
+    "rating": 5,
+    "content": "Exceeded every expectation! The suite was enormous, the bed was like sleeping on a cloud, and the butler service was impeccable.",
+    "date": "Dec 18, 2023",
+    "guestName": "Jonathan"
+  },
+  {
+    "rating": 2,
+    "content": "Booked a king bed, got two twins pushed together. Gap in the middle made sleeping uncomfortable. Front desk said no other rooms available.",
+    "date": "Dec 18, 2023",
+    "guestName": "Wendy"
+  },
+  {
+    "rating": 4,
+    "content": "Great hotel for families. Kids loved the game room and the pool had a fun slide. Parents could relax knowing kids were entertained.",
+    "date": "Dec 17, 2023",
+    "guestName": "The Andersons"
+  },
+  {
+    "rating": 3,
+    "content": "Middle of the road experience. Some things were great (location, bed), others not so much (slow service, dated decor).",
+    "date": "Dec 17, 2023",
+    "guestName": "Howard"
+  },
+  {
+    "rating": 1,
+    "content": "Do NOT stay here! Got food poisoning from the restaurant, spent two days sick in the room. Hotel refused any compensation.",
+    "date": "Dec 17, 2023",
+    "guestName": "Tina"
+  },
+  {
+    "rating": 5,
+    "content": "The executive lounge is worth the upgrade alone. Free drinks, snacks, and the most helpful concierge I've ever encountered.",
+    "date": "Dec 16, 2023",
+    "guestName": "Edward"
+  },
+  {
+    "rating": 2,
+    "content": "Room smelled like smoke despite booking non-smoking. Housekeeping tried to fix it but the smell never fully went away.",
+    "date": "Dec 16, 2023",
+    "guestName": "Brenda"
+  },
+  {
+    "rating": 4,
+    "content": "Solid business hotel. Good desk space, reliable WiFi, quiet rooms. Conference facilities were top-notch for our meeting.",
+    "date": "Dec 16, 2023",
+    "guestName": "TechStart Inc."
+  },
+  {
+    "rating": 3,
+    "content": "It's fine. Nothing wrong, nothing exceptional. Got what I paid for, nothing more, nothing less.",
+    "date": "Dec 15, 2023",
+    "guestName": "Charles"
+  },
+  {
+    "rating": 5,
+    "content": "My go-to hotel in this city. Consistently excellent service, always clean, and the loyalty program perks are fantastic.",
+    "date": "Dec 15, 2023",
+    "guestName": "Rebecca"
+  },
+  {
+    "rating": 1,
+    "content": "Fire alarm went off at 3 AM - false alarm. Then again at 5 AM. No apology, no compensation. Ruined our vacation.",
+    "date": "Dec 15, 2023",
+    "guestName": "Gary"
+  },
+  {
+    "rating": 4,
+    "content": "Beautiful art deco building with modern amenities. The lobby bar makes excellent martinis. Room was comfortable and stylish.",
+    "date": "Dec 14, 2023",
+    "guestName": "Vivian"
+  },
+  {
+    "rating": 2,
+    "content": "Overpriced for what you get. $400/night for a room this small with these amenities? There are better options nearby.",
+    "date": "Dec 14, 2023",
+    "guestName": "Donald"
+  },
+  {
+    "rating": 5,
+    "content": "The turndown service with chocolates and weather forecast for the next day was such a nice touch. Little details matter!",
+    "date": "Dec 14, 2023",
+    "guestName": "Irene"
+  },
+  {
+    "rating": 3,
+    "content": "Location is great, but the room faced a construction site. Jackhammers at 7 AM every morning. Should have been disclosed.",
+    "date": "Dec 13, 2023",
+    "guestName": "Philip"
+  },
+  {
+    "rating": 4,
+    "content": "Celebrated my 50th birthday here. Staff decorated the room and the chef made a custom cake. Very thoughtful!",
+    "date": "Dec 13, 2023",
+    "guestName": "Deborah"
+  },
+  {
+    "rating": 1,
+    "content": "Credit card was charged twice and took 3 weeks to get refund. Endless phone calls and emails. Terrible customer service.",
+    "date": "Dec 13, 2023",
+    "guestName": "Terry"
+  },
+  {
+    "rating": 5,
+    "content": "The in-room espresso machine was a game changer. Fresh coffee without leaving the room. Bed linens were hotel-ad worthy.",
+    "date": "Dec 12, 2023",
+    "guestName": "Cynthia"
+  },
+  {
+    "rating": 2,
+    "content": "Asked for extra towels three times. Never came. Had to go down to the front desk myself to get them. Frustrating.",
+    "date": "Dec 12, 2023",
+    "guestName": "Russell"
+  },
+  {
+    "rating": 4,
+    "content": "Perfect for our girls' weekend! The spa had great group packages and the rooftop pool was Instagram-perfect.",
+    "date": "Dec 12, 2023",
+    "guestName": "Jessica & Friends"
+  },
+  {
+    "rating": 3,
+    "content": "Decent stay. Breakfast was good, room was clean, but nothing made me say 'wow'. Just a standard hotel experience.",
+    "date": "Dec 11, 2023",
+    "guestName": "Martin"
+  },
+  {
+    "rating": 5,
+    "content": "Had a medical emergency and the staff called an ambulance, came to the hospital, and held our room. Above and beyond!",
+    "date": "Dec 11, 2023",
+    "guestName": "Harold & Betty"
+  },
+  {
+    "rating": 1,
+    "content": "Bed bugs. Actual bed bugs. Woke up with bites all over my arms. Hotel tried to deny it until I showed photos. Disgusting.",
+    "date": "Dec 11, 2023",
+    "guestName": "Shirley"
+  },
+  {
+    "rating": 4,
+    "content": "The bathtub was huge - perfect for a long soak after sightseeing. Bathroom amenities were high-end brands. Nice touch.",
+    "date": "Dec 10, 2023",
+    "guestName": "Eugene"
+  },
+  {
+    "rating": 2,
+    "content": "Room service took 90 minutes for a simple club sandwich. Food was cold when it arrived. Never again.",
+    "date": "Dec 10, 2023",
+    "guestName": "Gloria"
+  },
+  {
+    "rating": 5,
+    "content": "As a wheelchair user, I appreciated the truly accessible room. Wide doorways, roll-in shower, lowered closet rod. Well designed!",
+    "date": "Dec 10, 2023",
+    "guestName": "Raymond"
+  },
+  {
+    "rating": 3,
+    "content": "The gym was tiny - only 2 treadmills and some free weights. For a hotel this size, I expected more fitness options.",
+    "date": "Dec 9, 2023",
+    "guestName": "Louise"
+  },
+  {
+    "rating": 4,
+    "content": "Loved the pillow menu - chose memory foam and slept amazingly. Blackout curtains were effective. Great for light sleepers.",
+    "date": "Dec 9, 2023",
+    "guestName": "Arthur"
+  },
+  {
+    "rating": 1,
+    "content": "Neighboring room had a party until 4 AM. Called front desk multiple times but nothing was done. Zero sleep, zero stars.",
+    "date": "Dec 9, 2023",
+    "guestName": "Marie"
+  },
+  {
+    "rating": 5,
+    "content": "The sunset views from our balcony were breathtaking. Worth every penny for the ocean view upgrade. Magical evenings!",
+    "date": "Dec 8, 2023",
+    "guestName": "Walter"
+  },
+  {
+    "rating": 2,
+    "content": "Elevator was broken for 2 of my 3 nights. My room was on the 12th floor. The stairs got old real fast.",
+    "date": "Dec 8, 2023",
+    "guestName": "Frances"
+  },
+  {
+    "rating": 4,
+    "content": "The afternoon tea service was delightful. Beautiful presentation, delicious scones, and the server was knowledgeable about teas.",
+    "date": "Dec 8, 2023",
+    "guestName": "Dorothy"
+  },
+  {
+    "rating": 3,
+    "content": "Good hotel but the neighborhood felt sketchy at night. Wouldn't walk around alone after dark. Hotel itself was fine though.",
+    "date": "Dec 7, 2023",
+    "guestName": "Vincent"
+  },
+  {
+    "rating": 5,
+    "content": "They upgraded us to a suite for our anniversary without us even asking! Champagne was waiting. Customer for life now.",
+    "date": "Dec 7, 2023",
+    "guestName": "Kenneth & Rose"
+  },
+  {
+    "rating": 1,
+    "content": "Hot water stopped working at 6 AM when I needed to shower for a meeting. Maintenance said they'd fix it 'eventually'. Useless.",
+    "date": "Dec 7, 2023",
+    "guestName": "Patrick"
+  },
+  {
+    "rating": 4,
+    "content": "The soundproofing between rooms is excellent. Didn't hear a peep from neighbors. Finally, a hotel that understands quiet!",
+    "date": "Dec 6, 2023",
+    "guestName": "Judith"
+  },
+  {
+    "rating": 3,
+    "content": "Breakfast buffet was okay but ran out of popular items by 9 AM. If you sleep in, you get slim pickings.",
+    "date": "Dec 6, 2023",
+    "guestName": "Ralph"
   }
 ];
 
 export const stats = {
   "responseRate": 47,
-  "totalReviews": 60,
-  "displayedRange": "1-60"
+  "totalReviews": 100
 };

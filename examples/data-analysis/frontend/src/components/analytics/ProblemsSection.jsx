@@ -127,27 +127,23 @@ function ProblemsSection({ topics, isLoading }) {
           const mentionCount = getMentionCount(item);
 
           return (
-            <div key={index} className={`problem-card ${isExpanded ? 'expanded' : ''}`}>
+            <div
+              key={index}
+              className={`problem-card ${isExpanded ? 'expanded' : ''} ${hasReviews ? 'clickable' : ''}`}
+              onClick={() => hasReviews && toggleExpand(index)}
+            >
               <div className="problem-rank">#{index + 1}</div>
               <div className="problem-main">
-                <div
-                  className={`problem-header ${hasReviews ? 'clickable' : ''}`}
-                  onClick={() => hasReviews && toggleExpand(index)}
-                >
+                <div className="problem-header">
                   <h3 className="problem-title">{item.topic}</h3>
                   <div className="problem-meta">
                     <span className="mention-count">{mentionCount} mentions</span>
-                    {hasReviews && (
-                      <span className="expand-icon">{isExpanded ? '−' : '+'}</span>
-                    )}
                   </div>
                 </div>
                 {hasReviews && (
                   <div className="problem-evidence">
-                    <div className="evidence-label">Evidence from reviews</div>
                     <div className="evidence-list">
                       {item.reviews.slice(0, isExpanded ? undefined : 1).map((review, reviewIndex) => {
-                        // Handle both string reviews and {atomic_feedback: string} objects
                         const reviewText = typeof review === 'string'
                           ? review
                           : review.atomic_feedback ?? JSON.stringify(review);
@@ -159,9 +155,9 @@ function ProblemsSection({ topics, isLoading }) {
                       })}
                     </div>
                     {!isExpanded && item.reviews.length > 1 && (
-                      <button className="view-more-btn" onClick={() => toggleExpand(index)}>
-                        View {item.reviews.length - 1} more reviews
-                      </button>
+                      <div className="expand-hint">
+                        +{item.reviews.length - 1} more reviews
+                      </div>
                     )}
                   </div>
                 )}

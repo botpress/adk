@@ -1,23 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import '../../styles/DepartmentsPanel.css';
 
-// Mock AI-generated departments
-const MOCK_AI_DEPARTMENTS = [
-  'Front Desk',
-  'Housekeeping',
-  'Room Service',
-  'Concierge',
-  'Restaurant',
-  'Spa & Wellness'
-];
-
-function DepartmentsPanel({ isLoading, onRegenerateDepartments }) {
+function DepartmentsPanel({ departments, isLoading, onRegenerateDepartments }) {
   const [selectedDepartments, setSelectedDepartments] = useState([]);
   const [inputValue, setInputValue] = useState('');
-  const [simulatedLoading, setSimulatedLoading] = useState(true);
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
-  // Use actual loading state or simulated for demo
-  const showLoading = isLoading || simulatedLoading;
+  // Derive selected departments from incoming data
+  useEffect(() => {
+    if (departments?.length > 0) {
+      const departmentNames = departments.map(d => d.department);
+      setSelectedDepartments(departmentNames);
+      setIsRegenerating(false);
+    }
+  }, [departments]);
+
+  // Show loading only if explicitly loading AND no data yet (initial load)
+  const showLoading = isLoading && !departments;
 
   const handleAddDepartment = () => {
     const trimmed = inputValue.trim();
@@ -38,16 +37,9 @@ function DepartmentsPanel({ isLoading, onRegenerateDepartments }) {
     setSelectedDepartments(selectedDepartments.filter(d => d !== dept));
   };
 
-  const handleSimulateComplete = () => {
-    setSelectedDepartments(MOCK_AI_DEPARTMENTS);
-    setSimulatedLoading(false);
-  };
-
   const handleRegenerate = () => {
-    setSimulatedLoading(true);
+    setIsRegenerating(true);
     onRegenerateDepartments?.(selectedDepartments);
-    // Simulate completion after a delay for demo
-    setTimeout(() => setSimulatedLoading(false), 1500);
   };
 
   return (
@@ -61,12 +53,9 @@ function DepartmentsPanel({ isLoading, onRegenerateDepartments }) {
           <div className="panel-loading">
             <div className="panel-spinner" />
             <span>Detecting...</span>
-            <button className="panel-simulate-btn" onClick={handleSimulateComplete}>
-              Simulate
-            </button>
           </div>
         ) : selectedDepartments.length > 0 ? (
-          <div className="department-boxes">
+          <div className={`department-boxes ${isRegenerating ? 'disabled' : ''}`}>
             {selectedDepartments.map((dept) => (
               <div key={dept} className="department-plate">
                 <span className="plate-screw top-left" />
@@ -74,11 +63,13 @@ function DepartmentsPanel({ isLoading, onRegenerateDepartments }) {
                 <span className="plate-screw bottom-left" />
                 <span className="plate-screw bottom-right" />
                 <span className="plate-text">{dept}</span>
-                <button
-                  className="plate-remove"
-                  onClick={() => handleRemoveDepartment(dept)}
-                  aria-label="Remove department"
-                />
+                {!isRegenerating && (
+                  <button
+                    className="plate-remove"
+                    onClick={() => handleRemoveDepartment(dept)}
+                    aria-label="Remove department"
+                  />
+                )}
               </div>
             ))}
           </div>
@@ -96,17 +87,18 @@ function DepartmentsPanel({ isLoading, onRegenerateDepartments }) {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
+            disabled={isRegenerating}
           />
-          <button className="panel-add-btn" onClick={handleAddDepartment}>
+          <button className="panel-add-btn" onClick={handleAddDepartment} disabled={isRegenerating}>
             Add
           </button>
         </div>
         <button
           className="panel-regenerate-btn"
           onClick={handleRegenerate}
-          disabled={selectedDepartments.length < 2}
+          disabled={selectedDepartments.length < 2 || isRegenerating}
         >
-          {selectedDepartments.length < 2 ? 'Add at least 2 departments' : 'Regenerate Scores'}
+          {isRegenerating ? 'Regenerating...' : selectedDepartments.length < 2 ? 'Add at least 2 departments' : 'Regenerate Scores'}
         </button>
       </div>
     </div>

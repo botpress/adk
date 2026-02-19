@@ -72,6 +72,7 @@ function AnalyticsView({ reviews, analyticsData, onBackToInbox, onRegenerateDepa
             </div>
             {activeSection === 'departments' && (
               <DepartmentsPanel
+                departments={departmentScores}
                 isLoading={isLoading}
                 onRegenerateDepartments={onRegenerateDepartments}
               />
