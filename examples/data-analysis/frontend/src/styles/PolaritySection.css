@@ -227,7 +227,7 @@
   margin-bottom: 4px;
 }
 
-.evidence-list {
+.polarity-section .evidence-list {
   display: flex;
   flex-direction: column;
   gap: 6px;

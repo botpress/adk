@@ -81,6 +81,7 @@
 }
 
 .analytics-btn {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -96,10 +97,50 @@
   transition: background 0.15s ease;
 }
 
+.analytics-btn .notification-dot {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 10px;
+  height: 10px;
+  background: #e53935;
+  border-radius: 50%;
+  border: 2px solid var(--bg-secondary);
+}
+
 .analytics-btn:hover {
   background: var(--accent-hover);
 }
 
 .analytics-btn svg {
   opacity: 0.8;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.botpress-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.botpress-link:hover {
+  border-color: var(--text-muted);
+  color: var(--text-primary);
+}
+
+.botpress-link svg {
+  flex-shrink: 0;
 }

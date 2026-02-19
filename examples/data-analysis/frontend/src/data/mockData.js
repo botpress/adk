@@ -19,7 +19,7 @@ export const mockReviews = [
   },
   {
     "rating": 5,
-    "content": "Cons: Nothing - everything was perfect and exceeded expectations.",
+    "content": "everything was perfect and exceeded expectations.",
     "date": "Jan 8, 2024",
     "guestName": "Michael B."
   },
@@ -31,7 +31,7 @@ export const mockReviews = [
   },
   {
     "rating": 5,
-    "content": "Pros: EverythingCons: The room was fine but there were guests ,",
+    "content": "very nice staff",
     "date": "Jan 8, 2024",
     "guestName": "Jennifer"
   },

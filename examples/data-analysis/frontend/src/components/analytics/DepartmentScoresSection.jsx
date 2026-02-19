@@ -1,69 +1,9 @@
 import { useState } from 'react';
 import '../../styles/DepartmentScoresSection.css';
 
-// Mock data - will be populated by API later
-const MOCK_DEPARTMENT_SCORES = [
-  {
-    department: 'Front Desk',
-    score: 3.2,
-    reviews: [
-      'Stood in line for 40 minutes just to check in. Only one person at the desk.',
-      'Check-in was painfully slow. They need more staff during peak hours.',
-      'Staff was friendly but the wait was too long.',
-      'Asked for a late checkout and they accommodated without any issues.'
-    ]
-  },
-  {
-    department: 'Housekeeping',
-    score: 4.1,
-    reviews: [
-      'Room was spotless when we arrived.',
-      'Housekeeping skipped our room two days in a row.',
-      'Towels were always fresh and bathroom was clean.',
-      'Found hair in the bathtub when I arrived. Clearly not cleaned properly.'
-    ]
-  },
-  {
-    department: 'Room Service',
-    score: 2.8,
-    reviews: [
-      'Waited over an hour for a simple breakfast order. Unacceptable.',
-      'Room service took 45 minutes and the food was barely warm.',
-      'Called three times before anyone answered for room service.'
-    ]
-  },
-  {
-    department: 'Concierge',
-    score: 4.5,
-    reviews: [
-      'Concierge helped us get tickets to a sold-out show. Amazing!',
-      'Great restaurant recommendations from the concierge.',
-      'Asked for restaurant recommendations and got a shrug. Not helpful at all.'
-    ]
-  },
-  {
-    department: 'Restaurant',
-    score: 3.8,
-    reviews: [
-      'Buffet items were lukewarm and looked like they had been sitting out for hours.',
-      'Dinner at the hotel restaurant was excellent.',
-      'Ran out of eggs at 9am. For a $30 buffet, that is unacceptable.'
-    ]
-  },
-  {
-    department: 'Spa & Wellness',
-    score: 4.3,
-    reviews: [
-      'The spa was a highlight of our stay. Very relaxing.',
-      'Could not book a massage because they were fully booked.',
-      'Pool area was clean and well-maintained.'
-    ]
-  }
-];
-
 function DepartmentScoresSection({ departments: departmentsProp, isLoading }) {
   const [expandedIndex, setExpandedIndex] = useState(null);
-  const departments = departmentsProp ?? MOCK_DEPARTMENT_SCORES;
+  const departments = departmentsProp ?? [];
 
   // Show loading only if explicitly loading AND no data yet
   const showLoading = isLoading && !departmentsProp;

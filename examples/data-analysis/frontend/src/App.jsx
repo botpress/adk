@@ -15,6 +15,7 @@ function App() {
   const [sortBy, setSortBy] = useState('most-recent');
   const [error, setError] = useState(null);
   const [activeView, setActiveView] = useState('inbox'); // 'inbox' or 'analytics'
+  const [analyticsSeen, setAnalyticsSeen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
     // Default to dark mode if no preference saved
@@ -24,7 +25,7 @@ function App() {
 
   // Analytics state - prefetched when reviews load
   const [analyticsData, setAnalyticsData] = useState({
-    topics: null,
+    issues: null,
     polarityTopics: null,
     departmentScores: null,
     isLoading: false
@@ -57,9 +58,9 @@ function App() {
         serverStream.on("event_created", (event) => {
           const { type, data } = event.payload || {};
 
-          if (type === 'topicsResponse') {
-            console.log('topics response event received', event);
-            setAnalyticsData(prev => ({ ...prev, topics: data }));
+          if (type === 'issuesResponse') {
+            console.log('issues response event received', event);
+            setAnalyticsData(prev => ({ ...prev, issues: data }));
           }
           if (type === 'polarityResponse') {
             console.log('polarity response event received', event);
@@ -164,15 +165,30 @@ function App() {
     if (!reviews) return [];
     const sorted = [...reviews];
 
+    // Helper: push items with missing field to end
+    const sortWithMissing = (arr, getField, compareFn) => {
+      return arr.sort((a, b) => {
+        const aVal = getField(a);
+        const bVal = getField(b);
+        const aMissing = aVal == null || aVal === '';
+        const bMissing = bVal == null || bVal === '';
+
+        if (aMissing && bMissing) return 0;
+        if (aMissing) return 1;
+        if (bMissing) return -1;
+        return compareFn(aVal, bVal);
+      });
+    };
+
     switch (sortBy) {
       case 'most-recent':
-        return sorted.sort((a, b) => new Date(b.date) - new Date(a.date));
+        return sortWithMissing(sorted, r => r.date, (a, b) => new Date(b) - new Date(a));
       case 'oldest-first':
-        return sorted.sort((a, b) => new Date(a.date) - new Date(b.date));
+        return sortWithMissing(sorted, r => r.date, (a, b) => new Date(a) - new Date(b));
       case 'highest-rated':
-        return sorted.sort((a, b) => b.rating - a.rating);
+        return sortWithMissing(sorted, r => r.rating, (a, b) => b - a);
       case 'lowest-rated':
-        return sorted.sort((a, b) => a.rating - b.rating);
+        return sortWithMissing(sorted, r => r.rating, (a, b) => a - b);
       default:
         return sorted;
     }
@@ -203,7 +219,7 @@ function App() {
     setError(null);
         // Reset analytics data
     setAnalyticsData({
-      topics: null,
+      issues: null,
       polarityTopics: null,
       departmentScores: null,
       isLoading: false
@@ -242,15 +258,30 @@ function App() {
     );
   };
 
+  // Analytics are ready when all three data items are loaded
+  const analyticsReady = !!(analyticsData.issues && analyticsData.polarityTopics && analyticsData.departmentScores);
+
+  // Show notification only if analytics is ready and hasn't been seen yet
+  const showAnalyticsNotification = analyticsReady && !analyticsSeen;
+
+  const handleGoToAnalytics = () => {
+    setActiveView('analytics');
+    setAnalyticsSeen(true);
+  };
+
   return (
     <div className={`app ${darkMode ? 'dark' : ''}`}>
       <Sidebar
         activeView={activeView}
-        onViewChange={setActiveView}
+        onViewChange={(view) => {
+          setActiveView(view);
+          if (view === 'analytics') setAnalyticsSeen(true);
+        }}
         darkMode={darkMode}
         onToggleDarkMode={handleToggleDarkMode}
         disabledButtons={disabledButtons}
         onDisableButton={handleDisableButton}
+        showAnalyticsNotification={showAnalyticsNotification}
       />
       <div className="main-content">
         {activeView !== 'analytics' && (
@@ -260,8 +291,9 @@ function App() {
             dataSourceName={dataSourceName}
             onChangeDataSource={handleChangeDataSource}
             activeView={activeView}
-            onGoToAnalytics={() => setActiveView('analytics')}
+            onGoToAnalytics={handleGoToAnalytics}
             hasReviews={!!reviews}
+            showAnalyticsNotification={showAnalyticsNotification}
           />
         )}
         <div className="content-area">

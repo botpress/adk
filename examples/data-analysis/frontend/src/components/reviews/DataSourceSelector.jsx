@@ -89,14 +89,14 @@ function DataSourceSelector({ onDataLoaded, onUseMockData, error, setError }) {
           </svg>
         </div>
         <p className="empty-title">No reviews loaded</p>
-        <p className="empty-subtitle">Drop a file here, or choose an option below</p>
+        <p className="empty-subtitle">Choose an option below</p>
 
         <div className="empty-actions">
           <button className="empty-btn" onClick={() => fileInputRef.current?.click()}>
             Upload JSON / CSV
           </button>
           <button className="empty-btn primary" onClick={onUseMockData}>
-            See Demo Reviews
+            See Demo
           </button>
         </div>
 
@@ -111,9 +111,9 @@ function DataSourceSelector({ onDataLoaded, onUseMockData, error, setError }) {
         {error && <p className="empty-error">{error}</p>}
 
         <p className="schema-note">
-          Required: <code>content</code> (review text)
+          Required column: <code>content</code>
           <br />
-          Optional: <code>rating</code> (1-5), <code>date</code>, <code>guestName</code>
+          Optional columns: <code>rating</code> (1-5), <code>date</code>, <code>guestName</code>
         </p>
       </div>
     </div>

@@ -45,7 +45,7 @@ function DepartmentsPanel({ departments, isLoading, onRegenerateDepartments }) {
   return (
     <div className="departments-panel">
       <div className="panel-header">
-        <span className="panel-title">Departments</span>
+        <span className="panel-title">Manage Departments</span>
       </div>
 
       <div className="panel-content">

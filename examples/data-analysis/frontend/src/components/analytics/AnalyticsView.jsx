@@ -6,15 +6,20 @@ import DepartmentScoresSection from './DepartmentScoresSection';
 import DepartmentsPanel from './DepartmentsPanel';
 
 function AnalyticsView({ reviews, analyticsData, onBackToInbox, onRegenerateDepartments }) {
-  const [activeSection, setActiveSection] = useState('problems');
+  const [activeSection, setActiveSection] = useState('issues');
 
-  const { topics, polarityTopics, departmentScores, isLoading } = analyticsData;
+  const { issues, polarityTopics, departmentScores, isLoading } = analyticsData;
 
   const sectionCounts = {
-    topics: topics?.length ?? '–',
+    issues: issues?.length ?? '–',
     balance: polarityTopics?.length ?? '–',
     departments: departmentScores?.length ?? '–'
   };
+
+  // Calculate total atomic topics from polarity data
+  const atomicTopicsCount = polarityTopics?.reduce((total, topic) => {
+    return total + (topic.positiveReviews?.length ?? 0) + (topic.negativeReviews?.length ?? 0);
+  }, 0) ?? 0;
 
   const hasReviews = reviews && reviews.length > 0;
 
@@ -23,7 +28,9 @@ function AnalyticsView({ reviews, analyticsData, onBackToInbox, onRegenerateDepa
       <div className="analytics-header">
         <div className="analytics-header-left">
           <h1 className="analytics-title">Analytics</h1>
-          <p className="analytics-subtitle">AI-powered insights from {reviews?.length || 0} reviews</p>
+          <p className="analytics-subtitle">
+            AI business analytics from {reviews?.length || 0} reviews split into {atomicTopicsCount || '–'} atomic topics
+          </p>
         </div>
         <div className="analytics-header-right">
           <button className="back-btn" onClick={onBackToInbox}>
@@ -34,11 +41,11 @@ function AnalyticsView({ reviews, analyticsData, onBackToInbox, onRegenerateDepa
 
       <div className="analytics-nav">
         <button
-          className={`nav-tab ${activeSection === 'problems' ? 'active' : ''}`}
-          onClick={() => setActiveSection('problems')}
+          className={`nav-tab ${activeSection === 'issues' ? 'active' : ''}`}
+          onClick={() => setActiveSection('issues')}
         >
-          Problems
-          <span className="nav-tab-count">{sectionCounts.topics}</span>
+          Issues
+          <span className="nav-tab-count">{sectionCounts.issues}</span>
         </button>
         <button
           className={`nav-tab ${activeSection === 'balance' ? 'active' : ''}`}
@@ -60,8 +67,8 @@ function AnalyticsView({ reviews, analyticsData, onBackToInbox, onRegenerateDepa
         {hasReviews ? (
           <>
             <div className="analytics-content">
-              {activeSection === 'problems' && (
-                <ProblemsSection topics={topics} isLoading={isLoading} />
+              {activeSection === 'issues' && (
+                <ProblemsSection issues={issues} isLoading={isLoading} />
               )}
               {activeSection === 'balance' && (
                 <PolaritySection topics={polarityTopics} isLoading={isLoading} />

@@ -55,6 +55,7 @@
 }
 
 .nav-item {
+  position: relative;
   width: 40px;
   height: 40px;
   border: none;
@@ -67,6 +68,17 @@
   transition: color 0.15s ease, background 0.15s ease;
 }
 
+.nav-item .notification-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  background: #e53935;
+  border-radius: 50%;
+  border: 2px solid var(--sidebar-bg);
+}
+
 .nav-item:hover:not(:disabled) {
   color: var(--text-primary);
 }
@@ -77,8 +89,11 @@
 }
 
 .nav-item.disabled {
-  opacity: 0.3;
   cursor: not-allowed;
+}
+
+.nav-item.disabled svg {
+  opacity: 0.3;
 }
 
 .sidebar-bottom {

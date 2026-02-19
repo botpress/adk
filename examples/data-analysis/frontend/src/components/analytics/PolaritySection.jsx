@@ -1,77 +1,11 @@
 import { useState } from 'react';
 import '../../styles/PolaritySection.css';
 
-// Mock data - will be populated by API later
-const MOCK_POLARITY_TOPICS = [
-  {
-    topic: 'Modern minimalist decor',
-    positiveScore: 34,
-    negativeScore: 29,
-    polarityScore: 0.54,
-    positiveReviews: [
-      'Loved the clean, modern aesthetic',
-      'The minimalist design was refreshing',
-      'Room decor was stylish and contemporary'
-    ],
-    negativeReviews: [
-      'Room felt cold and sterile',
-      'Too minimalist, lacked warmth',
-      'Decor felt impersonal'
-    ]
-  },
-  {
-    topic: 'Rooftop bar atmosphere',
-    positiveScore: 52,
-    negativeScore: 41,
-    polarityScore: 0.56,
-    positiveReviews: [
-      'Amazing views and vibe',
-      'Perfect spot for sunset drinks',
-      'Great ambiance at the rooftop'
-    ],
-    negativeReviews: [
-      'Way too crowded and loud',
-      'Hard to get a table',
-      'Music was too loud to have a conversation'
-    ]
-  },
-  {
-    topic: 'Breakfast buffet variety',
-    positiveScore: 28,
-    negativeScore: 31,
-    polarityScore: 0.47,
-    positiveReviews: [
-      'Great selection of local dishes',
-      'Loved the variety of options'
-    ],
-    negativeReviews: [
-      'Not enough healthy options',
-      'Limited vegetarian choices',
-      'Same items every day'
-    ]
-  },
-  {
-    topic: 'Location near nightlife',
-    positiveScore: 45,
-    negativeScore: 22,
-    polarityScore: 0.67,
-    positiveReviews: [
-      'Perfect for going out',
-      'Walking distance to great bars'
-    ],
-    negativeReviews: [
-      'Too noisy at night for families',
-      'Street noise was disruptive'
-    ]
-  }
-];
-
 function PolaritySection({ topics, isLoading }) {
   const [expandedKey, setExpandedKey] = useState(null);
   const [sortByMostBalanced, setSortByMostBalanced] = useState(false);
 
-  // Use mock data only if no real data provided
-  const rawTopics = topics ?? MOCK_POLARITY_TOPICS;
+  const rawTopics = topics ?? [];
 
   // Sort by distance from 50%
   const sortByBalance = (a, b) => {
@@ -189,8 +123,11 @@ function PolaritySection({ topics, isLoading }) {
   return (
     <div className="polarity-section">
       <div className="section-header">
-        <h2 className="section-title">Sentiment by Aspect</h2>
-        <p className="section-description">Topics grouped by overall sentiment — identify strengths and areas for improvement</p>
+        <h2 className="section-title">Sentiment Polarity</h2>
+        <p className="section-description">
+          Unbalanced topics have clear consensus — act on these with confidence.
+          Balanced topics have divided opinions — these are harder to address as guests disagree.
+        </p>
       </div>
       <button className="sort-indicator" onClick={() => setSortByMostBalanced(!sortByMostBalanced)}>
         <span className="sort-label">Sorted by</span>
@@ -200,7 +137,7 @@ function PolaritySection({ topics, isLoading }) {
       <div className="polarity-columns">
         <div className="polarity-column bad">
           <div className="column-header bad">
-            <span className="column-title">Needs Improvement</span>
+            <span className="column-title">Mostly Negative</span>
             <span className="column-count">{badTopics.length}</span>
           </div>
           <div className="polarity-list">
@@ -209,7 +146,7 @@ function PolaritySection({ topics, isLoading }) {
         </div>
         <div className="polarity-column good">
           <div className="column-header good">
-            <span className="column-title">Performing Well</span>
+            <span className="column-title">Mostly Positive</span>
             <span className="column-count">{goodTopics.length}</span>
           </div>
           <div className="polarity-list">

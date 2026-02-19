@@ -1,5 +1,10 @@
 import { Trigger, context, actions, adk, z } from "@botpress/runtime";
 
+// Get formatted timestamp for logging
+function timestamp() {
+  return new Date().toISOString()
+}
+
 // a review might mention many topics, some good, some bad, so we split them with zai.extract()
 async function extractAtomicTopics(reviewsContent: string[]): Promise<string[]> {
   const atomicTopics = await Promise.all(
@@ -10,42 +15,49 @@ async function extractAtomicTopics(reviewsContent: string[]): Promise<string[]> 
   return atomicTopics.flatMap(topic => topic.map(entry => entry.atomic_feedback))
 }
 
-// Business critical analysis: only consider bad topics, group them by similarity, sort by harm to business
-async function analyzeTopics(atomicTopicList: string[], conversationId: string) {
-  const badAtomicTopics = await adk.zai.filter(atomicTopicList, "is a customer issue for a hotel")
+// Business critical analysis: only consider bad feedback, group them by similarity, sort by harm to business
+async function analyzeIssues(atomicTopicList: string[], conversationId: string) {
+  const logger = context.get("logger")
+  logger.info(`[${timestamp()}] analyzeIssues START`)
+
+  const badFeedback = await adk.zai.filter(atomicTopicList, "is a customer issue for a hotel")
 
   // group by customer issues
-  const groupedTopics = await adk.zai.group(badAtomicTopics, {
+  const groupedIssues = await adk.zai.group(badFeedback, {
     instructions: "Group by type of customer issues"
   })
 
   // stringify groups so that we can sort them
-  const stringifiedTopics = Object.entries(groupedTopics).map(([specificTopic, reviews]) => {
+  const stringifiedIssues = Object.entries(groupedIssues).map(([issue, reviews]) => {
     return JSON.stringify({
-      topic: specificTopic,
+      topic: issue,
       related_reviews: reviews,
       number_of_mentions: reviews.length
     })
   })
 
   // sort the groups by business harm
-  const sortedTopics = await adk.zai.sort(stringifiedTopics, "Sort these reviews by how much they hurt the business")
+  const sortedIssues = await adk.zai.sort(stringifiedIssues, "Sort these reviews by how much they hurt the business")
 
-  // revert the sringification and structure the results into what the client wants
-  const parsedSortedTopics = sortedTopics.map(topic => {
-    const json = JSON.parse(topic);
+  // revert the stringification and structure the results into what the client wants
+  const parsedSortedIssues = sortedIssues.map(issue => {
+    const json = JSON.parse(issue);
     return { topic: json["topic"], reviews: json['related_reviews'] }
   })
 
   // send event with results to client
   await actions.chat.sendEvent({
     conversationId,
-    payload: { type: "topicsResponse", data: parsedSortedTopics }
+    payload: { type: "issuesResponse", data: parsedSortedIssues }
   })
+
+  logger.info(`[${timestamp()}] analyzeIssues END`)
 }
 
 // Polarity analysis: split similar topics into groups, further split each group into subgroups for good and bad, zai.rate the reviews and sum the scores
 async function analyzePolarity(atomicTopicList: string[], conversationId: string) {
+  const logger = context.get("logger")
+  logger.info(`[${timestamp()}] analyzePolarity START`)
 
   // initialGroups to set the tone for the size of each group so that we dont have a lot of groups with 1 or 2 reviews
   const groupedTopics = await adk.zai.group(atomicTopicList, {
@@ -99,10 +111,15 @@ async function analyzePolarity(atomicTopicList: string[], conversationId: string
     conversationId,
     payload: { type: "polarityResponse", data: structuredGroups }
   })
+
+  logger.info(`[${timestamp()}] analyzePolarity END`)
 }
 
-// Department analysis: split reviews into department groups, user can provide their own departments, 
+// Department analysis: split reviews into department groups, user can provide their own departments,
 async function analyzeDepartments(atomicTopicList: string[], conversationId: string, customDepartments?: string[]) {
+  const logger = context.get("logger")
+  logger.info(`[${timestamp()}] analyzeDepartments START`)
+
   const defaultDepartments = [
     { id: "frontdesk", label: "Front Desk" },
     { id: "housekeeping", label: "Housekeeping" },
@@ -136,6 +153,8 @@ async function analyzeDepartments(atomicTopicList: string[], conversationId: str
     conversationId,
     payload: { type: "departmentsResponse", data: departmentScores }
   })
+
+  logger.info(`[${timestamp()}] analyzeDepartments END`)
 }
 
 // Single trigger handling all analysis events
@@ -155,25 +174,31 @@ export const AnalysisTrigger = new Trigger({
       const reviews = payload["reviews"] as {content: string}[]
       const reviewsContent = reviews.map(r => r.content)
 
-      logger.info(`Running full analysis for ${reviewsContent.length} reviews`)
+      logger.info(`[${timestamp()}] Running full analysis for ${reviewsContent.length} reviews`)
 
       const atomicTopicList = await extractAtomicTopics(reviewsContent)
+      logger.info(`[${timestamp()}] extractAtomicTopics complete (${atomicTopicList.length} atomic topics)`)
 
       await Promise.all([
-        analyzeTopics(atomicTopicList, conversation.id),
+        analyzeIssues(atomicTopicList, conversation.id),
         analyzePolarity(atomicTopicList, conversation.id),
         analyzeDepartments(atomicTopicList, conversation.id)
       ])
+
+      logger.info(`[${timestamp()}] Full analysis complete`)
     } else if (eventType === "departmentTrigger") {
       // Department-only analysis (manual regeneration with custom departments)
       const reviews = payload["reviews"] as {content: string}[]
       const reviewsContent = reviews.map(r => r.content)
       const departments = payload["departments"] as string[] | undefined
 
-      logger.info(`Running department analysis for ${reviewsContent.length} reviews with custom departments: ${departments?.join(', ') ?? 'default'}`)
+      logger.info(`[${timestamp()}] Running department analysis for ${reviewsContent.length} reviews with custom departments: ${departments?.join(', ') ?? 'default'}`)
 
       const atomicTopicList = await extractAtomicTopics(reviewsContent)
+      logger.info(`[${timestamp()}] extractAtomicTopics complete`)
+
       await analyzeDepartments(atomicTopicList, conversation.id, departments)
+      logger.info(`[${timestamp()}] Department analysis complete`)
     }
   },
 })
