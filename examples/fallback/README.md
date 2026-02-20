@@ -21,7 +21,7 @@ Each incoming message runs through an ordered **strategy chain** defined in `src
 
 The LLM receives all four strategy tools at once via `execute()` and is instructed to call them in order: succeed and stop, or fail and move to the next. This means the fallback logic lives entirely in the prompt and strategy config — no conditional branching in handler code.
 
-The four strategies in order:
+The four strategies in order (it can be reorderred in the config file):
 
 1. **mainAPI** — calls `fetchFlightById` against the primary REST API
 2. **backupAPI** — calls `fetchBackupFlight` against a secondary REST API
@@ -133,7 +133,7 @@ async function flightHandler({ conversation, execute, message, state }: any) {
 ```
 
 ### Background Cache Refresh (`src/workflows/updateFlightPrices.ts`)
-
+#### Note: For testing purposes, only first 10 Flights are cached into botpress table
 A scheduled workflow keeps the cache table populated so strategy 3 always has data:
 
 ```typescript
@@ -165,6 +165,7 @@ export default new Workflow({
 Try these prompts to see the fallback chain in action:
 
 - `FL001` — found immediately in the main API, chain stops at strategy 1
+- If we disable 2 API, `FL001` - `FL010` will still be accessible from cache, `FL010` - `FL100` will trigger strategy 4.
 - `FL999` — not found in main or backup API, not in cache, falls through to strategy 4 and asks for airport codes
 - `CDG to AUS` — after strategy 4 is reached, providing IATA codes triggers a SERP web search
 - Any flight ID while the main API is down — automatically falls back through backup API and cache without any code changes
