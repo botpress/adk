@@ -1,8 +1,8 @@
-import { Workflow } from "@botpress/runtime";
+import { Workflow, configuration } from "@botpress/runtime";
 import flightCacheTable from "../tables/flightCacheTable";
 import { fetchFlightById } from "../actions/fetchFlightById";
 
-const API_BASE_URL = "https://fallback-demo-api.vercel.app/api";
+const API_BASE_URL = configuration.API_BASE_URL;
 
 function generateFlightId(index: number): string {
 	return `FL${String(index).padStart(3, '0')}`;

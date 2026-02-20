@@ -1,6 +1,7 @@
 import type { Flight } from "./types";
+import { configuration } from "@botpress/runtime";
 
-const API_BASE_URL = process.env.FALLBACK_API_BASE_URL;
+const API_BASE_URL = configuration.API_BASE_URL;
 
 type FlightResult = {
   success: boolean;
