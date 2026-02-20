@@ -1,7 +1,5 @@
 import type { Flight } from "./types";
-import { configuration } from "@botpress/runtime";
-
-const API_BASE_URL = configuration.API_BASE_URL;
+import { context } from "@botpress/runtime";
 
 type FlightResult = {
   success: boolean;
@@ -13,6 +11,7 @@ export async function fetchFlight(
   flightId: string,
   source: "main" | "backup",
 ): Promise<FlightResult> {
+  const { API_BASE_URL } = context.get("configuration");
   try {
     const response = await fetch(
       `${API_BASE_URL}/flight/${source}/${flightId}`,

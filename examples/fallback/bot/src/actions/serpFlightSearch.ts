@@ -1,7 +1,5 @@
 import type { Flight } from "./types";
-import { configuration } from "@botpress/runtime";
-
-const API_BASE_URL = configuration.API_BASE_URL;
+import { context } from "@botpress/runtime";
 
 type SerpResult = {
 	success: boolean;
@@ -13,6 +11,7 @@ export async function serpFlightSearch(
 	departureAirport: string,
 	arrivalAirport: string,
 ): Promise<SerpResult> {
+	const { API_BASE_URL } = context.get("configuration");
 	if (!departureAirport || !arrivalAirport) {
 		return {
 			success: false,
