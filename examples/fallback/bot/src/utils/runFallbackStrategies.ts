@@ -24,6 +24,8 @@ export function generateInstructions(flightId: string, currentStrategyIndex: num
 		instructions += "\n";
 	});
 
+	instructions += "\n**Formatting rule:** Always respond with plain markdown (bold, bullets, etc.). Never wrap your response in a code block or markdown fences (``` or ~~~).";
+
 	return instructions;
 }
 
