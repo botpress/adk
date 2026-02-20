@@ -1,8 +1,6 @@
 import { Workflow, configuration } from "@botpress/runtime";
 import flightCacheTable from "../tables/flightCacheTable";
-import { fetchFlightById } from "../actions/fetchFlightById";
-
-const API_BASE_URL = configuration.API_BASE_URL;
+import { fetchFlight } from "../actions/fetchFlight";
 
 function generateFlightId(index: number): string {
 	return `FL${String(index).padStart(3, '0')}`;
@@ -22,7 +20,7 @@ export default new Workflow({
 			for (let i = 1; i <= 10; i++) {
 				const flightId = generateFlightId(i);
 				try {
-					const result = await fetchFlightById.handler({ input: { flightId } });
+					const result = await fetchFlight(flightId, "main");
 
 					if (result.error) {
 						logger.error(`Error got in fetchFlightById ${result.error}`);
