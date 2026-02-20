@@ -4,7 +4,9 @@ A pattern for gracefully degrading across multiple data sources when primary API
 
 ## Demo
 
-![Demo](./demo.gif)
+![Demo](./demo1.gif)
+---
+![Demo](./demo2.gif)
 
 ## Use Case
 
