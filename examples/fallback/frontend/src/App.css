@@ -1,35 +1,4 @@
-/* ==========================================
-   Toggle Switch
-   ========================================== */
-
-.toggle-slider {
-  position: absolute;
-  cursor: pointer;
-  inset: 0;
-  background-color: #d1d5db;
-  transition: 0.3s;
-  border-radius: 24px;
-}
-
-.toggle-slider:before {
-  position: absolute;
-  content: "";
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: 0.3s;
-  border-radius: 50%;
-}
-
-input:checked + .toggle-slider {
-  background-color: #10b981;
-}
-
-input:checked + .toggle-slider:before {
-  transform: translateX(20px);
-}
+/* Toggle switch styles removed — toggle is now built with Tailwind in EndpointCard.tsx */
 
 /* ==========================================
    Botpress container overrides
