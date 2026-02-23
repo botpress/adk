@@ -12,6 +12,15 @@ export default defineConfig({
 
   bot: {},
 
+  conversation: {
+    tags: {
+      startTime: {
+        title: "Conversation Start Time",
+        description: "The time the conversation started",
+      }
+    }
+  },
+
   user: {
     // Merge admin mode fields into user state so it persists per user (see admin-mode.ts)
     state: z.object({}).extend(AdminModeUserSchema),

@@ -32,3 +32,5 @@ logs/
 
 agent.json
 bun.lock
+examples/fallback/bot/pnpm-lock.yaml
+/examples/fallback/frontend/.vite

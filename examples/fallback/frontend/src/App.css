@@ -1,0 +1,398 @@
+/* Toggle switch styles removed — toggle is now built with Tailwind in EndpointCard.tsx */
+
+/* ==========================================
+   Botpress container overrides
+   ========================================== */
+
+.bpContainer {
+  border-radius: 0 !important;
+  border-top: none;
+  border-bottom: none;
+  border-right: none;
+  border-left: none;
+}
+
+.bpHeaderContainer { display: none !important; }
+.bpComposerFooter  { display: none !important; }
+.bpMessageListMarqueeContainer { visibility: hidden; }
+
+/* Composer pill */
+.bpComposerContainer {
+  border-radius: 24px !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: blur(12px) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.10) !important;
+  overflow: hidden !important;
+}
+
+.bpComposerContainer textarea {
+  font-size: 15px !important;
+  background: transparent !important;
+}
+
+.bpComposerContainer textarea::placeholder {
+  font-size: 15px !important;
+}
+
+:root .bpReset {
+  --bpGray-1: rgba(255, 255, 255, 0.12);
+  --bpGray-100: transparent;
+  --button-bg: #667eea;
+  --button-text: #ffffff;
+  --primary-color: #667eea;
+  font-weight: 400 !important;
+}
+
+/* Message bubbles */
+.bpMessageBlocksBubble {
+  font-size: 15px !important;
+}
+
+.bpMessageBlocksBubble[data-direction="incoming"] {
+  font-weight: 400 !important;
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+}
+
+.bpMessageBlocksBubble[data-direction="outgoing"] {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  color: #1f2937 !important;
+}
+
+.bpMessageContainer {
+  margin-bottom: 16px !important;
+}
+
+.bpTypingIndicatorContainer {
+  padding: var(--bpSpacing-2) var(--bpSpacing-4);
+  background-color: transparent;
+}
+
+button:hover { border-color: transparent; }
+
+/* ==========================================
+   Chat wrapper state machine
+   ========================================== */
+
+.bpMessageListViewport,
+.bpComposerContainer {
+  max-width: 768px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  width: 100% !important;
+}
+
+/* Give the message list container a bounded height so it can scroll */
+.bpMessageListContainer {
+  position: absolute !important;
+  inset: 0 !important;
+  overflow-y: auto !important;
+}
+
+.bpMessageListViewport {
+  overflow-y: auto !important;
+  height: 100% !important;
+}
+
+/* Empty state title — hidden by default */
+.empty-state-title {
+  position: absolute;
+  top: calc(50% - 60px);
+  left: 50%;
+  transform: translate(-50%, -100%);
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 10;
+  width: 100%;
+}
+
+.empty-state-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px auto;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+  font-size: 24px;
+  color: #ffffff;
+}
+
+.empty-state-title h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.empty-state-description {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 12px 0 0 0;
+  max-width: 380px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.55;
+}
+
+/* Suggestion buttons */
+.suggestion-buttons {
+  position: absolute;
+  top: calc(50% + 90px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  max-width: 768px;
+  width: calc(100% - 48px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 10;
+}
+
+.empty-state .suggestion-buttons {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.has-messages .suggestion-buttons,
+.is-loading .suggestion-buttons {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.suggestion-button {
+  padding: 10px 16px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+}
+
+.suggestion-button:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #ffffff;
+}
+
+/* Loading state */
+.is-loading .empty-state-title,
+.is-loading .bpComposerContainer {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+.is-loading .bpMessageListContainer {
+  visibility: hidden;
+}
+
+.loading-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Empty state: show title, centre composer */
+.empty-state .empty-state-title {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.empty-state .bpMessageListContainer {
+  visibility: hidden;
+}
+
+.empty-state .bpComposerContainer {
+  position: absolute !important;
+  top: calc(50% + 20px) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  max-width: 768px !important;
+  width: calc(100% - 48px) !important;
+  transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Has messages: normal chat layout */
+.has-messages .empty-state-title {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.has-messages .bpMessageListContainer {
+  visibility: visible;
+  padding-bottom: 80px !important;
+}
+
+.has-messages .bpMessageListContainer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(to bottom, rgba(147, 197, 253, 0.6) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.has-messages .bpComposerContainer {
+  position: absolute !important;
+  bottom: 28px !important;
+  top: auto !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==========================================
+   Scrollbar styling
+   ========================================== */
+
+.bpMessageListViewport::-webkit-scrollbar { width: 4px; }
+.bpMessageListViewport::-webkit-scrollbar-track { background: transparent; }
+.bpMessageListViewport::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.25);
+  border-radius: 2px;
+}
+.bpMessageListViewport::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.45);
+}
+
+/* ==========================================
+   New / restart button
+   ========================================== */
+
+.restart-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  backdrop-filter: blur(8px);
+}
+
+.restart-button:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #ffffff;
+}
+
+/* ==========================================
+   Composer footer
+   ========================================== */
+
+.composer-footer-text {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.composer-footer-text a {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: underline;
+}
+
+.composer-footer-text a:hover {
+  color: #ffffff;
+}
+
+/* ==========================================
+   Mobile
+   ========================================== */
+
+@media (max-width: 768px) {
+  .bpMessageListViewport {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  .bpComposerContainer {
+    left: 16px !important;
+    right: 16px !important;
+    width: calc(100% - 32px) !important;
+    max-width: calc(100% - 32px) !important;
+    transform: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .empty-state .bpComposerContainer {
+    top: calc(50% + 20px) !important;
+  }
+
+  .has-messages .bpComposerContainer {
+    bottom: 28px !important;
+  }
+
+  .suggestion-buttons {
+    width: calc(100% - 32px);
+    padding: 0 16px;
+  }
+
+  .empty-state-title h1 {
+    font-size: 1.5rem;
+    padding: 0 24px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .restart-button {
+    top: 12px;
+    right: 12px;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .composer-footer-text {
+    font-size: 11px;
+    bottom: 8px;
+  }
+}
