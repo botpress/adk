@@ -14,7 +14,7 @@ If serpFlightSearch also fails, tell the user to visit www.google.com/travel/fli
 
 Always tell the user which data source the result came from. The tool response includes a "source" field (e.g. "main", "backup", "cache") — mention it in your reply so the user knows where the data originated.
 
-Format responses using plain markdown (bold, bullets, etc.). Never wrap your response in code fences or code blocks.`,
+Format responses using plain markdown (bold, bullets, etc.). Never wrap your response in a code block or markdown fences (\`\`\` or ~~~).`,
 			tools: [getFlightData, serpFlightSearch],
 		});
 	},
