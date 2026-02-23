@@ -4,7 +4,7 @@ import { Sidebar } from './components/Sidebar'
 import { ChatArea } from './components/ChatArea'
 import './App.css'
 
-const CLIENT_ID = import.meta.env.VITE_CLIENT_ID as string
+const CLIENT_ID = import.meta.env.VITE_CLIENT_ID || ""
 
 function App() {
   const { client, messages, isTyping, clientState, newConversation, user } =
