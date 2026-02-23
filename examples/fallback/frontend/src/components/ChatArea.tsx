@@ -5,7 +5,7 @@ import {
   StylesheetProvider,
 } from '@botpress/webchat'
 import { IoMdAddCircleOutline } from 'react-icons/io'
-import type { WebchatClient, Message, User } from '@botpress/webchat'
+import type { ScopedClient, BlockMessage } from '@botpress/webchat'
 
 const BOT_CONFIG = {
   name: 'Fallback Bot',
@@ -20,12 +20,12 @@ const SUGGESTIONS = [
 ]
 
 interface ChatAreaProps {
-  client: WebchatClient | null
-  messages: Message[]
+  client: ScopedClient | undefined
+  messages: BlockMessage[]
   isTyping: boolean
   clientState: string
   newConversation: () => void
-  user: User | null
+  user: { userId: string } | undefined
 }
 
 export function ChatArea({ client, messages, isTyping, clientState, newConversation, user }: ChatAreaProps) {
@@ -44,7 +44,7 @@ export function ChatArea({ client, messages, isTyping, clientState, newConversat
     }
   })
 
-  const sendMessage = async (payload: { type: string; text?: string }) => {
+  const sendMessage = async (payload: { type: 'text'; text: string }) => {
     if (!client) return
     try {
       await client.sendMessage(payload)

@@ -29,7 +29,10 @@ export function useAdminStatus() {
   }
 
   useEffect(() => {
-    fetchStatus()
+    fetch(`${API_BASE}/api/admin/status`)
+      .then((res) => res.json())
+      .then(setStatus)
+      .catch((e) => console.error('Failed to fetch status:', e))
   }, [])
 
   const toggleEndpoint = async (endpoint: EndpointKey, currentState: boolean) => {

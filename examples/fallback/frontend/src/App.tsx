@@ -6,9 +6,14 @@ import './App.css'
 
 const CLIENT_ID = import.meta.env.VITE_CLIENT_ID || ""
 
+console.log('Using API URL:', import.meta.env.VITE_CLIENT_ID)
+
 function App() {
-  const { client, messages, isTyping, clientState, newConversation, user } =
-    useWebchat({ clientId: CLIENT_ID })
+  const webchat = useWebchat({ clientId: CLIENT_ID })
+  const { messages, clientState, newConversation } = webchat
+  const client = webchat.clientState === 'connected' ? webchat.client : undefined
+  const isTyping = webchat.isTyping ?? false
+  const user = webchat.user
 
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
