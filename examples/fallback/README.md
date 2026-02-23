@@ -2,6 +2,8 @@
 
 Demonstrates **graceful tool degradation** in a Botpress ADK agent. When a primary data source fails, the bot automatically tries backup sources — without the LLM needing to manage the retry logic.
 
+Try it live: **[https://adk-demo-tool-fallbacks.botpress.sh](https://adk-demo-tool-fallbacks.botpress.sh)**
+
 ## Goal
 
 AI agents depend on external APIs. APIs fail. This example shows the right way to handle that:
@@ -118,7 +120,7 @@ fallback/
 
 **Frontend** — A React app with a Botpress webchat widget and a sidebar control panel. The sidebar shows endpoint status badges and lets you toggle each endpoint on/off to simulate failures in real time.
 
-## Running It
+## Running Locally
 
 ### 1. API Server
 
@@ -145,6 +147,36 @@ cd frontend
 npm install
 npm run dev              # http://localhost:5173
 ```
+
+## Deploying
+
+### Bot
+
+```bash
+cd bot
+adk deploy
+```
+
+### API Server
+
+Deploy `example-server-api/` to Vercel as a Node.js project. Set `SERPAPI_KEY` in environment variables if using real flight search.
+
+### Frontend
+
+```bash
+cd frontend
+vercel link              # Select your org, name it (e.g. adk-demo-fallback)
+vercel env add VITE_CLIENT_ID production    # Your Botpress webchat client ID
+vercel env add VITE_API_BASE production     # API server URL (e.g. https://your-api.vercel.app)
+vercel --prod
+```
+
+**Environment variables:**
+
+| Variable | Description |
+|----------|-------------|
+| `VITE_CLIENT_ID` | Botpress webchat client ID (from bot dashboard) |
+| `VITE_API_BASE` | Deployed API server URL (without `/api` — the code adds it) |
 
 ## Testing Fallback Behavior
 
