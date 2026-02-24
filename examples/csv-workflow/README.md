@@ -2,6 +2,10 @@
 
 An ADK example demonstrating **Workflow <-> Conversation Communication** through a CSV import pipeline.
 
+Try it Live here: https://adk-example-csv-workflow.botpress.sh/
+
+![CSV Workflow Demo](csv-workflow-demo.gif)
+
 ## Use Case
 
 Import CSV data into Botpress Tables with validation. A background workflow processes the file, and when it hits issues (duplicates, bad format, missing fields), it pauses and asks the user how to handle them before continuing.
