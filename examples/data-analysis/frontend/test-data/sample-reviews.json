@@ -1,0 +1,35 @@
+[
+  {
+    "content": "The hotel was okay but nothing special. Wouldn't recommend paying full price."
+  },
+  {
+    "rating": 5,
+    "content": "Absolutely wonderful experience! The staff went above and beyond to make our anniversary special. The room had a beautiful view of the city and was spotlessly clean.",
+    "date": "Feb 10, 2025",
+    "guestName": "Sarah Mitchell"
+  },
+  {
+    "rating": 4,
+    "content": "Great location and comfortable beds. The breakfast buffet had plenty of options. Only minor issue was the WiFi being a bit slow during peak hours.",
+    "date": "Feb 8, 2025",
+    "guestName": "David Chen"
+  },
+  {
+    "rating": 2,
+    "content": "Disappointed with my stay. The room was smaller than expected and the air conditioning was noisy. Front desk staff seemed overwhelmed and check-in took forever.",
+    "date": "Feb 5, 2025",
+    "guestName": "Jennifer Adams"
+  },
+  {
+    "rating": 5,
+    "content": "Perfect business trip stay. Fast check-in, excellent gym facilities, and the executive lounge was a nice touch. Will definitely book again for my next visit.",
+    "date": "Feb 1, 2025",
+    "guestName": "Michael Roberts"
+  },
+  {
+    "rating": 3,
+    "content": "Average experience overall. The room was clean but dated. Restaurant food was mediocre for the price. Location is convenient though, close to public transport.",
+    "date": "Jan 28, 2025",
+    "guestName": "Emma Wilson"
+  }
+]
