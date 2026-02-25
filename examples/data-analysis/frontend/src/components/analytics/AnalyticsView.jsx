@@ -8,7 +8,7 @@ import DepartmentsPanel from './DepartmentsPanel';
 function AnalyticsView({ reviews, analyticsData, onBackToInbox, onRegenerateDepartments }) {
   const [activeSection, setActiveSection] = useState('issues');
 
-  const { issues, polarityTopics, departmentScores, isLoading } = analyticsData;
+  const { issues, polarityTopics, departmentScores, isLoading, requestedDepartments } = analyticsData;
 
   const sectionCounts = {
     issues: issues?.length ?? '–',
@@ -74,7 +74,7 @@ function AnalyticsView({ reviews, analyticsData, onBackToInbox, onRegenerateDepa
                 <PolaritySection topics={polarityTopics} isLoading={isLoading} />
               )}
               {activeSection === 'departments' && (
-                <DepartmentScoresSection departments={departmentScores} isLoading={isLoading} />
+                <DepartmentScoresSection departments={departmentScores} isLoading={isLoading} requestedDepartments={requestedDepartments} />
               )}
             </div>
             {activeSection === 'departments' && (
@@ -82,6 +82,7 @@ function AnalyticsView({ reviews, analyticsData, onBackToInbox, onRegenerateDepa
                 departments={departmentScores}
                 isLoading={isLoading}
                 onRegenerateDepartments={onRegenerateDepartments}
+                requestedDepartments={requestedDepartments}
               />
             )}
           </>

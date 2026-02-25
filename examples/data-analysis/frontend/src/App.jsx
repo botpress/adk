@@ -28,7 +28,8 @@ function App() {
     issues: null,
     polarityTopics: null,
     departmentScores: null,
-    isLoading: false
+    isLoading: false,
+    requestedDepartments: null
   });
 
   // Bot client refs
@@ -140,7 +141,11 @@ function App() {
     await waitForClient();
 
     console.log('Triggering department analysis with departments:', departments);
-    setAnalyticsData(prev => ({ ...prev, departmentScores: null, isLoading: true }));
+    setAnalyticsData(prev => ({
+      ...prev,
+      isLoading: true,
+      requestedDepartments: new Set(departments.map(d => d.toLowerCase()))
+    }));
 
     try {
       const conversationId = conversationRef.current.id;

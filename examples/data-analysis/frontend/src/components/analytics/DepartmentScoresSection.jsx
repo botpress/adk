@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import '../../styles/DepartmentScoresSection.css';
 
-function DepartmentScoresSection({ departments: departmentsProp, isLoading }) {
+function DepartmentScoresSection({ departments: departmentsProp, isLoading, requestedDepartments }) {
   const [expandedIndex, setExpandedIndex] = useState(null);
   const [reversedCards, setReversedCards] = useState(new Set());
   const departments = departmentsProp ?? [];
@@ -59,6 +59,9 @@ function DepartmentScoresSection({ departments: departmentsProp, isLoading }) {
             >
               <div className="department-header">
                 <h3 className="department-name">{dept.department}</h3>
+                {requestedDepartments && !requestedDepartments.has(dept.department.toLowerCase()) && (
+                  <span className="ai-detected-label">ai detected</span>
+                )}
               </div>
               <div className="department-score-container">
                 <span className={`department-score ${getScoreColor(dept.score)}`}>

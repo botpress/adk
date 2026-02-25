@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import '../../styles/DepartmentsPanel.css';
 
-function DepartmentsPanel({ departments, isLoading, onRegenerateDepartments }) {
+function DepartmentsPanel({ departments, isLoading, onRegenerateDepartments, requestedDepartments }) {
   const [selectedDepartments, setSelectedDepartments] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -42,6 +42,10 @@ function DepartmentsPanel({ departments, isLoading, onRegenerateDepartments }) {
     onRegenerateDepartments?.(selectedDepartments);
   };
 
+  const isBotAdded = (dept) => {
+    return requestedDepartments && !requestedDepartments.has(dept.toLowerCase());
+  };
+
   return (
     <div className="departments-panel">
       <div className="panel-header">
@@ -57,11 +61,12 @@ function DepartmentsPanel({ departments, isLoading, onRegenerateDepartments }) {
         ) : selectedDepartments.length > 0 ? (
           <div className={`department-boxes ${isRegenerating ? 'disabled' : ''}`}>
             {selectedDepartments.map((dept) => (
-              <div key={dept} className="department-plate">
+              <div key={dept} className={`department-plate ${isBotAdded(dept) ? 'bot-added' : ''}`}>
                 <span className="plate-screw top-left" />
                 <span className="plate-screw top-right" />
                 <span className="plate-screw bottom-left" />
                 <span className="plate-screw bottom-right" />
+                {isBotAdded(dept) && <span className="bot-added-label">ai detected</span>}
                 <span className="plate-text">{dept}</span>
                 {!isRegenerating && (
                   <button
