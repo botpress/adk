@@ -1,7 +1,7 @@
 # Hotel Review Analytics
 
 AI-powered analytics dashboard for hotel reviews built with **Botpress ADK** and **React**. <br>
-This app shows how to use `zai.group()`, `zai.rate()`, and `zai.sort()`.
+This app shows how to use `zai.group()`, `zai.extract()`, `zai.rate()`, and `zai.sort()`.
 
 ## What's in this file
 
@@ -73,8 +73,10 @@ There is a single `AnalysisTrigger` that handles all analysis requests via the `
 | Step | Method | Description | Example |
 |------|--------|-------------|---------|
 | 1. Group by department | `zai.group()` | Group reviews by responsible department | Uses custom or default departments |
-| 2. Rate feedback | `zai.rate()` | Rate how positive each review is | `["Great service", "Rude staff"]` → `[8, 2]` |
-| 3. Average scores | arithmetic | Calculate average score per department | `scores.reduce() / scores.length` |
+| 2. Extract sentiment | `zai.extract()` | Extract sentiment enum per review (`very_negative`, `somewhat_negative`, `neutral`, `somewhat_positive`, `very_positive`) | `"Great service"` → `very_positive` |
+| 3. Map to score | if/else | Convert sentiment to numeric score (0, 2.5, 5, 7.5, 10) | `very_positive` → `10` |
+| 4. Sort reviews | `.sort()` | Sort reviews by score (highest first) within each department | Best reviews shown first |
+| 5. Average scores | arithmetic | Calculate average score per department | `scores.reduce() / scores.length` |
 
 **Default departments:** Front Desk, Housekeeping, Restaurant, Events, Maintenance and Facilities, Recreation, Parking
 
@@ -205,10 +207,18 @@ await actions.chat.sendEvent({
     data: [
       {
         department: "Front Desk",
-        score: 3.2,
+        score: 6.25,
         reviews: [
-          "Check-in took forever",
-          "Staff was friendly"
+          {
+            text: "Staff was friendly",
+            sentiment: "very_positive",
+            score: 10
+          },
+          {
+            text: "Check-in took forever",
+            sentiment: "somewhat_negative",
+            score: 2.5
+          }
         ]
       }
     ]
@@ -225,7 +235,13 @@ await actions.chat.sendEvent({
   {
     department: string,  // Department name
     score: number,       // Average rating (0-10 scale)
-    reviews: string[]    // Relevant reviews
+    reviews: [           // Sorted by score (highest first)
+      {
+        text: string,      // Review text
+        sentiment: string, // very_negative | somewhat_negative | neutral | somewhat_positive | very_positive
+        score: number      // 0, 2.5, 5, 7.5, or 10
+      }
+    ]
   }
 ]
 ```
