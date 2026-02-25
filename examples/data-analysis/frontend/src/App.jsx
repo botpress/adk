@@ -60,15 +60,27 @@ function App() {
 
           if (type === 'issuesResponse') {
             console.log('issues response event received', event);
-            setAnalyticsData(prev => ({ ...prev, issues: data }));
+            setAnalyticsData(prev => {
+              const next = { ...prev, issues: data };
+              if (next.issues && next.polarityTopics && next.departmentScores) next.isLoading = false;
+              return next;
+            });
           }
           if (type === 'polarityResponse') {
             console.log('polarity response event received', event);
-            setAnalyticsData(prev => ({ ...prev, polarityTopics: data }));
+            setAnalyticsData(prev => {
+              const next = { ...prev, polarityTopics: data };
+              if (next.issues && next.polarityTopics && next.departmentScores) next.isLoading = false;
+              return next;
+            });
           }
           if (type === 'departmentsResponse') {
             console.log('departments response event received', event);
-            setAnalyticsData(prev => ({ ...prev, departmentScores: data }));
+            setAnalyticsData(prev => {
+              const next = { ...prev, departmentScores: data };
+              if (next.issues && next.polarityTopics && next.departmentScores) next.isLoading = false;
+              return next;
+            });
           }
         });
 
@@ -264,6 +276,18 @@ function App() {
   // Show notification only if analytics is ready and hasn't been seen yet
   const showAnalyticsNotification = analyticsReady && !analyticsSeen;
 
+  // Toast notification when analytics completes
+  const [showToast, setShowToast] = useState(false);
+  const prevAnalyticsReady = useRef(false);
+
+  useEffect(() => {
+    if (analyticsReady && !prevAnalyticsReady.current && activeView !== 'analytics') {
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 4000);
+    }
+    prevAnalyticsReady.current = analyticsReady;
+  }, [analyticsReady, activeView]);
+
   const handleGoToAnalytics = () => {
     setActiveView('analytics');
     setAnalyticsSeen(true);
@@ -294,12 +318,18 @@ function App() {
             onGoToAnalytics={handleGoToAnalytics}
             hasReviews={!!reviews}
             showAnalyticsNotification={showAnalyticsNotification}
+            isAnalyticsLoading={analyticsData.isLoading}
           />
         )}
         <div className="content-area">
           {renderContent()}
         </div>
       </div>
+      {showToast && (
+        <div className="toast" onClick={() => { setShowToast(false); handleGoToAnalytics(); }}>
+          Analytics ready — click to view
+        </div>
+      )}
     </div>
   );
 }

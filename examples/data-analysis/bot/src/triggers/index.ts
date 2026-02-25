@@ -141,11 +141,25 @@ async function analyzeDepartments(atomicTopicList: string[], conversationId: str
     initialGroups
   })
 
-  // score each department by taking the average rating of each review. 
+  // score each department
   const departmentScores = await Promise.all(Object.entries(groupedByDepartment).map(async ([department, reviews]) => {
-    const scores = await adk.zai.rate(reviews, "Rate how positive this feedback is.")
-    const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0
-    return { department, score: avgScore, reviews }
+    const scoredReviews = await Promise.all(reviews.map(async (review) => {
+      const sentiment = await adk.zai.extract(review, z.enum(['very_negative', 'somewhat_negative', 'neutral', 'somewhat_positive', 'very_positive']))
+
+      let score = 5
+      if (sentiment === 'very_negative') score = 0
+      else if (sentiment === 'somewhat_negative') score = 2.5
+      else if (sentiment === 'neutral') score = 5
+      else if (sentiment === 'somewhat_positive') score = 7.5
+      else if (sentiment === 'very_positive') score = 10
+
+      return { text: review, sentiment, score }
+    }))
+
+    scoredReviews.sort((a, b) => b.score - a.score)
+    const totalScore = scoredReviews.reduce((a: number, b) => a + b.score, 0)
+    const avgScore = scoredReviews.length > 0 ? totalScore / scoredReviews.length : 0
+    return { department, score: avgScore, reviews: scoredReviews }
   }))
 
   // send event with results to client
