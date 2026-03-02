@@ -1,0 +1,20 @@
+{
+  "name": "parallel-document-processing",
+  "version": "1.0.0",
+  "description": "A Botpress Agent built with the ADK",
+  "type": "module",
+  "packageManager": "pnpm@latest",
+  "scripts": {
+    "dev": "adk dev",
+    "build": "adk build",
+    "deploy": "adk deploy"
+  },
+  "dependencies": {
+    "@botpress/runtime": "^1.15.4",
+    "axios": "^1.13.5",
+    "unpdf": "^0.12.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
