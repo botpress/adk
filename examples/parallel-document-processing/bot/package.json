@@ -11,8 +11,7 @@
   },
   "dependencies": {
     "@botpress/runtime": "^1.15.4",
-    "axios": "^1.13.5",
-    "unpdf": "^0.12.2"
+    "axios": "^1.13.6"
   },
   "devDependencies": {
     "typescript": "^5.9.3"

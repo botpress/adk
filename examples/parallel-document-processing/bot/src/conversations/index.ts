@@ -4,38 +4,35 @@ import {
   isWorkflowCallback,
   Reference,
 } from "@botpress/runtime";
-import { extractText } from "unpdf";
-import { AnalyzeDocumentWorkflow } from "../workflows/analyze-message";
 import axios from "axios";
-/**
- * Fetch a PDF from a URL and extract its text content.
- */
-async function extractPdfText(url: string): Promise<string> {
-  const response = await axios.get(url, { responseType: "arraybuffer" });
-  const { text } = await extractText(new Uint8Array(response.data), {
-    mergePages: true,
-  });
-  return text.trim();
-}
+import { getFileText } from "../utils/files";
+import { AnalyzeDocumentWorkflow } from "../workflows/analyze-message";
 
 /**
  * Conversation handler — the user-facing layer.
  *
- * Handles three event types:
+ * Handles five event types:
+ * 1. upsertAnalyzer
+ *    Event sent from the frontend to add an analyzer to the conversation
+ *    state.
  *
- * 1. workflow_callback
+ * 2. message (file upload)
+ *    The user uploaded a file. Upload it via the Files API with indexing,
+ *    extract text from passages, and start the orchestrator.
+ *
+ * 3. workflow_request (analyze_document:checks)
+ *    A sub-workflow has generated yes/no checks and is paused waiting for
+ *    user feedback. We esume the workflow via request.workflow.provide().
+ *
+ * 4. confirmAnalysis
+ *    Event sent from the frontend to confirm the dimensions to analyze a
+ *    document on.
+ *
+ * 5. workflow_callback
  *    The orchestrator workflow completed (or failed). The callback fires
  *    automatically — no polling or state tracking needed. We format and
  *    send the aggregated results.
  *
- * 2. workflow_request (analyze_document:checks)
- *    A sub-workflow has generated yes/no checks and is paused waiting for
- *    user feedback. We use execute() to let the LLM have a natural
- *    conversation with the user, then resume the workflow via
- *    request.workflow.provide().
- *
- * 3. message (PDF upload)
- *    The user uploaded a PDF. Extract text and start the orchestrator.
  */
 export default new Conversation({
   channel: ["webchat.channel"],
@@ -62,6 +59,7 @@ export default new Conversation({
     conversation,
     state,
     workflow,
+    client,
   }) => {
     if (!state.analyzers) {
       state.analyzers = {};
@@ -86,11 +84,10 @@ export default new Conversation({
     }
 
     // ============================================================
-    // CASE 2: The user uploaded a PDF — start a fresh analysis.
+    // CASE 2: The user uploaded a file — start a fresh analysis.
     // A workflow will be started for each analyzer in the state.
     // ============================================================
-    const isFileMessage =
-      message?.type === "file" && message?.payload.fileUrl.endsWith("pdf");
+    const isFileMessage = message?.type === "file";
 
     if (isFileMessage) {
       const payload = message?.payload;
@@ -100,7 +97,7 @@ export default new Conversation({
         await conversation.send({
           type: "text",
           payload: {
-            text: "⚠️ No analyzers configured. Please add at least one analyzer before uploading a PDF.",
+            text: "⚠️ No analyzers configured. Please add at least one analyzer before uploading a document.",
           },
         });
         return;
@@ -108,12 +105,27 @@ export default new Conversation({
 
       let fileContent: string;
       try {
-        fileContent = await extractPdfText(payload.fileUrl);
-      } catch {
+        const res = await axios.get(payload.fileUrl, {
+          responseType: "arraybuffer",
+        });
+        const content = new Uint8Array(res.data);
+        const contentType =
+          (res.headers["content-type"] as string) || "application/octet-stream";
+        const { file } = await client.uploadFile({
+          key: `user-upload-${conversation.id}/${Date.now()}-${payload.title}`,
+          content,
+          contentType,
+          index: true,
+          expiresAt: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
+        });
+
+        fileContent = await getFileText(file.id);
+      } catch (error) {
+        console.log(JSON.stringify(error));
         await conversation.send({
           type: "text",
           payload: {
-            text: "⚠️ I couldn't read that PDF. Please make sure it's a text-based PDF (not a scanned image) and try again.",
+            text: "⚠️ I couldn't process that file. Please try again with a different document.",
           },
         });
         return;
@@ -123,24 +135,26 @@ export default new Conversation({
         await conversation.send({
           type: "text",
           payload: {
-            text: "⚠️ The PDF appears to be empty or contains only images. Please upload a text-based PDF.",
+            text: "⚠️ The document appears to be empty or couldn't be indexed. Please try a different file.",
           },
         });
         return;
       }
 
-      for (const [id, analyzer] of analyzerEntries) {
-        const wf = await AnalyzeDocumentWorkflow.getOrCreate({
-          key: id,
-          input: {
-            fileContent,
-            title: analyzer.name,
-            id,
-            instructions: analyzer.instructions,
-          },
-        });
-        state.analyzers[id].workflow = wf;
-      }
+      await Promise.all(
+        analyzerEntries.map(async ([id, analyzer]) => {
+          const wf = await AnalyzeDocumentWorkflow.getOrCreate({
+            key: id,
+            input: {
+              fileContent,
+              title: analyzer.name,
+              id,
+              instructions: analyzer.instructions,
+            },
+          });
+          state.analyzers[id].workflow = wf;
+        }),
+      );
       return;
     }
 
@@ -189,7 +203,7 @@ export default new Conversation({
         id: string;
         checks: string[];
       };
-      console.log("sending back to workflow:", id, checks)
+      console.log("sending back to workflow:", id, checks);
       await state.analyzers[id].workflow?.provide("checks", { checks });
       return;
     }
@@ -221,13 +235,13 @@ export default new Conversation({
     }
 
     // ============================================================
-    // FALLBACK: Non-PDF text message — guide the user.
+    // FALLBACK: Non-file text message — guide the user.
     // ============================================================
     if (message?.type === "text" && message?.payload?.text) {
       await conversation.send({
         type: "text",
         payload: {
-          text: "👋 Upload a PDF to get started. I'll generate yes/no checks across three dimensions (Clarity, Completeness, and Accuracy), show them to you for approval, then run the analysis.",
+          text: "👋 Upload a document to get started. I'll generate yes/no checks across three dimensions (Clarity, Completeness, and Accuracy), show them to you for approval, then run the analysis.",
         },
       });
     }

@@ -7,7 +7,7 @@ A Botpress Agent built with the ADK.
 1. Install dependencies:
 
    ```bash
-   pnpm install
+   bun install
    ```
 
 2. Start development server:
