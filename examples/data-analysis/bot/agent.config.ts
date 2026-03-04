@@ -1,7 +1,7 @@
 import { z, defineConfig } from "@botpress/runtime";
 
 export default defineConfig({
-  name: "bot",
+  name: "data-analysis",
   description: "An AI agent built with Botpress ADK",
 
   bot: {
@@ -10,7 +10,7 @@ export default defineConfig({
 
   user: {
     state: z.object({
-      atomicReviews: z.array(z.string()).default([])
+      atomicReviews: z.array(z.string()).default([]),
     }),
   },
 
