@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Webchat User Data — Example</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #111; color: #ddd; display: flex; min-height: 100vh; }
+    .sidebar { width: 340px; padding: 32px 24px; border-right: 1px solid #333; display: flex; flex-direction: column; gap: 16px; }
+    h1 { font-size: 18px; color: #fff; }
+    label { font-size: 12px; font-weight: 600; color: #999; }
+    input, textarea { width: 100%; padding: 8px; background: #1a1a2e; border: 1px solid #333; border-radius: 6px; color: #eee; font-family: monospace; font-size: 12px; }
+    input:focus, textarea:focus { outline: none; border-color: #7c5cfc; }
+    button { padding: 10px; background: #7c5cfc; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
+    button:hover { background: #6a4ce0; }
+    button:disabled { background: #444; cursor: not-allowed; }
+    .status { font-size: 12px; padding: 6px 10px; border-radius: 4px; }
+    .connected { background: #1a3a2a; color: #4ade80; }
+    .waiting { background: #3a2a1a; color: #fbbf24; }
+    .chat { flex: 1; }
+    #webchat { height: 100%; }
+    .hint { font-size: 11px; color: #666; line-height: 1.4; }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <h1>Webchat User Data</h1>
+    <p class="hint">
+      This page demonstrates passing data from a website to a Botpress bot using
+      <code>updateUser</code>. Enter values below and click <strong>Connect</strong>.
+      The bot will receive these values via <code>getUserData</code>.
+    </p>
+
+    <label for="jwt-input">JWT / Session Token</label>
+    <input id="jwt-input" placeholder="eyJhbGciOiJIUzI1NiIs..." />
+
+    <label for="email-input">Email</label>
+    <input id="email-input" placeholder="user@example.com" />
+
+    <label for="plan-input">Plan</label>
+    <input id="plan-input" placeholder="premium" />
+
+    <button id="connect-btn">Connect</button>
+    <div id="status" class="status waiting">Not connected</div>
+
+    <p class="hint">
+      <strong>How it works:</strong> On <code>webchat:ready</code>, the page calls
+      <code>window.botpress.updateUser({ data: { jwt, email, plan } })</code>.
+      The bot reads it with <code>actions.webchat.getUserData()</code>.
+    </p>
+  </div>
+
+  <div class="chat">
+    <!-- The webchat embeds inside this element -->
+    <div id="webchat"></div>
+  </div>
+
+  <script>
+    var jwtInput = document.getElementById('jwt-input')
+    var emailInput = document.getElementById('email-input')
+    var planInput = document.getElementById('plan-input')
+    var connectBtn = document.getElementById('connect-btn')
+    var statusEl = document.getElementById('status')
+
+    connectBtn.addEventListener('click', function () {
+      var jwt = jwtInput.value.trim()
+      var email = emailInput.value.trim()
+      var plan = planInput.value.trim()
+
+      connectBtn.disabled = true
+      statusEl.textContent = 'Loading webchat...'
+
+      var s = document.createElement('script')
+      s.src = 'https://cdn.botpress.cloud/webchat/v3.6/inject.js'
+      s.onload = function () {
+        var poll = setInterval(function () {
+          if (!window.botpress || !window.botpress.on) return
+          clearInterval(poll)
+
+          window.botpress.on('webchat:ready', function () {
+            // --- THIS IS THE KEY CALL ---
+            // Data passed here is available in the bot via:
+            //   actions.webchat.getUserData({ userId: event.userId })
+            window.botpress.updateUser({
+              data: { jwt: jwt, email: email, plan: plan },
+            })
+            statusEl.textContent = 'Connected'
+            statusEl.className = 'status connected'
+          })
+
+          // Replace these with YOUR bot's botId and clientId from the Dashboard
+          window.botpress.init({
+            botId: 'YOUR_BOT_ID',
+            clientId: 'YOUR_CLIENT_ID',
+            selector: '#webchat',
+          })
+        }, 50)
+      }
+      document.body.appendChild(s)
+    })
+  </script>
+
+</body>
+</html>
